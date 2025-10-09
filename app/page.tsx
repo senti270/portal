@@ -10,6 +10,7 @@ import { System, systems } from '@/data/systems'
 
 export default function Home() {
   const [searchTerm, setSearchTerm] = useState('')
+  const [allSystems, setAllSystems] = useState<System[]>(systems)
   const [filteredSystems, setFilteredSystems] = useState<System[]>(systems)
   const [isDark, setIsDark] = useState(false)
 
@@ -19,11 +20,19 @@ export default function Home() {
       setIsDark(true)
       document.documentElement.classList.add('dark')
     }
+    
+    // 로컬 스토리지에서 시스템 데이터 로드
+    const savedSystems = localStorage.getItem('portal-systems')
+    if (savedSystems) {
+      const parsedSystems = JSON.parse(savedSystems)
+      setAllSystems(parsedSystems)
+      setFilteredSystems(parsedSystems)
+    }
   }, [])
 
   useEffect(() => {
     // 검색 필터링 및 정렬
-    const filtered = systems.filter(system =>
+    const filtered = allSystems.filter(system =>
       system.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       system.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
       system.category.toLowerCase().includes(searchTerm.toLowerCase())
@@ -37,7 +46,7 @@ export default function Home() {
     })
     
     setFilteredSystems(sorted)
-  }, [searchTerm])
+  }, [searchTerm, allSystems])
 
   const toggleTheme = () => {
     setIsDark(!isDark)

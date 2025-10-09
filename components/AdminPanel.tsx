@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useAdmin } from '@/contexts/AdminContext'
 import { System, systems } from '@/data/systems'
 
@@ -12,6 +12,15 @@ export default function AdminPanel() {
   const [editingSystem, setEditingSystem] = useState<System | null>(null)
   const [showAddForm, setShowAddForm] = useState(false)
 
+  useEffect(() => {
+    // 로컬 스토리지에서 시스템 데이터 로드
+    const savedSystems = localStorage.getItem('portal-systems')
+    if (savedSystems) {
+      const parsedSystems = JSON.parse(savedSystems)
+      setSystemsList(parsedSystems)
+    }
+  }, [])
+
   if (!isAdmin) return null
 
   const handleEdit = (system: System) => {
@@ -21,20 +30,38 @@ export default function AdminPanel() {
 
   const handleDelete = (id: string) => {
     if (confirm('정말 삭제하시겠습니까?')) {
-      setSystemsList(systemsList.filter(s => s.id !== id))
+      const updatedSystems = systemsList.filter(s => s.id !== id)
+      setSystemsList(updatedSystems)
+      
+      // 로컬 스토리지에 저장
+      localStorage.setItem('portal-systems', JSON.stringify(updatedSystems))
+      
+      // 페이지 새로고침으로 변경사항 반영
+      window.location.reload()
     }
   }
 
   const handleSave = (system: System) => {
+    let updatedSystems: System[]
+    
     if (editingSystem) {
       // 편집 모드
-      setSystemsList(systemsList.map(s => s.id === system.id ? system : s))
+      updatedSystems = systemsList.map(s => s.id === system.id ? system : s)
     } else {
       // 추가 모드
-      setSystemsList([...systemsList, { ...system, id: `system-${Date.now()}` }])
+      updatedSystems = [...systemsList, { ...system, id: `system-${Date.now()}` }]
     }
+    
+    setSystemsList(updatedSystems)
+    
+    // 로컬 스토리지에 저장
+    localStorage.setItem('portal-systems', JSON.stringify(updatedSystems))
+    
     setShowAddForm(false)
     setEditingSystem(null)
+    
+    // 페이지 새로고침으로 변경사항 반영
+    window.location.reload()
   }
 
   const handleCancel = () => {

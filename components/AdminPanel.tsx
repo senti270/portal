@@ -130,7 +130,7 @@ function SystemForm({ system, onSave, onCancel }: {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    if (formData.title && formData.description && formData.category) {
+    if (formData.title && formData.description && formData.category && formData.icon && formData.color && formData.status) {
       onSave({
         id: system?.id || `system-${Date.now()}`,
         title: formData.title,
@@ -138,7 +138,7 @@ function SystemForm({ system, onSave, onCancel }: {
         icon: formData.icon,
         color: formData.color,
         category: formData.category,
-        url: formData.url,
+        url: formData.url || '',
         status: formData.status as 'active' | 'inactive' | 'maintenance',
         tags: formData.tags,
         optimization: formData.optimization,

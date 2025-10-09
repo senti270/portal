@@ -14,7 +14,7 @@ export const systems: System[] = [
   {
     id: 'schedule',
     title: '스케줄 관리',
-    description: '팀 일정 및 개인 스케줄을 관리하는 시스템입니다.',
+    description: '매장의 스케줄 및 직원, 급여를 관리하는 시스템입니다.',
     icon: '📅',
     color: '#3B82F6',
     category: '업무관리',

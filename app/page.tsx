@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react'
 import SystemCard from '@/components/SystemCard'
 import SearchBar from '@/components/SearchBar'
 import ThemeToggle from '@/components/ThemeToggle'
+import AdminLogin from '@/components/AdminLogin'
+import AdminPanel from '@/components/AdminPanel'
 import { System, systems } from '@/data/systems'
 
 export default function Home() {
@@ -88,10 +90,14 @@ export default function Home() {
       <footer className="mt-20 py-8 bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm transition-colors duration-300">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <p className="text-gray-600 dark:text-gray-400">
-            © 2025 cdcdcd.kr | 통합 업무 포털 시스템
+            © 2025 드로잉컴퍼니 | 통합 업무 포털 시스템
           </p>
         </div>
       </footer>
+
+      {/* 관리자 기능 */}
+      <AdminLogin />
+      <AdminPanel />
     </main>
   )
 }

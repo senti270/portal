@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import './globals.css'
+import { AdminProvider } from '@/contexts/AdminContext'
 
 export const metadata: Metadata = {
   title: '드로잉컴퍼니',
@@ -20,7 +21,11 @@ export default function RootLayout({
 }) {
   return (
     <html lang="ko">
-      <body>{children}</body>
+      <body>
+        <AdminProvider>
+          {children}
+        </AdminProvider>
+      </body>
     </html>
   )
 }

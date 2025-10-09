@@ -52,7 +52,7 @@ export default function AdminPanel() {
       </div>
 
       {/* 시스템 관리 버튼 */}
-      <div className="fixed bottom-6 right-20 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg shadow-lg transition-all duration-300 z-50">
+      <div className="fixed bottom-6 right-32 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg shadow-lg transition-all duration-300 z-50">
         <button onClick={() => setShowAddForm(true)}>
           시스템 추가
         </button>

@@ -126,7 +126,6 @@ function SystemForm({ system, onSave, onCancel }: {
   })
 
   const [newTag, setNewTag] = useState('')
-  const [newOptimization, setNewOptimization] = useState('')
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -163,21 +162,19 @@ function SystemForm({ system, onSave, onCancel }: {
     })
   }
 
-  const addOptimization = () => {
-    if (newOptimization && !formData.optimization?.includes(newOptimization)) {
+  const toggleOptimization = (opt: string) => {
+    const currentOptimization = formData.optimization || []
+    if (currentOptimization.includes(opt)) {
       setFormData({
         ...formData,
-        optimization: [...(formData.optimization || []), newOptimization]
+        optimization: currentOptimization.filter(o => o !== opt)
       })
-      setNewOptimization('')
+    } else {
+      setFormData({
+        ...formData,
+        optimization: [...currentOptimization, opt]
+      })
     }
-  }
-
-  const removeOptimization = (opt: string) => {
-    setFormData({
-      ...formData,
-      optimization: formData.optimization?.filter(o => o !== opt)
-    })
   }
 
   return (
@@ -325,41 +322,28 @@ function SystemForm({ system, onSave, onCancel }: {
 
           {/* 최적화 환경 */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
               최적화 환경
             </label>
-            <div className="flex gap-2 mb-2">
-              <input
-                type="text"
-                value={newOptimization}
-                onChange={(e) => setNewOptimization(e.target.value)}
-                className="flex-1 p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                placeholder="예: PC 최적화"
-              />
-              <button
-                type="button"
-                onClick={addOptimization}
-                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
-              >
-                추가
-              </button>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {formData.optimization?.map((opt, idx) => (
-                <span
-                  key={idx}
-                  className="inline-flex items-center gap-1 px-2 py-1 bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200 rounded-md text-sm"
-                >
-                  {opt}
-                  <button
-                    type="button"
-                    onClick={() => removeOptimization(opt)}
-                    className="text-green-600 hover:text-green-800"
-                  >
-                    ×
-                  </button>
-                </span>
-              ))}
+            <div className="space-y-2">
+              <label className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  checked={formData.optimization?.includes('PC 최적화') || false}
+                  onChange={() => toggleOptimization('PC 최적화')}
+                  className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+                />
+                <span className="text-sm text-gray-700 dark:text-gray-300">PC 최적화</span>
+              </label>
+              <label className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  checked={formData.optimization?.includes('모바일 최적화') || false}
+                  onChange={() => toggleOptimization('모바일 최적화')}
+                  className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+                />
+                <span className="text-sm text-gray-700 dark:text-gray-300">모바일 최적화</span>
+              </label>
             </div>
           </div>
 

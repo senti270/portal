@@ -32,7 +32,7 @@ export default function AdminLogin() {
 
       {/* 로그인 모달 */}
       {showModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 overflow-hidden">
           <div className="bg-white dark:bg-gray-800 rounded-xl p-6 w-96 max-w-[90vw]">
             <h2 className="text-xl font-bold mb-4 text-gray-900 dark:text-white">
               관리자 로그인

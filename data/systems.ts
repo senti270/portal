@@ -18,7 +18,7 @@ export const systems: System[] = [
     icon: '📅',
     color: '#3B82F6',
     category: '업무관리',
-    url: '', // 실제 URL로 변경하세요
+    url: 'https://work-schedule-next.vercel.app/',
     status: 'active',
     tags: ['일정', '캘린더', '스케줄'],
   },

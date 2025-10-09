@@ -22,13 +22,21 @@ export default function Home() {
   }, [])
 
   useEffect(() => {
-    // 검색 필터링
+    // 검색 필터링 및 정렬
     const filtered = systems.filter(system =>
       system.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       system.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
       system.category.toLowerCase().includes(searchTerm.toLowerCase())
     )
-    setFilteredSystems(filtered)
+    
+    // 활성화된 시스템을 먼저 표시하도록 정렬
+    const sorted = filtered.sort((a, b) => {
+      // 활성 상태 우선순위: active > maintenance > inactive
+      const statusOrder = { active: 0, maintenance: 1, inactive: 2 }
+      return statusOrder[a.status] - statusOrder[b.status]
+    })
+    
+    setFilteredSystems(sorted)
   }, [searchTerm])
 
   const toggleTheme = () => {

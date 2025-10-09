@@ -121,3 +121,5 @@ portal/
 
 **Made with ❤️ for cdcdcd.kr**
 
+*Last updated: 2025-01-16*
+

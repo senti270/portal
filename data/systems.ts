@@ -36,7 +36,7 @@ export const systems: System[] = [
   {
     id: 'purchase',
     title: '구매 물품 리스트',
-    description: '구매 요청 물품 및 발주 현황을 확인합니다.',
+    description: '매장에 필요한 발주물품목록입니다.',
     icon: '🛒',
     color: '#F59E0B',
     category: '구매관리',

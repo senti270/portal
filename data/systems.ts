@@ -8,6 +8,7 @@ export interface System {
   url?: string
   status: 'active' | 'inactive' | 'maintenance'
   tags?: string[]
+  optimization?: string[]
 }
 
 export const systems: System[] = [
@@ -21,6 +22,7 @@ export const systems: System[] = [
     url: 'https://work-schedule-next.vercel.app/',
     status: 'active',
     tags: ['일정', '캘린더', '스케줄'],
+    optimization: ['PC 최적화'],
   },
   {
     id: 'attendance',
@@ -54,6 +56,7 @@ export const systems: System[] = [
     url: 'https://web-production-1d90.up.railway.app/',
     status: 'active',
     tags: ['SEO', '순위', '분석', '블로그'],
+    optimization: ['PC 최적화', '모바일 최적화'],
   },
   // 아래는 예시 - 나중에 추가할 시스템들
   {

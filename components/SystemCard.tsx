@@ -75,6 +75,20 @@ export default function SystemCard({ system, index }: SystemCardProps) {
         </div>
       )}
 
+      {/* 최적화 정보 */}
+      {system.optimization && system.optimization.length > 0 && (
+        <div className="flex flex-wrap gap-2 mb-4">
+          {system.optimization.map((opt, idx) => (
+            <span
+              key={idx}
+              className="text-xs px-2 py-1 rounded-md bg-green-50 dark:bg-green-900/30 text-green-600 dark:text-green-300"
+            >
+              💻 {opt}
+            </span>
+          ))}
+        </div>
+      )}
+
       {/* 링크 표시 */}
       {system.url && (
         <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">

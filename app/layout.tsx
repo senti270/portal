@@ -5,7 +5,10 @@ export const metadata: Metadata = {
   title: '드로잉컴퍼니 - 통합 포털',
   description: '드로잉컴퍼니 업무 시스템 통합 포털',
   icons: {
-    icon: '/favicon.ico',
+    icon: [
+      { url: '/favicon.ico', sizes: '32x32', type: 'image/x-icon' },
+      { url: '/favicon.ico', sizes: '16x16', type: 'image/x-icon' }
+    ],
     apple: '/apple-touch-icon.png',
   },
 }

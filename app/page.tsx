@@ -63,33 +63,6 @@ export default function Home() {
           <SearchBar searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
         </div>
 
-        {/* 통계 정보 */}
-        <div className="mb-8 grid grid-cols-2 sm:grid-cols-4 gap-4 animate-slide-up">
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-md transition-all duration-300 hover:shadow-lg">
-            <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-              {systems.length}
-            </div>
-            <div className="text-sm text-gray-600 dark:text-gray-400">전체 시스템</div>
-          </div>
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-md transition-all duration-300 hover:shadow-lg">
-            <div className="text-2xl font-bold text-green-600 dark:text-green-400">
-              {systems.filter(s => s.status === 'active').length}
-            </div>
-            <div className="text-sm text-gray-600 dark:text-gray-400">활성 시스템</div>
-          </div>
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-md transition-all duration-300 hover:shadow-lg">
-            <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">
-              {new Set(systems.map(s => s.category)).size}
-            </div>
-            <div className="text-sm text-gray-600 dark:text-gray-400">카테고리</div>
-          </div>
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-md transition-all duration-300 hover:shadow-lg">
-            <div className="text-2xl font-bold text-orange-600 dark:text-orange-400">
-              {filteredSystems.length}
-            </div>
-            <div className="text-sm text-gray-600 dark:text-gray-400">검색 결과</div>
-          </div>
-        </div>
 
         {/* 시스템 카드 그리드 */}
         {filteredSystems.length > 0 ? (

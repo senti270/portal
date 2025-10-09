@@ -46,9 +46,9 @@ export default function Home() {
               </div>
               <div>
                 <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
-                  통합 업무 포털
+                  드로잉컴퍼니
                 </h1>
-                <p className="text-sm text-gray-600 dark:text-gray-400">업무 시스템 통합 관리</p>
+                <p className="text-sm text-gray-600 dark:text-gray-400">통합 업무 포털</p>
               </div>
             </div>
             <ThemeToggle isDark={isDark} toggleTheme={toggleTheme} />

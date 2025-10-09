@@ -2,8 +2,8 @@ import type { Metadata } from 'next'
 import './globals.css'
 
 export const metadata: Metadata = {
-  title: 'cdcdcd.kr - 통합 포털',
-  description: '업무 시스템 통합 포털',
+  title: '드로잉컴퍼니 - 통합 포털',
+  description: '드로잉컴퍼니 업무 시스템 통합 포털',
   icons: {
     icon: '/favicon.ico',
     apple: '/apple-touch-icon.png',

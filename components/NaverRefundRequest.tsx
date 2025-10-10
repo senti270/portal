@@ -99,18 +99,18 @@ export default function NaverRefundRequest() {
         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
           매장 선택
         </label>
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {stores.map((store) => (
             <button
               key={store.id}
               onClick={() => handleStoreSelect(store)}
-              className={`p-3 rounded-lg border-2 transition-all duration-200 ${
+              className={`p-4 rounded-lg border-2 transition-all duration-200 min-h-[60px] flex items-center justify-center ${
                 selectedStore?.id === store.id
                   ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
-                  : 'border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500'
+                  : 'border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 hover:border-gray-300 dark:hover:border-gray-500 text-gray-800 dark:text-gray-200'
               }`}
             >
-              <span className="font-medium">{store.name}</span>
+              <span className="font-medium text-sm sm:text-base text-center leading-tight">{store.name}</span>
             </button>
           ))}
         </div>

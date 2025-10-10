@@ -27,28 +27,12 @@ export default function StoreSelector({ stores, selectedStore, onStoreChange }: 
                 : 'border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500'
             }`}
           >
-            {/* 지점 이미지 */}
-            <div className="w-full h-20 mb-3 rounded-lg bg-gray-200 dark:bg-gray-600 flex items-center justify-center overflow-hidden">
-              {store.imageUrl ? (
-                <img
-                  src={store.imageUrl}
-                  alt={store.name}
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <span className="text-2xl">🏪</span>
-              )}
-            </div>
-            
             {/* 지점 정보 */}
-            <div className="space-y-1">
-              <h3 className="font-medium text-sm text-gray-900 dark:text-white line-clamp-1">
+            <div className="space-y-2">
+              <h3 className="font-medium text-base text-gray-900 dark:text-white">
                 {store.name}
               </h3>
-              <p className="text-xs text-gray-600 dark:text-gray-400 line-clamp-2">
-                {store.address}
-              </p>
-              <p className="text-xs text-blue-600 dark:text-blue-400">
+              <p className="text-sm text-blue-600 dark:text-blue-400">
                 {store.category}
               </p>
             </div>

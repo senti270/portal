@@ -33,12 +33,13 @@ export default function PurchaseListManager() {
   const handleAddItem = async (formData: PurchaseItemFormData) => {
     try {
       setError(null)
+      console.log('Adding item:', formData)
       await addPurchaseItem(formData, formData.imageFile)
       await loadItems()
       setShowForm(false)
     } catch (error) {
       console.error('Error adding item:', error)
-      setError('물품 추가에 실패했습니다.')
+      setError(`물품 추가에 실패했습니다: ${error instanceof Error ? error.message : '알 수 없는 오류'}`)
     }
   }
 

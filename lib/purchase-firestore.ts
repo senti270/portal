@@ -10,12 +10,10 @@ import {
   query,
   Timestamp
 } from 'firebase/firestore'
-import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage'
-import app from './firebase'
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage'
+import { db, storage } from './firebase'
 import { PurchaseItem } from '@/types/purchase'
 
-const db = getFirestore(app)
-const storage = getStorage(app)
 const purchaseCollection = collection(db, 'purchase-items')
 
 // 구매물품 목록 조회

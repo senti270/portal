@@ -11,7 +11,15 @@ export async function POST(request: NextRequest) {
     const clientId = process.env.NAVER_CLIENT_ID
     const clientSecret = process.env.NAVER_CLIENT_SECRET
 
+    console.log('🔍 Search API - Environment variables check:', {
+      hasClientId: !!clientId,
+      hasClientSecret: !!clientSecret,
+      clientIdLength: clientId?.length || 0,
+      clientSecretLength: clientSecret?.length || 0
+    })
+
     if (!clientId || !clientSecret) {
+      console.error('❌ Search API - API keys missing:', { clientId: !!clientId, clientSecret: !!clientSecret })
       return NextResponse.json({ error: 'API 키가 설정되지 않았습니다.' }, { status: 500 })
     }
 

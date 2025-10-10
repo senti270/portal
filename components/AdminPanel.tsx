@@ -91,7 +91,13 @@ export default function AdminPanel() {
           시스템 관리
         </h3>
         <div className="space-y-2">
-          {systemsList.map((system) => (
+          {systemsList
+            .sort((a, b) => {
+              // 활성 상태 우선순위: active > maintenance > inactive
+              const statusOrder = { active: 0, maintenance: 1, inactive: 2 }
+              return statusOrder[a.status] - statusOrder[b.status]
+            })
+            .map((system) => (
             <div key={system.id} className="border border-gray-200 dark:border-gray-600 rounded-lg p-3">
               <div className="flex items-center justify-between mb-2">
                 <span className="font-medium text-gray-900 dark:text-white">

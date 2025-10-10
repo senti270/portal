@@ -13,7 +13,7 @@ export async function GET(request: NextRequest) {
     const widgetData = incompleteTodos.slice(0, 5).map(todo => ({
       id: todo.id,
       task: todo.task.length > 20 ? todo.task.substring(0, 20) + '...' : todo.task,
-      deadline: todo.deadline,
+      dueDate: todo.dueDate,
       requester: todo.requester
     }))
 

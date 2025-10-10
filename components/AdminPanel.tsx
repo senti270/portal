@@ -90,15 +90,33 @@ export default function AdminPanel({ systemsList: propSystemsList, onSystemsUpda
     let updatedSystems: System[]
     
     if (editingSystem) {
-      // 편집 모드
-      updatedSystems = systemsList.map(s => s.id === system.id ? system : s)
+      // 편집 모드 - 기존 시스템의 모든 필드를 유지하면서 업데이트
+      updatedSystems = systemsList.map(s => {
+        if (s.id === system.id) {
+          return {
+            ...s, // 기존 시스템의 모든 필드 유지
+            ...system, // 수정된 필드만 덮어쓰기
+            id: s.id, // ID는 절대 변경하지 않음
+            order: s.order, // order도 유지
+            createdAt: s.createdAt, // 생성일 유지
+            updatedAt: new Date() // 수정일만 업데이트
+          }
+        }
+        return s
+      })
     } else {
-      // 추가 모드
       // 추가 모드 - Firebase 호환 ID 생성
       const newId = `system-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
       // 새 시스템의 order는 기존 시스템 개수로 설정 (맨 뒤에 추가)
       const newOrder = systemsList.length
-      updatedSystems = [...systemsList, { ...system, id: newId, order: newOrder }]
+      const now = new Date()
+      updatedSystems = [...systemsList, { 
+        ...system, 
+        id: newId, 
+        order: newOrder,
+        createdAt: now,
+        updatedAt: now
+      }]
     }
     
     setSystemsList(updatedSystems)
@@ -306,7 +324,7 @@ function SystemForm({ system, onSave, onCancel }: {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     if (formData.title && formData.description && formData.category && formData.icon && formData.color && formData.status) {
-      onSave({
+      const savedSystem: System = {
         id: system?.id || `system-${Date.now()}`,
         title: formData.title,
         description: formData.description,
@@ -315,9 +333,13 @@ function SystemForm({ system, onSave, onCancel }: {
         category: formData.category,
         url: formData.url || '',
         status: formData.status as 'active' | 'inactive' | 'maintenance',
-        tags: formData.tags,
-        optimization: formData.optimization,
-      })
+        tags: formData.tags || [],
+        optimization: formData.optimization || [],
+        order: system?.order ?? 0, // 기존 order 유지 또는 0
+        createdAt: system?.createdAt || new Date(),
+        updatedAt: new Date()
+      }
+      onSave(savedSystem)
     }
   }
 

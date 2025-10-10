@@ -28,20 +28,44 @@ export default function AdminPanel() {
     setShowAddForm(true)
   }
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
     if (confirm('정말 삭제하시겠습니까?')) {
       const updatedSystems = systemsList.filter(s => s.id !== id)
       setSystemsList(updatedSystems)
       
-      // 로컬 스토리지에 저장
-      localStorage.setItem('portal-systems', JSON.stringify(updatedSystems))
-      
-      // 페이지 새로고침으로 변경사항 반영
-      window.location.reload()
+      try {
+        // GitHub에 저장
+        const response = await fetch('/api/update-systems', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ systems: updatedSystems })
+        })
+        
+        if (response.ok) {
+          // 로컬 스토리지에도 저장 (백업용)
+          localStorage.setItem('portal-systems', JSON.stringify(updatedSystems))
+          
+          // 성공 메시지
+          alert('시스템이 성공적으로 삭제되었습니다!')
+          
+          // 페이지 새로고침으로 변경사항 반영
+          window.location.reload()
+        } else {
+          throw new Error('Failed to delete from GitHub')
+        }
+      } catch (error) {
+        console.error('Delete error:', error)
+        alert('삭제 중 오류가 발생했습니다. 다시 시도해주세요.')
+        
+        // 로컬 스토리지에만 저장 (오프라인 백업)
+        localStorage.setItem('portal-systems', JSON.stringify(updatedSystems))
+      }
     }
   }
 
-  const handleSave = (system: System) => {
+  const handleSave = async (system: System) => {
     let updatedSystems: System[]
     
     if (editingSystem) {
@@ -54,14 +78,38 @@ export default function AdminPanel() {
     
     setSystemsList(updatedSystems)
     
-    // 로컬 스토리지에 저장
-    localStorage.setItem('portal-systems', JSON.stringify(updatedSystems))
-    
-    setShowAddForm(false)
-    setEditingSystem(null)
-    
-    // 페이지 새로고침으로 변경사항 반영
-    window.location.reload()
+    try {
+      // GitHub에 저장
+      const response = await fetch('/api/update-systems', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ systems: updatedSystems })
+      })
+      
+      if (response.ok) {
+        // 로컬 스토리지에도 저장 (백업용)
+        localStorage.setItem('portal-systems', JSON.stringify(updatedSystems))
+        
+        setShowAddForm(false)
+        setEditingSystem(null)
+        
+        // 성공 메시지
+        alert('시스템이 성공적으로 저장되었습니다!')
+        
+        // 페이지 새로고침으로 변경사항 반영
+        window.location.reload()
+      } else {
+        throw new Error('Failed to save to GitHub')
+      }
+    } catch (error) {
+      console.error('Save error:', error)
+      alert('저장 중 오류가 발생했습니다. 다시 시도해주세요.')
+      
+      // 로컬 스토리지에만 저장 (오프라인 백업)
+      localStorage.setItem('portal-systems', JSON.stringify(updatedSystems))
+    }
   }
 
   const handleCancel = () => {

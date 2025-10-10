@@ -32,7 +32,8 @@ export default function KeywordManager({ storeId, storeName }: KeywordManagerPro
       id: `keyword-${Date.now()}`,
       ...formData,
       storeId,
-      isActive: true
+      isActive: true,
+      order: keywords.length // 마지막 순서로 추가
     }
     setKeywords([...keywords, newKeyword])
     setShowForm(false)

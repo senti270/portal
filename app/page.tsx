@@ -144,7 +144,14 @@ export default function Home() {
       <AdminLogin />
       <AdminPanel 
         systemsList={allSystems}
-        onSystemsUpdate={setAllSystems}
+        onSystemsUpdate={(updatedSystems) => {
+          setAllSystems(updatedSystems)
+          setFilteredSystems(updatedSystems)
+          // 상태 업데이트 강제
+          setTimeout(() => {
+            setFilteredSystems([...updatedSystems])
+          }, 100)
+        }}
       />
     </main>
   )

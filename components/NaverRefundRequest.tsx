@@ -52,15 +52,16 @@ export default function NaverRefundRequest() {
   }
 
   const handleSubmit = () => {
-    if (!selectedStore || !customMessage) {
-      alert('매장을 선택하고 메시지를 입력해주세요.')
+    if (!selectedStore) {
+      alert('매장을 선택해주세요.')
       return
     }
 
     // 네이버 고객센터 URL 생성
-    const encodedMessage = encodeURIComponent(customMessage)
+    const mapUrl = selectedStore.naverMapUrl || ''
+    const encodedMapUrl = encodeURIComponent(mapUrl)
     const encodedCompany = encodeURIComponent(selectedStore.name)
-    const naverUrl = `https://help.naver.com/inquiry/input.help?categoryNo=15008&serviceNo=30026&lang=ko&message=${encodedMessage}&company=${encodedCompany}`
+    const naverUrl = `https://help.naver.com/inquiry/input.help?categoryNo=15008&serviceNo=30026&lang=ko&message=${encodedMapUrl}&company=${encodedCompany}`
     
     // 새 탭에서 열기
     const newWindow = window.open(naverUrl, '_blank')
@@ -82,7 +83,7 @@ export default function NaverRefundRequest() {
               companyInput.value = decodeURIComponent(company)
             }
             
-            // 메시지 입력
+            // 네이버 지도 URL 입력
             const messageTextarea = newWindow.document.getElementById('moText2CB')
             if (messageTextarea && message) {
               messageTextarea.value = decodeURIComponent(message)
@@ -148,20 +149,32 @@ export default function NaverRefundRequest() {
         </div>
       )}
 
-      {/* 메시지 편집 */}
+      {/* 네이버 지도 URL 표시 */}
       <div className="mb-6">
         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-          환불 요청 메시지
+          네이버 지도 URL (자동 입력됨)
         </label>
-        <textarea
-          value={customMessage}
-          onChange={handleCustomMessageChange}
-          placeholder="매장을 선택하면 기본 메시지가 입력됩니다. 필요에 따라 수정하세요."
-          className="w-full h-32 p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white resize-none"
-        />
-        <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
-          [예약번호], [사유] 부분을 실제 내용으로 변경해주세요.
-        </p>
+        <div className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700">
+          {selectedStore?.naverMapUrl ? (
+            <div className="space-y-2">
+              <p className="text-sm text-gray-600 dark:text-gray-400 break-all">
+                {selectedStore.naverMapUrl}
+              </p>
+              <a
+                href={selectedStore.naverMapUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-xs text-blue-600 hover:text-blue-800 dark:text-blue-400"
+              >
+                네이버 지도에서 확인하기 →
+              </a>
+            </div>
+          ) : (
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              매장을 선택하면 네이버 지도 URL이 표시됩니다.
+            </p>
+          )}
+        </div>
       </div>
 
       {/* 제출 버튼 */}
@@ -183,7 +196,7 @@ export default function NaverRefundRequest() {
       <div className="mt-6 p-4 bg-yellow-50 dark:bg-yellow-900/30 rounded-lg">
         <p className="text-sm text-yellow-700 dark:text-yellow-300">
           <span className="font-medium">안내:</span> 버튼을 클릭하면 네이버 고객센터 문의 페이지가 새 탭에서 열리며, 
-          선택한 매장명(업체명)과 환불 요청 메시지가 자동으로 입력됩니다.
+          선택한 매장명(업체명)과 네이버 지도 URL이 자동으로 입력됩니다.
         </p>
       </div>
     </div>

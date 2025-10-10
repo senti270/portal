@@ -147,6 +147,32 @@ export default function AdminPanel({ systemsList: propSystemsList, onSystemsUpda
     setEditingSystem(null)
   }
 
+  const fixSystemOrders = async () => {
+    if (!confirm('모든 시스템의 order를 현재 순서대로 재설정하시겠습니까?')) {
+      return
+    }
+
+    try {
+      // 현재 systemsList를 순서대로 order 재부여
+      const fixedSystems = systemsList.map((s, index) => ({
+        ...s,
+        order: index
+      }))
+
+      setSystemsList(fixedSystems)
+      onSystemsUpdate(fixedSystems)
+
+      // Firebase에 저장
+      await updateAllSystems(fixedSystems)
+      
+      alert('✅ 모든 시스템의 order가 수정되었습니다!')
+      console.log('Fixed systems:', fixedSystems.map(s => `${s.title}: order ${s.order}`))
+    } catch (error) {
+      console.error('Order 수정 오류:', error)
+      alert('❌ Order 수정 중 오류가 발생했습니다.')
+    }
+  }
+
   // react-beautiful-dnd 핸들러
   const handleDragEnd = async (result: any) => {
     console.log('🔄 드래그 종료:', result)
@@ -210,9 +236,18 @@ export default function AdminPanel({ systemsList: propSystemsList, onSystemsUpda
         </button>
       </div>
 
-      {/* 시스템 관리 버튼 */}
-      <div className="fixed bottom-6 right-32 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg shadow-lg transition-all duration-300 z-50">
-        <button onClick={() => setShowAddForm(true)}>
+      {/* 시스템 관리 버튼들 */}
+      <div className="fixed bottom-6 right-6 flex gap-2 z-50">
+        <button 
+          onClick={fixSystemOrders}
+          className="bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-lg shadow-lg transition-all duration-300 text-sm"
+        >
+          🔧 Order 수정
+        </button>
+        <button 
+          onClick={() => setShowAddForm(true)}
+          className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg shadow-lg transition-all duration-300"
+        >
           시스템 추가
         </button>
       </div>

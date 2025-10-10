@@ -28,10 +28,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'API 키가 설정되지 않았습니다.' }, { status: 500 })
     }
 
+    // 주소를 간단하게 변환 (동탄대로만 검색)
+    const simplifiedAddress = address.includes('동탄대로') ? '동탄대로 446' : address
+    console.log('🔧 Simplified address:', simplifiedAddress)
+    
     // 네이버 Local Search API로 주소 검색하여 좌표 획득
     const searchUrl = new URL('https://openapi.naver.com/v1/search/local.json')
-    searchUrl.searchParams.append('query', address)
-    searchUrl.searchParams.append('display', '1')
+    searchUrl.searchParams.append('query', simplifiedAddress)
+    searchUrl.searchParams.append('display', '5') // 더 많은 결과 검색
 
     console.log('🔍 Calling Naver API:', searchUrl.toString())
 
@@ -57,12 +61,20 @@ export async function POST(request: NextRequest) {
     console.log('📋 Naver API response:', data)
 
     if (data.items && data.items.length > 0) {
+      console.log(`📋 Found ${data.items.length} results, using first one`)
+      
+      // 첫 번째 결과 사용 (가장 관련성 높은 결과)
       const item = data.items[0]
       // mapx, mapy는 카텍 좌표계이므로 10000000으로 나눠서 위경도로 변환
       const longitude = parseInt(item.mapx) / 10000000
       const latitude = parseInt(item.mapy) / 10000000
       
-      console.log('✅ Coordinates found:', { latitude, longitude })
+      console.log('✅ Coordinates found:', { 
+        latitude, 
+        longitude, 
+        title: item.title,
+        address: item.roadAddress || item.address 
+      })
       
       return NextResponse.json({
         success: true,
@@ -72,6 +84,7 @@ export async function POST(request: NextRequest) {
       })
     } else {
       console.log('❌ No items found in response')
+      console.log('📋 Full response:', JSON.stringify(data, null, 2))
       return NextResponse.json({ error: '좌표를 찾을 수 없습니다.' }, { status: 404 })
     }
   } catch (error) {

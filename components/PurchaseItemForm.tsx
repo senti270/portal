@@ -171,18 +171,33 @@ export default function PurchaseItemForm({ item, onSubmit, onCancel }: PurchaseI
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
             구입처 *
           </label>
-          <select
-            name="purchaseSource"
-            value={formData.purchaseSource}
-            onChange={handleInputChange}
-            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
-            required
-          >
-            <option value="">구입처를 선택하세요</option>
-            {PURCHASE_SOURCES.map((source) => (
-              <option key={source} value={source}>{source}</option>
-            ))}
-          </select>
+          <div className="space-y-2">
+            <input
+              type="text"
+              name="purchaseSource"
+              value={formData.purchaseSource}
+              onChange={handleInputChange}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+              placeholder="구입처를 입력하세요"
+              required
+            />
+            <div className="flex flex-wrap gap-2">
+              {PURCHASE_SOURCES.map((source) => (
+                <button
+                  key={source}
+                  type="button"
+                  onClick={() => setFormData(prev => ({ ...prev, purchaseSource: source }))}
+                  className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
+                    formData.purchaseSource === source
+                      ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
+                      : 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                  }`}
+                >
+                  {source}
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
 
         {/* URL */}

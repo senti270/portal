@@ -85,7 +85,8 @@ export const getPurchaseItems = async (): Promise<PurchaseItem[]> => {
       })
     })
     
-    return items
+    // 최신순으로 정렬 (새로 추가된 것이 맨 위)
+    return items.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
   } catch (error) {
     console.error('Error getting purchase items:', error)
     throw error

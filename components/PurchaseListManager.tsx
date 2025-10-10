@@ -203,6 +203,17 @@ export default function PurchaseListManager() {
         )}
       </div>
 
+      {/* 추가/편집 폼 */}
+      {(showForm || editingItem) && (
+        <div className="animate-fade-in">
+          <PurchaseItemForm
+            item={editingItem}
+            onSubmit={editingItem ? (data) => handleEditItem(editingItem.id, data) : handleAddItem}
+            onCancel={handleCancel}
+          />
+        </div>
+      )}
+
       {/* 물품 목록 테이블 */}
       <PurchaseItemTable
         items={filteredItems}
@@ -211,15 +222,6 @@ export default function PurchaseListManager() {
         onCategoryFilter={handleCategoryFilter}
         selectedCategory={selectedCategory}
       />
-
-      {/* 추가/편집 폼 */}
-      {(showForm || editingItem) && (
-        <PurchaseItemForm
-          item={editingItem}
-          onSubmit={editingItem ? (data) => handleEditItem(editingItem.id, data) : handleAddItem}
-          onCancel={handleCancel}
-        />
-      )}
     </div>
   )
 }

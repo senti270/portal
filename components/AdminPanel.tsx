@@ -8,16 +8,21 @@ import { getSystems, updateAllSystems, deleteSystem as deleteSystemFromFirestore
 
 const ICONS = ['📅', '👥', '🛒', '📊', '💼', '📈', '🔧', '📝', '🎯', '⚙️', '📱', '💻', '🌐', '📋', '🏪']
 
-export default function AdminPanel() {
+interface AdminPanelProps {
+  systemsList: System[]
+  onSystemsUpdate: (systems: System[]) => void
+}
+
+export default function AdminPanel({ systemsList: propSystemsList, onSystemsUpdate }: AdminPanelProps) {
   const { isAdmin, logout } = useAdmin()
-  const [systemsList, setSystemsList] = useState<System[]>(systems)
+  const [systemsList, setSystemsList] = useState<System[]>(propSystemsList)
   const [editingSystem, setEditingSystem] = useState<System | null>(null)
   const [showAddForm, setShowAddForm] = useState(false)
 
   useEffect(() => {
-    // Firestore에서 시스템 데이터 로드
-    loadSystems()
-  }, [])
+    // props에서 받은 systemsList로 초기화
+    setSystemsList(propSystemsList)
+  }, [propSystemsList])
 
   const loadSystems = async () => {
     try {
@@ -57,14 +62,12 @@ export default function AdminPanel() {
         // 로컬 상태 업데이트
         const updatedSystems = systemsList.filter(s => s.id !== id)
         setSystemsList(updatedSystems)
-        
+        onSystemsUpdate(updatedSystems) // 부모 컴포넌트 상태도 업데이트
+
         // 로컬 스토리지에 백업
         localStorage.setItem('portal-systems', JSON.stringify(updatedSystems))
-        
+
         alert('시스템이 성공적으로 삭제되었습니다!')
-        
-        // 페이지 새로고침으로 변경사항 반영
-        window.location.reload()
       } catch (error) {
         console.error('Delete error:', error)
         alert('삭제 중 오류가 발생했습니다. 다시 시도해주세요.')
@@ -84,7 +87,8 @@ export default function AdminPanel() {
     }
     
     setSystemsList(updatedSystems)
-    
+    onSystemsUpdate(updatedSystems) // 부모 컴포넌트 상태도 업데이트
+
     try {
       // Firestore에 저장
       await updateAllSystems(updatedSystems)
@@ -96,9 +100,6 @@ export default function AdminPanel() {
       setEditingSystem(null)
       
       alert('시스템이 성공적으로 저장되었습니다!')
-      
-      // 페이지 새로고침으로 변경사항 반영
-      window.location.reload()
     } catch (error) {
       console.error('Save error:', error)
       alert('저장 중 오류가 발생했습니다. 다시 시도해주세요.')
@@ -121,6 +122,7 @@ export default function AdminPanel() {
     items.splice(result.destination.index, 0, reorderedItem)
 
     setSystemsList(items)
+    onSystemsUpdate(items) // 부모 컴포넌트 상태도 업데이트
 
     try {
       // Firestore에 저장

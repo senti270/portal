@@ -138,7 +138,10 @@ export default function Home() {
 
       {/* 관리자 기능 */}
       <AdminLogin />
-      <AdminPanel />
+      <AdminPanel 
+        systemsList={allSystems}
+        onSystemsUpdate={setAllSystems}
+      />
     </main>
   )
 }

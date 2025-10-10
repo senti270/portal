@@ -128,8 +128,10 @@ export default function PurchaseItemTable({ items, onEdit, onDelete, onCategoryF
                   </td>
                   
                   {/* 구매단위&옵션 */}
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                    {item.purchaseUnit || '-'}
+                  <td className="px-6 py-4 text-xs text-gray-900 dark:text-white max-w-[200px]">
+                    <div className="line-clamp-2">
+                      {item.purchaseUnit || '-'}
+                    </div>
                   </td>
                   
                   {/* 관리 */}

@@ -28,9 +28,18 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'API 키가 설정되지 않았습니다.' }, { status: 500 })
     }
 
-    // 주소를 간단하게 변환 (동탄대로만 검색)
-    const simplifiedAddress = address.includes('동탄대로') ? '동탄대로 446' : address
-    console.log('🔧 Simplified address:', simplifiedAddress)
+    // 주소를 더 일반적으로 변환 (동탄 지역 검색)
+    let simplifiedAddress = address
+    if (address.includes('동탄')) {
+      simplifiedAddress = '동탄'
+    } else if (address.includes('송파')) {
+      simplifiedAddress = '송파구'
+    } else if (address.includes('정자')) {
+      simplifiedAddress = '정자동'
+    } else if (address.includes('석촌')) {
+      simplifiedAddress = '석촌호수'
+    }
+    console.log('🔧 Simplified address:', simplifiedAddress, '(from:', address, ')')
     
     // 네이버 Local Search API로 주소 검색하여 좌표 획득
     const searchUrl = new URL('https://openapi.naver.com/v1/search/local.json')

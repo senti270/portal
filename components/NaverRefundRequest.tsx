@@ -46,9 +46,26 @@ export default function NaverRefundRequest() {
   const [selectedStore, setSelectedStore] = useState<Store | null>(null)
   const [customMessage, setCustomMessage] = useState('')
 
-  const handleStoreSelect = (store: Store) => {
+  const handleStoreSelect = async (store: Store) => {
     setSelectedStore(store)
     setCustomMessage(store.refundMessage)
+    
+    // 네이버 지도 URL 자동 복사
+    if (store.naverMapUrl) {
+      try {
+        await navigator.clipboard.writeText(store.naverMapUrl)
+        alert(`${store.name}의 네이버 지도 URL이 클립보드에 복사되었습니다!`)
+      } catch (error) {
+        // 클립보드 API가 지원되지 않는 경우
+        const textArea = document.createElement('textarea')
+        textArea.value = store.naverMapUrl
+        document.body.appendChild(textArea)
+        textArea.select()
+        document.execCommand('copy')
+        document.body.removeChild(textArea)
+        alert(`${store.name}의 네이버 지도 URL이 클립보드에 복사되었습니다!`)
+      }
+    }
   }
 
   const handleSubmit = () => {
@@ -58,14 +75,13 @@ export default function NaverRefundRequest() {
     }
 
     // 네이버 고객센터 URL 생성
-    const mapUrl = selectedStore.naverMapUrl || ''
     const naverUrl = `https://help.naver.com/inquiry/input.help?categoryNo=15008&serviceNo=30026&lang=ko`
     
     // 네이버 고객센터 열기
     window.open(naverUrl, '_blank')
     
     // 안내 메시지 표시
-    alert(`네이버 고객센터가 열렸습니다!\n\n입력할 내용:\n\n1. 업체명 입력란에:\n"${selectedStore.name}"\n\n2. 문의내용 입력란에:\n"${mapUrl}"\n\n위 내용을 복사해서 입력해주세요.`)
+    alert(`네이버 고객센터가 열렸습니다!\n\n입력할 내용:\n\n1. 업체명 입력란에:\n"${selectedStore.name}"\n\n2. 문의내용 입력란에:\n붙여넣기(Ctrl+V) 하세요\n\n(네이버 지도 URL이 이미 클립보드에 복사되어 있습니다)`)
   }
 
   const handleCustomMessageChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -160,10 +176,15 @@ export default function NaverRefundRequest() {
           </div>
           
           <div className="p-4 bg-green-50 dark:bg-green-900/30 rounded-lg">
-            <h4 className="font-medium text-green-800 dark:text-green-200 mb-2">네이버 지도 URL (moText2CB)</h4>
-            <p className="text-xs text-green-700 dark:text-green-300 bg-white dark:bg-gray-800 p-2 rounded border break-all">
-              {selectedStore.naverMapUrl}
-            </p>
+            <h4 className="font-medium text-green-800 dark:text-green-200 mb-2">네이버 지도 URL (moText2CB) - 복사됨!</h4>
+            <div className="bg-white dark:bg-gray-800 p-2 rounded border">
+              <p className="text-xs text-green-700 dark:text-green-300 break-all mb-2">
+                {selectedStore.naverMapUrl}
+              </p>
+              <p className="text-xs text-green-600 dark:text-green-400 font-medium">
+                ✅ 클립보드에 복사되었습니다!
+              </p>
+            </div>
           </div>
         </div>
       )}
@@ -189,10 +210,10 @@ export default function NaverRefundRequest() {
           <span className="font-medium">사용 방법:</span>
         </p>
         <ol className="text-sm text-yellow-700 dark:text-yellow-300 mt-2 space-y-1 list-decimal list-inside">
-          <li>매장을 선택하세요</li>
-          <li>위의 입력할 내용을 확인하세요</li>
+          <li>매장을 선택하세요 (네이버 지도 URL 자동 복사됨)</li>
           <li>"네이버 고객센터로 이동" 버튼을 클릭하세요</li>
-          <li>네이버 고객센터에서 위 내용을 복사해서 입력하세요</li>
+          <li>업체명은 위 내용을 복사해서 입력하세요</li>
+          <li>문의내용에는 붙여넣기(Ctrl+V) 하세요</li>
         </ol>
       </div>
     </div>

@@ -45,27 +45,27 @@ export interface RankingFormData {
 
 // 5개 지점 기본 데이터
 export const defaultStores: Store[] = [
-  {
-    id: 'store1',
-    name: '청담장어마켓 동탄점',
-    address: '동탄대로 446 1층 1002호~1006호, 1009호, 1010호',
-    category: '장어, 먹장어요리',
-    imageUrl: '/images/stores/cheongdam-dongtan.jpg',
-    mobileUrl: 'https://m.place.naver.com/place/2056632623/home',
-    pcUrl: 'https://map.naver.com/p/entry/place/2056632623'
-  },
-  {
-    id: 'store2',
-    name: '청담장어마켓 송파점',
-    address: '송파구 주소',
-    category: '장어, 먹장어요리',
-    imageUrl: '/images/stores/cheongdam-songpa.jpg',
-    mobileUrl: 'https://m.place.naver.com/place/1563424767/home',
-    pcUrl: 'https://map.naver.com/p/entry/place/1563424767'
-  },
+      {
+        id: 'store1',
+        name: '청담장어마켓',
+        address: '동탄대로 446 1층 1002호~1006호, 1009호, 1010호',
+        category: '장어, 먹장어요리',
+        imageUrl: '/images/stores/cheongdam-dongtan.jpg',
+        mobileUrl: 'https://m.place.naver.com/place/2056632623/home',
+        pcUrl: 'https://map.naver.com/p/entry/place/2056632623'
+      },
+      {
+        id: 'store2',
+        name: '청담장어마켓',
+        address: '송파구 주소',
+        category: '장어, 먹장어요리',
+        imageUrl: '/images/stores/cheongdam-songpa.jpg',
+        mobileUrl: 'https://m.place.naver.com/place/1563424767/home',
+        pcUrl: 'https://map.naver.com/p/entry/place/1563424767'
+      },
   {
     id: 'store3',
-    name: '카페드로잉 석촌호수점',
+    name: '카페드로잉',
     address: '석촌호수 주소',
     category: '카페, 베이커리',
     imageUrl: '/images/stores/cafe-drawing-seokchon.jpg',

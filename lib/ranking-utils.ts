@@ -156,8 +156,8 @@ export const fetchNaverRanking = async (keyword: string, storeName: string, stor
     }
 
         // 4. 검색 결과에서 해당 매장의 순위 찾기
-        console.log(`📋 검색 결과 (상위 ${Math.min(10, data.items.length)}개):`)
-        data.items.slice(0, 10).forEach((item: any, idx: number) => {
+        console.log(`📋 검색 결과 (상위 ${data.items.length}개):`)
+        data.items.forEach((item: any, idx: number) => {
           console.log(`  ${idx + 1}위: ${item.title} (${item.category})`)
         })
         

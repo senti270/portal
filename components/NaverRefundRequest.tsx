@@ -119,102 +119,25 @@ export default function NaverRefundRequest() {
       {/* 선택된 매장 정보 */}
       {selectedStore && (
         <div className="mb-6 p-4 bg-green-50 dark:bg-green-900/30 rounded-lg">
-          <div className="flex justify-between items-center">
-            <p className="text-sm text-green-700 dark:text-green-300">
-              <span className="font-medium">선택된 매장:</span> {selectedStore.name}
-            </p>
-            {selectedStore.naverMapUrl && (
-              <a
-                href={selectedStore.naverMapUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-xs bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded-md transition-colors duration-200"
-              >
-                네이버 지도 보기
-              </a>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* 네이버 지도 URL 표시 */}
-      <div className="mb-6">
-        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-          네이버 지도 URL (자동 입력됨)
-        </label>
-        <div className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700">
-          {selectedStore?.naverMapUrl ? (
-            <div className="space-y-2">
-              <p className="text-sm text-gray-600 dark:text-gray-400 break-all">
-                {selectedStore.naverMapUrl}
-              </p>
-              <a
-                href={selectedStore.naverMapUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-xs text-blue-600 hover:text-blue-800 dark:text-blue-400"
-              >
-                네이버 지도에서 확인하기 →
-              </a>
-            </div>
-          ) : (
-            <p className="text-sm text-gray-500 dark:text-gray-400">
-              매장을 선택하면 네이버 지도 URL이 표시됩니다.
-            </p>
-          )}
-        </div>
-      </div>
-
-      {/* 입력할 내용 미리보기 */}
-      {selectedStore && (
-        <div className="mb-6 space-y-4">
-          <div className="p-4 bg-blue-50 dark:bg-blue-900/30 rounded-lg">
-            <h4 className="font-medium text-blue-800 dark:text-blue-200 mb-2">업체명 (moText1CC)</h4>
-            <p className="text-sm text-blue-700 dark:text-blue-300 bg-white dark:bg-gray-800 p-2 rounded border">
-              {selectedStore.name}
-            </p>
-          </div>
-          
-          <div className="p-4 bg-green-50 dark:bg-green-900/30 rounded-lg">
-            <h4 className="font-medium text-green-800 dark:text-green-200 mb-2">예약 URL (moText2CB) - 복사됨!</h4>
-            <div className="bg-white dark:bg-gray-800 p-2 rounded border">
-              <p className="text-xs text-green-700 dark:text-green-300 break-all mb-2">
-                {selectedStore.naverMapUrl}
-              </p>
-              <p className="text-xs text-green-600 dark:text-green-400 font-medium">
-                ✅ 클립보드에 복사되었습니다!
-              </p>
-            </div>
-          </div>
+          <p className="text-sm text-green-700 dark:text-green-300 text-center">
+            <span className="font-medium">선택된 매장:</span> {selectedStore.name}
+          </p>
         </div>
       )}
 
       {/* 제출 버튼 */}
-      <div className="flex justify-end">
+      <div className="flex justify-center">
         <button
           onClick={handleSubmit}
           disabled={!selectedStore}
-          className={`px-6 py-3 rounded-lg font-medium transition-all duration-200 ${
+          className={`px-8 py-4 rounded-lg font-medium text-lg transition-all duration-200 ${
             selectedStore
-              ? 'bg-blue-600 hover:bg-blue-700 text-white'
+              ? 'bg-blue-600 hover:bg-blue-700 text-white shadow-lg'
               : 'bg-gray-300 dark:bg-gray-600 text-gray-500 dark:text-gray-400 cursor-not-allowed'
           }`}
         >
           네이버 고객센터로 이동
         </button>
-      </div>
-
-      {/* 안내 메시지 */}
-      <div className="mt-6 p-4 bg-yellow-50 dark:bg-yellow-900/30 rounded-lg">
-        <p className="text-sm text-yellow-700 dark:text-yellow-300">
-          <span className="font-medium">사용 방법:</span>
-        </p>
-        <ol className="text-sm text-yellow-700 dark:text-yellow-300 mt-2 space-y-1 list-decimal list-inside">
-          <li>매장을 선택하세요 (예약 URL 자동 복사됨)</li>
-          <li>"네이버 고객센터로 이동" 버튼을 클릭하세요</li>
-          <li>업체명은 위 내용을 복사해서 입력하세요</li>
-          <li>문의내용에는 예약 URL 붙여넣기(Ctrl+V) 하세요</li>
-        </ol>
       </div>
     </div>
   )

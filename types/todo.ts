@@ -22,4 +22,7 @@ export interface DepositItem {
   updatedAt: Date
 }
 
+// 별칭 추가
+export type Deposit = DepositItem
+
 export type TodoTabType = 'todo' | 'deposit'

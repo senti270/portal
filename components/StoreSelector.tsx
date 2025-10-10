@@ -6,6 +6,7 @@ interface StoreSelectorProps {
   stores: Store[]
   selectedStore: Store | null
   onStoreChange: (store: Store) => void
+  onStoreDelete?: (storeId: string) => void
 }
 
 export default function StoreSelector({ stores, selectedStore, onStoreChange }: StoreSelectorProps) {

@@ -270,7 +270,7 @@ export default function RankingTrackerManager() {
       <div className="flex justify-end mb-4">
         <button 
           onClick={() => setShowPlaceRegistration(true)}
-          className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium transition-colors"
+          className="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg font-medium transition-colors"
         >
           플레이스 등록
         </button>
@@ -299,16 +299,17 @@ export default function RankingTrackerManager() {
               onClick={() => setShowAutoTrackingModal(true)}
               className={`px-4 py-2 text-sm rounded-lg transition-colors ${
                 autoTracking
-                  ? 'bg-green-600 hover:bg-green-700 text-white'
+                  ? 'bg-gray-700 hover:bg-gray-800 text-white'
                   : 'bg-gray-300 hover:bg-gray-400 text-gray-700'
               }`}
+              title="매일 오전 9시에 자동으로 순위를 업데이트합니다"
             >
-              {autoTracking ? '🔄 자동추적 ON' : '⏸️ 자동추적 OFF'}
+              {autoTracking ? '🔄 자동추적 ON (매일 09:00)' : '⏸️ 자동추적 OFF'}
             </button>
 
             <button
               onClick={() => setShowKeywordForm(true)}
-              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded-lg transition-colors"
+              className="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white text-sm rounded-lg transition-colors"
             >
               키워드 관리
             </button>
@@ -319,7 +320,7 @@ export default function RankingTrackerManager() {
               className={`px-4 py-2 text-sm rounded-lg transition-colors ${
                 isUpdating 
                   ? 'bg-gray-400 cursor-not-allowed' 
-                  : 'bg-purple-600 hover:bg-purple-700'
+                  : 'bg-gray-600 hover:bg-gray-700'
               } text-white`}
             >
               {isUpdating ? '⏳ 업데이트 중...' : '🔄 업데이트'}

@@ -1,6 +1,5 @@
 import { initializeApp } from 'firebase/app'
 import { getFirestore } from 'firebase/firestore'
-import { getStorage } from 'firebase/storage'
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -16,8 +15,5 @@ const app = initializeApp(firebaseConfig)
 
 // Firestore 초기화
 export const db = getFirestore(app)
-
-// Storage 초기화
-export const storage = getStorage(app)
 
 export default app

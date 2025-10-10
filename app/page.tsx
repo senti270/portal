@@ -60,18 +60,10 @@ export default function Home() {
       system.category.toLowerCase().includes(searchTerm.toLowerCase())
     )
     
-    // 드래그 앤 드롭 순서를 유지하고, 상태는 보조 조건으로 정렬
+    // 드래그 앤 드롭 순서만 유지 (상태 무시)
     const sorted = filtered.sort((a, b) => {
-      // 먼저 배열의 원래 순서(index)를 기준으로 정렬
       const aIndex = allSystems.findIndex(system => system.id === a.id)
       const bIndex = allSystems.findIndex(system => system.id === b.id)
-      
-      // 같은 순서라면 상태로 정렬 (active > maintenance > inactive)
-      if (aIndex === bIndex) {
-        const statusOrder = { active: 0, maintenance: 1, inactive: 2 }
-        return statusOrder[a.status] - statusOrder[b.status]
-      }
-      
       return aIndex - bIndex
     })
     

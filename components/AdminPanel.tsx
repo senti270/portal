@@ -406,11 +406,11 @@ function SystemForm({ system, onSave, onCancel }: {
               URL
             </label>
             <input
-              type="url"
+              type="text"
               value={formData.url}
               onChange={(e) => setFormData({ ...formData, url: e.target.value })}
               className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-              placeholder="https://example.com"
+              placeholder="/ranking-tracker 또는 https://example.com"
             />
           </div>
 

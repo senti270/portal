@@ -81,6 +81,23 @@ export const getCoordinates = async (address: string): Promise<{
   error?: string
 }> => {
   try {
+    console.log('🔍 Testing geocode API with:', address)
+    
+    // 먼저 테스트 API로 확인
+    const testResponse = await fetch('/api/test-geocode', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ address }),
+    })
+    
+    if (testResponse.ok) {
+      const testData = await testResponse.json()
+      console.log('✅ Test API works:', testData)
+    } else {
+      console.log('❌ Test API failed:', testResponse.status)
+    }
+    
+    // 실제 geocode API 호출
     const response = await fetch('/api/geocode', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

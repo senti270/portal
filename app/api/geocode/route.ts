@@ -1,10 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
 
 export async function POST(request: NextRequest) {
+  console.log('🌍 Geocode API called')
+  
   try {
     const { address } = await request.json()
+    console.log('📍 Address received:', address)
 
     if (!address) {
+      console.log('❌ No address provided')
       return NextResponse.json({ error: '주소가 필요합니다.' }, { status: 400 })
     }
 

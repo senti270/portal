@@ -23,11 +23,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'API 키가 설정되지 않았습니다.' }, { status: 500 })
     }
 
-    // 네이버 로컬 검색 API 호출
-    const searchUrl = new URL('https://openapi.naver.com/v1/search/local.json')
-    searchUrl.searchParams.append('query', query)
-    searchUrl.searchParams.append('display', display.toString())
-    searchUrl.searchParams.append('sort', 'random') // random 정렬로 실제 순위 반영
+        // 네이버 로컬 검색 API 호출
+        const searchUrl = new URL('https://openapi.naver.com/v1/search/local.json')
+        searchUrl.searchParams.append('query', query)
+        searchUrl.searchParams.append('display', Math.min(display, 100).toString()) // 최대 100개까지
+        searchUrl.searchParams.append('start', '1') // 시작점 명시
+        searchUrl.searchParams.append('sort', 'random') // random 정렬로 실제 순위 반영
     
     // 좌표가 있으면 추가
     if (latitude && longitude) {

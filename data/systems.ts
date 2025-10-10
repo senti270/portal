@@ -10,6 +10,8 @@ export interface System {
   tags?: string[]
   optimization?: string[]
   order?: number
+  createdAt?: Date
+  updatedAt?: Date
 }
 
 export const systems: System[] = [

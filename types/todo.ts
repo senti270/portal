@@ -8,6 +8,9 @@ export interface TodoItem {
   updatedAt: Date
 }
 
+// 별칭 추가
+export type Todo = TodoItem
+
 export interface DepositItem {
   id: string
   requester: string // 요청자

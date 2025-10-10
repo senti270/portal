@@ -134,8 +134,10 @@ export const fetchNaverRanking = async (keyword: string, storeName: string, stor
       }
     }
     
-    // 2. 사용자가 입력한 키워드 그대로 검색
-    console.log(`🔎 검색어: "${keyword}" ${latitude && longitude ? `(위치: ${storeAddress})` : '(전국 검색)'}`)
+        // 2. 사용자가 입력한 키워드 그대로 검색 (위치 기반 검색 임시 비활성화)
+        console.log(`🔎 검색어: "${keyword}" (전국 검색 - 위치 기반 검색 임시 비활성화)`)
+        // latitude = undefined // 위치 기반 검색 임시 비활성화
+        // longitude = undefined
     
     // 3. 네이버 로컬 검색 API 호출
     const response = await fetch('/api/naver-search', {
@@ -143,8 +145,8 @@ export const fetchNaverRanking = async (keyword: string, storeName: string, stor
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         query: keyword,
-        latitude,    // 매장 위치 좌표 전달
-        longitude,   // 매장 위치 좌표 전달
+        // latitude,    // 위치 기반 검색 임시 비활성화
+        // longitude,   // 위치 기반 검색 임시 비활성화
         display: 50, // 상위 50개 검색
       }),
     })

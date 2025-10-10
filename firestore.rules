@@ -1,0 +1,15 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 시스템 컬렉션 - 모든 사용자가 읽기/쓰기 가능
+    match /systems/{document} {
+      allow read, write: if true;
+    }
+    
+    // 구매물품 컬렉션 - 모든 사용자가 읽기/쓰기 가능
+    match /purchase-items/{document} {
+      allow read, write: if true;
+    }
+  }
+}

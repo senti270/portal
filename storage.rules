@@ -1,0 +1,10 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+    // 구매물품 이미지 - 모든 사용자가 읽기/쓰기 가능
+    match /purchase-items/{allPaths=**} {
+      allow read, write: if true;
+    }
+  }
+}

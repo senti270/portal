@@ -62,8 +62,11 @@ export const uploadImage = async (file: File, itemId: string): Promise<string> =
 export const addPurchaseItem = async (item: Omit<PurchaseItem, 'id' | 'createdAt' | 'updatedAt'>, imageFile?: File): Promise<string> => {
   try {
     const now = Timestamp.now()
+    
+    // File 객체를 제외한 데이터만 저장
+    const { imageFile: _, ...itemWithoutFile } = item as any
     const itemData = {
-      ...item,
+      ...itemWithoutFile,
       createdAt: now,
       updatedAt: now,
     }
@@ -87,8 +90,10 @@ export const addPurchaseItem = async (item: Omit<PurchaseItem, 'id' | 'createdAt
 // 구매물품 수정
 export const updatePurchaseItem = async (id: string, item: Partial<PurchaseItem>, imageFile?: File): Promise<void> => {
   try {
+    // File 객체를 제외한 데이터만 저장
+    const { imageFile: _, ...itemWithoutFile } = item as any
     const updateData: any = {
-      ...item,
+      ...itemWithoutFile,
       updatedAt: Timestamp.now(),
     }
 

@@ -123,8 +123,32 @@ export default function AdminPanel({ systemsList: propSystemsList, onSystemsUpda
     onSystemsUpdate(updatedSystems) // 부모 컴포넌트 상태도 업데이트
 
     try {
-      // Firestore에 저장
-      await updateAllSystems(updatedSystems)
+      // Firestore에 개별적으로 저장 (안전한 방식)
+      if (editingSystem) {
+        // 편집 모드: 해당 시스템만 업데이트
+        const { updateDoc, doc } = await import('firebase/firestore')
+        const { db } = await import('@/lib/firebase')
+        const systemToUpdate = updatedSystems.find(s => s.id === editingSystem.id)
+        if (systemToUpdate) {
+          const systemRef = doc(db, 'systems', systemToUpdate.id)
+          await updateDoc(systemRef, {
+            title: systemToUpdate.title,
+            description: systemToUpdate.description,
+            icon: systemToUpdate.icon,
+            color: systemToUpdate.color,
+            category: systemToUpdate.category,
+            url: systemToUpdate.url || '',
+            status: systemToUpdate.status,
+            tags: systemToUpdate.tags || [],
+            optimization: systemToUpdate.optimization || [],
+            order: systemToUpdate.order ?? 0,
+            updatedAt: new Date()
+          })
+        }
+      } else {
+        // 추가 모드: updateAllSystems 사용
+        await updateAllSystems(updatedSystems)
+      }
       
       // 로컬 스토리지에 백업
       localStorage.setItem('portal-systems', JSON.stringify(updatedSystems))
@@ -162,8 +186,17 @@ export default function AdminPanel({ systemsList: propSystemsList, onSystemsUpda
       setSystemsList(fixedSystems)
       onSystemsUpdate(fixedSystems)
 
-      // Firebase에 저장
-      await updateAllSystems(fixedSystems)
+      // Firebase에 개별적으로 업데이트 (삭제 없이)
+      const { updateDoc, doc } = await import('firebase/firestore')
+      const { db } = await import('@/lib/firebase')
+      
+      for (const system of fixedSystems) {
+        const systemRef = doc(db, 'systems', system.id)
+        await updateDoc(systemRef, { 
+          order: system.order,
+          updatedAt: new Date()
+        })
+      }
       
       alert('✅ 모든 시스템의 order가 수정되었습니다!')
       console.log('Fixed systems:', fixedSystems.map(s => `${s.title}: order ${s.order}`))

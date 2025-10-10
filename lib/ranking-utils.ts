@@ -81,11 +81,9 @@ export const getCoordinates = async (address: string): Promise<{
   error?: string
 }> => {
   try {
-    console.log('🔍 Testing geocode API with:', address)
+    console.log('📍 주소로 좌표 변환 요청:', address)
     
-    // 임시로 테스트 API 사용 (geocode API가 404 에러나므로)
-    console.log('⚠️ Using test API temporarily due to geocode 404 error')
-    const response = await fetch('/api/test-geocode', {
+    const response = await fetch('/api/geocode', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ address }),

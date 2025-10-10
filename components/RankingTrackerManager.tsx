@@ -172,17 +172,17 @@ export default function RankingTrackerManager() {
           // 실제 네이버 검색 API 호출
           const result = await fetchNaverRanking(keyword.keyword, selectedStore.name, selectedStore.address)
           
-          // 순위권 밖이거나 에러인 경우에도 null로 저장 (에러 아님)
-          const mobileRank = result.mobileRank || null
-          const pcRank = result.pcRank || null
+          // 순위권 밖이거나 에러인 경우에도 저장 (에러 아님)
+          const mobileRank = result.mobileRank || undefined
+          const pcRank = result.pcRank || undefined
           
           if (result.error) {
-            console.warn(`⚠️ "${keyword.keyword}": ${result.error} - null로 저장됩니다.`)
+            console.warn(`⚠️ "${keyword.keyword}": ${result.error} - 순위권 밖으로 저장됩니다.`)
           } else {
             console.log(`✅ [실제 데이터] "${keyword.keyword}" - "${selectedStore.name}": 모바일 ${mobileRank || '순위권 밖'}위, PC ${pcRank || '순위권 밖'}위`)
           }
           
-          // 새로운 순위 기록 생성 (순위권 밖이어도 null로 저장)
+          // 새로운 순위 기록 생성 (순위권 밖이어도 저장)
           const newRanking: Omit<RankingRecord, 'id' | 'createdAt'> = {
             storeId: selectedStore.id,
             keywordId: keyword.id,
@@ -196,13 +196,13 @@ export default function RankingTrackerManager() {
         } catch (error) {
           console.error(`❌ Error fetching ranking for ${keyword.keyword}:`, error)
           
-          // 에러 발생 시에도 null로 저장 (기록은 남김)
+          // 에러 발생 시에도 저장 (기록은 남김)
           return {
             storeId: selectedStore.id,
             keywordId: keyword.id,
             date: new Date().toISOString().split('T')[0],
-            mobileRank: null,
-            pcRank: null,
+            mobileRank: undefined,
+            pcRank: undefined,
             isAutoTracked: false
           } as Omit<RankingRecord, 'id' | 'createdAt'>
         }

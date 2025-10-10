@@ -6,28 +6,39 @@ interface Store {
   id: string
   name: string
   refundMessage: string
+  naverMapUrl?: string
 }
 
 const stores: Store[] = [
   {
     id: 'store1',
-    name: '강남점',
-    refundMessage: '강남점 예약 환불 요청드립니다. 예약번호: [예약번호], 환불 사유: [사유]'
+    name: '청담장어마켓동탄점',
+    refundMessage: '청담장어마켓동탄점 예약 환불 요청드립니다.\n\n예약번호: [예약번호]\n환불 사유: [사유]\n매장 위치: 동탄신도시\n\n빠른 처리를 부탁드립니다.',
+    naverMapUrl: 'https://map.naver.com/p/entry/place/2056632623?lng=127.0993355&lat=37.1933444&placePath=/booking?entry=plt&from=map&fromPanelNum=1&additionalHeight=76&timestamp=202510101006&locale=ko&svcName=map_pcv5&entry=plt&searchType=place&c=14.85,0,0,0,dh'
   },
   {
     id: 'store2', 
-    name: '홍대점',
-    refundMessage: '홍대점 예약 환불 요청드립니다. 예약번호: [예약번호], 환불 사유: [사유]'
+    name: '청담장어마켓송파점',
+    refundMessage: '청담장어마켓송파점 예약 환불 요청드립니다.\n\n예약번호: [예약번호]\n환불 사유: [사유]\n매장 위치: 송파구\n\n빠른 처리를 부탁드립니다.',
+    naverMapUrl: 'https://map.naver.com/p/entry/place/1563424767?lng=127.1249046&lat=37.4801315&placePath=/booking?from=map&fromPanelNum=1&additionalHeight=76&timestamp=202510101116&locale=ko&svcName=map_pcv5&entry=bmp&fromPanelNum=1&additionalHeight=76&timestamp=202510101116&locale=ko&svcName=map_pcv5&entry=plt&searchType=place&c=15.00,0,0,0,dh'
   },
   {
     id: 'store3',
-    name: '명동점', 
-    refundMessage: '명동점 예약 환불 요청드립니다. 예약번호: [예약번호], 환불 사유: [사유]'
+    name: '카페드로잉석촌호수점', 
+    refundMessage: '카페드로잉석촌호수점 예약 환불 요청드립니다.\n\n예약번호: [예약번호]\n환불 사유: [사유]\n매장 위치: 석촌호수\n\n빠른 처리를 부탁드립니다.',
+    naverMapUrl: 'https://map.naver.com/p/entry/place/1824352254?c=15.00,0,0,0,dh&placePath=/booking?from=map&fromPanelNum=1&additionalHeight=76&timestamp=202510101116&locale=ko&svcName=map_pcv5&entry=bmp&fromPanelNum=1&additionalHeight=76&timestamp=202510101116&locale=ko&svcName=map_pcv5'
   },
   {
     id: 'store4',
-    name: '잠실점',
-    refundMessage: '잠실점 예약 환불 요청드립니다. 예약번호: [예약번호], 환불 사유: [사유]'
+    name: '카페드로잉정자점',
+    refundMessage: '카페드로잉정자점 예약 환불 요청드립니다.\n\n예약번호: [예약번호]\n환불 사유: [사유]\n매장 위치: 정자동\n\n빠른 처리를 부탁드립니다.',
+    naverMapUrl: 'https://map.naver.com/p/entry/place/31427861?c=15.00,0,0,0,dh&placePath=/booking?from=map&fromPanelNum=1&additionalHeight=76&timestamp=202510101116&locale=ko&svcName=map_pcv5&entry=bmp&fromPanelNum=1&additionalHeight=76&timestamp=202510101116&locale=ko&svcName=map_pcv5'
+  },
+  {
+    id: 'store5',
+    name: '카페드로잉동탄점',
+    refundMessage: '카페드로잉동탄점 예약 환불 요청드립니다.\n\n예약번호: [예약번호]\n환불 사유: [사유]\n매장 위치: 동탄신도시\n\n빠른 처리를 부탁드립니다.',
+    naverMapUrl: 'https://map.naver.com/p/entry/place/1249653316?c=15.00,0,0,0,dh&placePath=/booking?from=map&fromPanelNum=1&additionalHeight=76&timestamp=202510101117&locale=ko&svcName=map_pcv5&entry=bmp&fromPanelNum=1&additionalHeight=76&timestamp=202510101117&locale=ko&svcName=map_pcv5'
   }
 ]
 
@@ -69,7 +80,7 @@ export default function NaverRefundRequest() {
         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
           매장 선택
         </label>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
           {stores.map((store) => (
             <button
               key={store.id}
@@ -89,9 +100,21 @@ export default function NaverRefundRequest() {
       {/* 선택된 매장 정보 */}
       {selectedStore && (
         <div className="mb-6 p-4 bg-green-50 dark:bg-green-900/30 rounded-lg">
-          <p className="text-sm text-green-700 dark:text-green-300">
-            <span className="font-medium">선택된 매장:</span> {selectedStore.name}
-          </p>
+          <div className="flex justify-between items-center">
+            <p className="text-sm text-green-700 dark:text-green-300">
+              <span className="font-medium">선택된 매장:</span> {selectedStore.name}
+            </p>
+            {selectedStore.naverMapUrl && (
+              <a
+                href={selectedStore.naverMapUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-xs bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded-md transition-colors duration-200"
+              >
+                네이버 지도 보기
+              </a>
+            )}
+          </div>
         </div>
       )}
 

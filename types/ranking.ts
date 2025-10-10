@@ -16,6 +16,7 @@ export interface Keyword {
   pcVolume: number
   storeId: string
   isActive: boolean
+  order: number
 }
 
 export interface RankingRecord {
@@ -100,7 +101,8 @@ export const defaultKeywords: Keyword[] = [
     mobileVolume: 1940,
     pcVolume: 260,
     storeId: 'store1',
-    isActive: true
+    isActive: true,
+    order: 0
   },
   {
     id: 'keyword2',
@@ -109,7 +111,8 @@ export const defaultKeywords: Keyword[] = [
     mobileVolume: 570,
     pcVolume: 80,
     storeId: 'store1',
-    isActive: true
+    isActive: true,
+    order: 1
   },
   {
     id: 'keyword3',
@@ -118,7 +121,8 @@ export const defaultKeywords: Keyword[] = [
     mobileVolume: 1410,
     pcVolume: 130,
     storeId: 'store1',
-    isActive: true
+    isActive: true,
+    order: 2
   },
   {
     id: 'keyword4',
@@ -127,7 +131,8 @@ export const defaultKeywords: Keyword[] = [
     mobileVolume: 260,
     pcVolume: 20,
     storeId: 'store1',
-    isActive: true
+    isActive: true,
+    order: 3
   },
   {
     id: 'keyword5',
@@ -136,6 +141,7 @@ export const defaultKeywords: Keyword[] = [
     mobileVolume: 30,
     pcVolume: 10,
     storeId: 'store1',
-    isActive: true
+    isActive: true,
+    order: 4
   }
 ]

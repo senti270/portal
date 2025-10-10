@@ -74,61 +74,130 @@ export const searchNaverPlace = async (query: string): Promise<{
 }
 
 // 네이버 스마트플레이스 순위 조회 함수
+// 주소를 좌표로 변환
+export const getCoordinates = async (address: string): Promise<{
+  latitude: number
+  longitude: number
+  error?: string
+}> => {
+  try {
+    const response = await fetch('/api/geocode', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ address }),
+    })
+
+    const data = await response.json()
+
+    if (!response.ok || !data.success) {
+      throw new Error(data.error || '좌표 변환 실패')
+    }
+
+    return {
+      latitude: data.latitude,
+      longitude: data.longitude,
+    }
+  } catch (error) {
+    console.error('좌표 변환 오류:', error)
+    return {
+      latitude: 0,
+      longitude: 0,
+      error: error instanceof Error ? error.message : '좌표 변환 실패',
+    }
+  }
+}
+
+// 실제 네이버 검색 API로 순위 조회
 export const fetchNaverRanking = async (keyword: string, storeName: string, storeAddress?: string): Promise<{
   mobileRank?: number
   pcRank?: number
   error?: string
 }> => {
   try {
-    console.log(`네이버 스마트플레이스 순위 조회: "${keyword}" - "${storeName}"`)
+    console.log(`🔍 네이버 순위 조회 시작: "${keyword}" - "${storeName}"`)
     
-    // 1. 먼저 해당 매장을 네이버 플레이스에서 검색
-    const placeSearchResult = await searchNaverPlace(storeName)
+    // 1. 매장 주소를 좌표로 변환 (위치 기준 검색)
+    let latitude: number | undefined
+    let longitude: number | undefined
     
-    if (placeSearchResult.error || !placeSearchResult.places?.length) {
-      console.log('매장을 네이버 플레이스에서 찾을 수 없습니다.')
-      // 매장을 찾을 수 없어도 키워드 검색으로 순위 조회 시도
+    if (storeAddress) {
+      console.log(`📍 주소로 좌표 변환 중: ${storeAddress}`)
+      const coords = await getCoordinates(storeAddress)
+      if (!coords.error) {
+        latitude = coords.latitude
+        longitude = coords.longitude
+        console.log(`✅ 좌표: (${latitude}, ${longitude})`)
+      } else {
+        console.warn(`⚠️ 좌표 변환 실패: ${coords.error}, 위치 기준 없이 검색합니다.`)
+      }
     }
     
-    // 2. 키워드로 네이버 검색 결과에서 순위 찾기
-    const searchQuery = `${keyword} ${storeName}`.trim()
-    const rankingResult = await searchNaverPlace(searchQuery)
+    // 2. 사용자가 입력한 키워드 그대로 검색
+    console.log(`🔎 검색어: "${keyword}" ${latitude && longitude ? `(위치: ${storeAddress})` : '(전국 검색)'}`)
     
-    if (rankingResult.error) {
-      throw new Error(rankingResult.error)
+    // 3. 네이버 로컬 검색 API 호출
+    const response = await fetch('/api/naver-search', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        query: keyword,
+        latitude,    // 매장 위치 좌표 전달
+        longitude,   // 매장 위치 좌표 전달
+        display: 50, // 상위 50개 검색
+      }),
+    })
+
+    const data = await response.json()
+
+    if (!response.ok || !data.success) {
+      throw new Error(data.error || '네이버 검색 실패')
     }
+
+    // 4. 검색 결과에서 해당 매장의 순위 찾기
+    console.log(`📋 검색 결과 (상위 10개):`)
+    data.items.slice(0, 10).forEach((item: any, idx: number) => {
+      console.log(`  ${idx + 1}위: ${item.title} (${item.category})`)
+    })
     
-    // 3. 검색 결과에서 해당 매장의 순위 찾기
-    const targetStoreIndex = rankingResult.places?.findIndex(place => 
-      place.name.includes(storeName) || storeName.includes(place.name)
-    ) || -1
-    
-    const rank = targetStoreIndex >= 0 ? targetStoreIndex + 1 : null
-    
-    if (rank) {
-      // 모바일과 PC는 동일한 순위로 가정 (실제로는 별도 조회 필요)
+    const targetStoreIndex = data.items.findIndex((item: any) => {
+      const itemTitle = item.title.toLowerCase().replace(/<[^>]*>/g, '') // HTML 태그 제거
+      const searchName = storeName.toLowerCase()
+      
+      // 정확한 매장명 매칭 (완전 일치 또는 포함)
+      // 예: "청담장어마켓 동탄점" === "청담장어마켓 동탄점"
+      if (itemTitle === searchName || itemTitle.includes(searchName) || searchName.includes(itemTitle)) {
+        console.log(`🎯 매칭 성공: "${item.title}" ≈ "${storeName}"`)
+        return true
+      }
+      
+      return false
+    })
+
+    if (targetStoreIndex >= 0) {
+      const rank = targetStoreIndex + 1
+      console.log(`✅ 순위 발견: ${rank}위 (총 ${data.total}개 중)`)
+      
+      // 모바일과 PC 동일한 순위로 가정 (네이버 API는 구분 안함)
       return {
         mobileRank: rank,
-        pcRank: rank
+        pcRank: rank,
       }
     } else {
-      // 순위를 찾을 수 없는 경우
+      console.log(`❌ 상위 50위 안에서 "${storeName}"을 찾을 수 없습니다.`)
+      console.log(`💡 팁: 매장 이름을 더 간단하게 수정해보세요 (예: "청담장어마켓")`)
       return {
         mobileRank: undefined,
-        pcRank: undefined
+        pcRank: undefined,
+        error: '순위권 밖 (50위 이하)',
       }
     }
   } catch (error) {
-    console.error('순위 조회 오류:', error)
-    
-    // 오류 발생 시 시뮬레이션 데이터 반환 (개발용)
-    const mobileRank = Math.floor(Math.random() * 50) + 1
-    const pcRank = Math.floor(Math.random() * 50) + 1
+    console.error('❌ 순위 조회 오류:', error)
     
     return {
-      mobileRank,
-      pcRank,
-      error: '순위 조회 중 오류가 발생했습니다. (시뮬레이션 데이터)'
+      mobileRank: undefined,
+      pcRank: undefined,
+      error: error instanceof Error ? error.message : '순위 조회 실패',
     }
   }
 }

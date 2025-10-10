@@ -42,8 +42,8 @@ export const getRankings = async (storeId: string): Promise<RankingRecord[]> => 
     const rankingsRef = collection(db, COLLECTION_NAME)
     const q = query(
       rankingsRef, 
-      where('storeId', '==', storeId),
-      orderBy('date', 'desc') // 날짜순 정렬 (최신순)
+      where('storeId', '==', storeId)
+      // orderBy는 인덱스가 필요하므로 일단 제거
     )
     
     const querySnapshot = await getDocs(q)

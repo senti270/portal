@@ -57,8 +57,8 @@ export const getKeywords = async (storeId: string): Promise<Keyword[]> => {
     const keywordsRef = collection(db, COLLECTION_NAME)
     const q = query(
       keywordsRef, 
-      where('storeId', '==', storeId),
-      orderBy('order', 'asc')
+      where('storeId', '==', storeId)
+      // orderBy는 인덱스가 필요하므로 일단 제거
     )
     
     const querySnapshot = await getDocs(q)
@@ -71,6 +71,11 @@ export const getKeywords = async (storeId: string): Promise<Keyword[]> => {
     return keywords
   } catch (error) {
     console.error('Error getting keywords:', error)
+    console.error('Error details:', {
+      message: error instanceof Error ? error.message : 'Unknown error',
+      code: (error as any)?.code,
+      storeId
+    })
     throw error
   }
 }

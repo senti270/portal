@@ -1,29 +1,40 @@
 'use client'
 
-import { RankingRecord, Keyword } from '@/types/ranking'
+import { RankingRecord, Keyword, Store } from '@/types/ranking'
 
 interface RankingHistoryProps {
   storeId: string
   keywords: Keyword[]
   rankings: RankingRecord[]
-  onDeleteDate?: (date: string) => Promise<void>
+  store?: Store
 }
 
-export default function RankingHistory({ storeId, keywords, rankings, onDeleteDate }: RankingHistoryProps) {
-  // 날짜 범위 생성 (최근 7일)
+export default function RankingHistory({ storeId, keywords, rankings, store }: RankingHistoryProps) {
+  // 날짜 범위 생성 (10월 10일 이후만)
   const generateDateRange = () => {
     const dates = new Set<string>()
     const today = new Date()
+    const cutoffDate = new Date('2025-10-10') // 10월 10일부터만 표시
 
     // Add today and past 6 days
     for (let i = 0; i < 7; i++) {
       const date = new Date(today)
       date.setDate(date.getDate() - i)
-      dates.add(date.toISOString().split('T')[0])
+      const dateString = date.toISOString().split('T')[0]
+      
+      // 10월 10일 이후만 추가
+      if (date >= cutoffDate) {
+        dates.add(dateString)
+      }
     }
 
-    // Add dates from existing rankings if they are outside the 7-day range
-    rankings.forEach(r => dates.add(r.date));
+    // Add dates from existing rankings (10월 10일 이후만)
+    rankings.forEach(r => {
+      const rankingDate = new Date(r.date)
+      if (rankingDate >= cutoffDate) {
+        dates.add(r.date)
+      }
+    });
 
     // Sort dates in descending order (most recent first)
     return Array.from(dates).sort((a, b) => b.localeCompare(a));
@@ -44,13 +55,6 @@ export default function RankingHistory({ storeId, keywords, rankings, onDeleteDa
     return date.getFullYear()
   }
 
-  const handleDeleteDate = async (date: string) => {
-    if (!onDeleteDate) return
-    
-    if (confirm(`${formatDate(date)}의 순위 기록을 삭제하시겠습니까?`)) {
-      await onDeleteDate(date)
-    }
-  }
 
   const dateRange = generateDateRange()
 
@@ -92,9 +96,6 @@ export default function RankingHistory({ storeId, keywords, rankings, onDeleteDa
                 <th key={`${keyword.id}-pc`} className="px-2 py-2 text-center text-xs font-medium text-gray-500 dark:text-gray-300">
                   💻 {keyword.pcVolume.toLocaleString()}
                 </th>
-                <th key={`${keyword.id}-delete-header`} className="px-2 py-2 text-center text-xs font-medium text-gray-500 dark:text-gray-300">
-                  🗑️
-                </th>
               </>
             ))}
           </tr>
@@ -117,21 +118,30 @@ export default function RankingHistory({ storeId, keywords, rankings, onDeleteDa
                   const ranking = getRankingForDateAndKeyword(date, keyword.id)
                   return (
                     <>
-                      <td key={`${keyword.id}-${date}-mobile`} className="px-4 py-3 whitespace-nowrap text-sm text-blue-600 dark:text-blue-400 text-center border-l border-gray-200 dark:border-gray-700">
-                        {ranking?.mobileRank ? `${ranking.mobileRank}위` : '-'}
-                      </td>
-                      <td key={`${keyword.id}-${date}-pc`} className="px-4 py-3 whitespace-nowrap text-sm text-blue-600 dark:text-blue-400 text-center">
-                        {ranking?.pcRank ? `${ranking.pcRank}위` : '-'}
-                      </td>
-                      <td key={`${keyword.id}-${date}-delete`} className="px-2 py-3 whitespace-nowrap text-sm text-center">
-                        <button
-                          onClick={() => handleDeleteDate(date)}
-                          className="text-gray-400 hover:text-red-500 transition-colors"
-                          title="이 날짜의 순위 기록 삭제"
-                        >
-                          🗑️
-                        </button>
-                      </td>
+                          <td key={`${keyword.id}-${date}-mobile`} className="px-4 py-3 whitespace-nowrap text-sm text-center border-l border-gray-200 dark:border-gray-700">
+                            {ranking?.mobileRank ? (
+                              <button
+                                onClick={() => window.open(`https://m.map.naver.com/search?query=${encodeURIComponent(keyword.keyword)}`, '_blank')}
+                                className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 underline cursor-pointer"
+                              >
+                                {ranking.mobileRank}위
+                              </button>
+                            ) : (
+                              <span className="text-gray-400 dark:text-gray-500 text-xs">50위↓</span>
+                            )}
+                          </td>
+                          <td key={`${keyword.id}-${date}-pc`} className="px-4 py-3 whitespace-nowrap text-sm text-center">
+                            {ranking?.pcRank ? (
+                              <button
+                                onClick={() => window.open(`https://m.map.naver.com/search?query=${encodeURIComponent(keyword.keyword)}`, '_blank')}
+                                className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 underline cursor-pointer"
+                              >
+                                {ranking.pcRank}위
+                              </button>
+                            ) : (
+                              <span className="text-gray-400 dark:text-gray-500 text-xs">50위↓</span>
+                            )}
+                          </td>
                     </>
                   )
                 })}

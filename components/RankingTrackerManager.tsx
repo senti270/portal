@@ -11,7 +11,7 @@ import AutoTrackingModal from './AutoTrackingModal'
 import { fetchNaverRanking, exportToExcel, formatRankingDataForExcel } from '@/lib/ranking-utils'
 import { getKeywords, saveKeywords } from '@/lib/keyword-firestore'
 import { getStores, addStore } from '@/lib/store-firestore'
-import { getRankings, addRankings, deleteRankingsByDate } from '@/lib/ranking-firestore'
+import { getRankings, addRankings } from '@/lib/ranking-firestore'
 
 export default function RankingTrackerManager() {
   const [selectedStore, setSelectedStore] = useState<Store | null>(null)
@@ -168,24 +168,44 @@ export default function RankingTrackerManager() {
     
     try {
       const updatePromises = keywords.map(async (keyword) => {
-        const result = await fetchNaverRanking(keyword.keyword, selectedStore.name)
-        
-        if (result.error) {
-          console.error(`Error updating ${keyword.keyword}:`, result.error)
-          return null
+        try {
+          // 실제 네이버 검색 API 호출
+          const result = await fetchNaverRanking(keyword.keyword, selectedStore.name, selectedStore.address)
+          
+          // 순위권 밖이거나 에러인 경우에도 null로 저장 (에러 아님)
+          const mobileRank = result.mobileRank || null
+          const pcRank = result.pcRank || null
+          
+          if (result.error) {
+            console.warn(`⚠️ "${keyword.keyword}": ${result.error} - null로 저장됩니다.`)
+          } else {
+            console.log(`✅ [실제 데이터] "${keyword.keyword}" - "${selectedStore.name}": 모바일 ${mobileRank || '순위권 밖'}위, PC ${pcRank || '순위권 밖'}위`)
+          }
+          
+          // 새로운 순위 기록 생성 (순위권 밖이어도 null로 저장)
+          const newRanking: Omit<RankingRecord, 'id' | 'createdAt'> = {
+            storeId: selectedStore.id,
+            keywordId: keyword.id,
+            date: new Date().toISOString().split('T')[0],
+            mobileRank: mobileRank,
+            pcRank: pcRank,
+            isAutoTracked: false
+          }
+          
+          return newRanking
+        } catch (error) {
+          console.error(`❌ Error fetching ranking for ${keyword.keyword}:`, error)
+          
+          // 에러 발생 시에도 null로 저장 (기록은 남김)
+          return {
+            storeId: selectedStore.id,
+            keywordId: keyword.id,
+            date: new Date().toISOString().split('T')[0],
+            mobileRank: null,
+            pcRank: null,
+            isAutoTracked: false
+          } as Omit<RankingRecord, 'id' | 'createdAt'>
         }
-        
-        // 새로운 순위 기록 생성 (id와 createdAt는 Firebase에서 자동 생성)
-        const newRanking: Omit<RankingRecord, 'id' | 'createdAt'> = {
-          storeId: selectedStore.id,
-          keywordId: keyword.id,
-          date: new Date().toISOString().split('T')[0],
-          mobileRank: result.mobileRank || null,
-          pcRank: result.pcRank || null,
-          isAutoTracked: false
-        }
-        
-        return newRanking
       })
       
       const newRankingsData = (await Promise.all(updatePromises)).filter(Boolean) as Omit<RankingRecord, 'id' | 'createdAt'>[]
@@ -223,22 +243,6 @@ export default function RankingTrackerManager() {
     setShowAutoTrackingModal(false)
   }
 
-  const handleDeleteDate = async (date: string) => {
-    if (!selectedStore) return
-    
-    try {
-      await deleteRankingsByDate(selectedStore.id, date)
-      
-      // Firebase에서 업데이트된 순위 기록 다시 로드
-      const updatedRankings = await getRankings(selectedStore.id)
-      setRankings(updatedRankings)
-      
-      alert('순위 기록이 삭제되었습니다.')
-    } catch (error) {
-      console.error('Error deleting rankings:', error)
-      alert('삭제 중 오류가 발생했습니다.')
-    }
-  }
 
   if (loading) {
     return (
@@ -250,6 +254,18 @@ export default function RankingTrackerManager() {
 
   return (
     <div className="space-y-6">
+      {/* 안내 문구 */}
+      <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+        <div className="flex items-center gap-2">
+          <svg className="w-5 h-5 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <p className="text-sm text-blue-800 dark:text-blue-300 font-medium">
+            각 매장 위치에서 검색한 검색순위로 조회됩니다.
+          </p>
+        </div>
+      </div>
+
       {/* 플레이스 등록 버튼 */}
       <div className="flex justify-end mb-4">
         <button 
@@ -315,7 +331,6 @@ export default function RankingTrackerManager() {
             storeId={selectedStore.id}
             keywords={keywords}
             rankings={rankings}
-            onDeleteDate={handleDeleteDate}
           />
         </div>
       )}

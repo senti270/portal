@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd'
 import { useAdmin } from '@/contexts/AdminContext'
 import { System, systems } from '@/data/systems'
 import { getSystems, updateAllSystems, deleteSystem as deleteSystemFromFirestore } from '@/lib/firestore'
@@ -112,6 +113,29 @@ export default function AdminPanel() {
     setEditingSystem(null)
   }
 
+  const handleDragEnd = async (result: any) => {
+    if (!result.destination) return
+
+    const items = Array.from(systemsList)
+    const [reorderedItem] = items.splice(result.source.index, 1)
+    items.splice(result.destination.index, 0, reorderedItem)
+
+    setSystemsList(items)
+
+    try {
+      // Firestore에 저장
+      await updateAllSystems(items)
+      
+      // 로컬 스토리지에 백업
+      localStorage.setItem('portal-systems', JSON.stringify(items))
+      
+      alert('시스템 순서가 저장되었습니다!')
+    } catch (error) {
+      console.error('Save order error:', error)
+      alert('순서 저장 중 오류가 발생했습니다.')
+    }
+  }
+
   return (
     <>
       {/* 관리자 패널 */}
@@ -133,43 +157,74 @@ export default function AdminPanel() {
         <h3 className="text-lg font-bold mb-4 text-gray-900 dark:text-white">
           시스템 관리
         </h3>
-        <div className="space-y-2">
-          {systemsList
-            .sort((a, b) => {
-              // 활성 상태 우선순위: active > maintenance > inactive
-              const statusOrder = { active: 0, maintenance: 1, inactive: 2 }
-              return statusOrder[a.status] - statusOrder[b.status]
-            })
-            .map((system) => (
-            <div key={system.id} className="border border-gray-200 dark:border-gray-600 rounded-lg p-3">
-              <div className="flex items-center justify-between mb-2">
-                <span className="font-medium text-gray-900 dark:text-white">
-                  {system.icon} {system.title}
-                </span>
-                <div className="flex gap-1">
-                  <button
-                    onClick={() => handleEdit(system)}
-                    className="text-blue-600 hover:text-blue-800 text-sm"
-                  >
-                    편집
-                  </button>
-                  <button
-                    onClick={() => handleDelete(system.id)}
-                    className="text-red-600 hover:text-red-800 text-sm"
-                  >
-                    삭제
-                  </button>
-                </div>
+        <DragDropContext onDragEnd={handleDragEnd}>
+          <Droppable droppableId="systems-list">
+            {(provided) => (
+              <div
+                {...provided.droppableProps}
+                ref={provided.innerRef}
+                className="space-y-2"
+              >
+                {systemsList
+                  .sort((a, b) => {
+                    // 활성 상태 우선순위: active > maintenance > inactive
+                    const statusOrder = { active: 0, maintenance: 1, inactive: 2 }
+                    return statusOrder[a.status] - statusOrder[b.status]
+                  })
+                  .map((system, index) => (
+                  <Draggable key={system.id} draggableId={system.id} index={index}>
+                    {(provided, snapshot) => (
+                      <div
+                        ref={provided.innerRef}
+                        {...provided.draggableProps}
+                        className={`border rounded-lg p-3 transition-all duration-200 ${
+                          snapshot.isDragging 
+                            ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/30 shadow-lg' 
+                            : 'border-gray-200 dark:border-gray-600'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="flex items-center gap-2">
+                            <div
+                              {...provided.dragHandleProps}
+                              className="cursor-grab active:cursor-grabbing text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
+                            >
+                              ⋮⋮
+                            </div>
+                            <span className="font-medium text-gray-900 dark:text-white">
+                              {system.icon} {system.title}
+                            </span>
+                          </div>
+                          <div className="flex gap-1">
+                            <button
+                              onClick={() => handleEdit(system)}
+                              className="text-blue-600 hover:text-blue-800 text-sm"
+                            >
+                              편집
+                            </button>
+                            <button
+                              onClick={() => handleDelete(system.id)}
+                              className="text-red-600 hover:text-red-800 text-sm"
+                            >
+                              삭제
+                            </button>
+                          </div>
+                        </div>
+                        <p className="text-sm text-gray-600 dark:text-gray-300">
+                          {system.description}
+                        </p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                          {system.category} • {system.status}
+                        </p>
+                      </div>
+                    )}
+                  </Draggable>
+                ))}
+                {provided.placeholder}
               </div>
-              <p className="text-sm text-gray-600 dark:text-gray-300">
-                {system.description}
-              </p>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                {system.category} • {system.status}
-              </p>
-            </div>
-          ))}
-        </div>
+            )}
+          </Droppable>
+        </DragDropContext>
       </div>
 
       {/* 시스템 추가/편집 폼 */}

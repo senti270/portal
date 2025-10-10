@@ -127,7 +127,7 @@ export default function RankingHistory({ storeId, keywords, rankings, store }: R
                                 {ranking.mobileRank}위
                               </button>
                             ) : (
-                              <span className="text-gray-400 dark:text-gray-500 text-xs">50위↓</span>
+                              <span className="text-gray-400 dark:text-gray-500 text-xs">5위↓</span>
                             )}
                           </td>
                           <td key={`${keyword.id}-${date}-pc`} className="px-4 py-3 whitespace-nowrap text-sm text-center">
@@ -139,7 +139,7 @@ export default function RankingHistory({ storeId, keywords, rankings, store }: R
                                 {ranking.pcRank}위
                               </button>
                             ) : (
-                              <span className="text-gray-400 dark:text-gray-500 text-xs">50위↓</span>
+                              <span className="text-gray-400 dark:text-gray-500 text-xs">5위↓</span>
                             )}
                           </td>
                     </>

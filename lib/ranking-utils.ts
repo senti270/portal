@@ -202,12 +202,12 @@ export const fetchNaverRanking = async (keyword: string, storeName: string, stor
         pcRank: rank,
       }
     } else {
-      console.log(`❌ 상위 50위 안에서 "${storeName}"을 찾을 수 없습니다.`)
+      console.log(`❌ 상위 5위 안에서 "${storeName}"을 찾을 수 없습니다.`)
       console.log(`💡 팁: 매장 이름을 더 간단하게 수정해보세요 (예: "청담장어마켓")`)
       return {
         mobileRank: undefined,
         pcRank: undefined,
-        error: '순위권 밖 (50위 이하)',
+        error: '순위권 밖 (5위 이하)',
       }
     }
   } catch (error) {

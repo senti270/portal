@@ -9,6 +9,7 @@ export interface System {
   status: 'active' | 'inactive' | 'maintenance'
   tags?: string[]
   optimization?: string[]
+  order?: number
 }
 
 export const systems: System[] = [
@@ -23,6 +24,7 @@ export const systems: System[] = [
     status: 'active',
     tags: ['일정', '캘린더', '스케줄'],
     optimization: ['PC 최적화'],
+    order: 1,
   },
   {
     id: 'attendance',
@@ -34,6 +36,7 @@ export const systems: System[] = [
     url: '', // 실제 URL로 변경하세요
     status: 'active',
     tags: ['근태', '급여', '인사'],
+    order: 2,
   },
   {
     id: 'purchase',
@@ -45,6 +48,7 @@ export const systems: System[] = [
     url: '/purchase-list',
     status: 'active',
     tags: ['구매', '발주', '재고'],
+    order: 3,
   },
   {
     id: 'naver-ranking',
@@ -57,6 +61,7 @@ export const systems: System[] = [
     status: 'active',
     tags: ['SEO', '순위', '분석', '블로그'],
     optimization: ['PC 최적화', '모바일 최적화'],
+    order: 4,
   },
   {
     id: 'naver-refund',
@@ -69,6 +74,7 @@ export const systems: System[] = [
     status: 'active',
     tags: ['환불', '네이버', '예약'],
     optimization: ['PC 최적화', '모바일 최적화'],
+    order: 5,
   },
   // 아래는 예시 - 나중에 추가할 시스템들
   {
@@ -80,6 +86,7 @@ export const systems: System[] = [
     category: '기타',
     status: 'inactive',
     tags: ['준비중'],
+    order: 6,
   },
 ]
 

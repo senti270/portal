@@ -17,7 +17,7 @@ const SYSTEMS_COLLECTION = 'systems'
 export async function getSystems(): Promise<System[]> {
   try {
     const systemsRef = collection(db, SYSTEMS_COLLECTION)
-    const q = query(systemsRef, orderBy('createdAt', 'desc'))
+    const q = query(systemsRef, orderBy('order', 'asc'))
     const querySnapshot = await getDocs(q)
     
     return querySnapshot.docs.map(doc => ({

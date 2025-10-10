@@ -132,15 +132,21 @@ export default function AdminPanel({ systemsList: propSystemsList, onSystemsUpda
     const [reorderedItem] = items.splice(result.source.index, 1)
     items.splice(result.destination.index, 0, reorderedItem)
 
-    setSystemsList(items)
-    onSystemsUpdate(items) // 부모 컴포넌트 상태도 업데이트
+    // order 필드 업데이트
+    const updatedItems = items.map((item, index) => ({
+      ...item,
+      order: index + 1
+    }))
+
+    setSystemsList(updatedItems)
+    onSystemsUpdate(updatedItems) // 부모 컴포넌트 상태도 업데이트
 
     try {
       // Firestore에 저장
-      await updateAllSystems(items)
+      await updateAllSystems(updatedItems)
       
       // 로컬 스토리지에 백업
-      localStorage.setItem('portal-systems', JSON.stringify(items))
+      localStorage.setItem('portal-systems', JSON.stringify(updatedItems))
       
       // 조용히 저장 (알림 없음)
     } catch (error) {

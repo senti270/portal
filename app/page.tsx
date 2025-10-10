@@ -60,11 +60,11 @@ export default function Home() {
       system.category.toLowerCase().includes(searchTerm.toLowerCase())
     )
     
-    // 드래그 앤 드롭 순서만 유지 (상태 무시)
+    // order 필드로 정렬 (드래그 앤 드롭 순서 유지)
     const sorted = filtered.sort((a, b) => {
-      const aIndex = allSystems.findIndex(system => system.id === a.id)
-      const bIndex = allSystems.findIndex(system => system.id === b.id)
-      return aIndex - bIndex
+      const aOrder = a.order ?? 999
+      const bOrder = b.order ?? 999
+      return aOrder - bOrder
     })
     
     setFilteredSystems(sorted)

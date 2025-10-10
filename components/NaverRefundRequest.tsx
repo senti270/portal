@@ -59,10 +59,40 @@ export default function NaverRefundRequest() {
 
     // 네이버 고객센터 URL 생성
     const encodedMessage = encodeURIComponent(customMessage)
-    const naverUrl = `https://help.naver.com/inquiry/input.help?categoryNo=15008&serviceNo=30026&lang=ko&message=${encodedMessage}`
+    const encodedCompany = encodeURIComponent(selectedStore.name)
+    const naverUrl = `https://help.naver.com/inquiry/input.help?categoryNo=15008&serviceNo=30026&lang=ko&message=${encodedMessage}&company=${encodedCompany}`
     
     // 새 탭에서 열기
-    window.open(naverUrl, '_blank')
+    const newWindow = window.open(naverUrl, '_blank')
+    
+    // 네이버 고객센터 페이지가 로드된 후 자동으로 입력하는 코드 추가
+    if (newWindow) {
+      newWindow.addEventListener('load', () => {
+        // URL 파라미터에서 값 추출
+        const urlParams = new URLSearchParams(newWindow.location.search)
+        const message = urlParams.get('message')
+        const company = urlParams.get('company')
+        
+        // 자동으로 입력
+        setTimeout(() => {
+          try {
+            // 업체명 입력
+            const companyInput = newWindow.document.getElementById('moText1CC')
+            if (companyInput && company) {
+              companyInput.value = decodeURIComponent(company)
+            }
+            
+            // 메시지 입력
+            const messageTextarea = newWindow.document.getElementById('moText2CB')
+            if (messageTextarea && message) {
+              messageTextarea.value = decodeURIComponent(message)
+            }
+          } catch (error) {
+            console.log('자동 입력 실패 (CORS 정책):', error)
+          }
+        }, 2000) // 2초 후 실행
+      })
+    }
   }
 
   const handleCustomMessageChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -153,7 +183,7 @@ export default function NaverRefundRequest() {
       <div className="mt-6 p-4 bg-yellow-50 dark:bg-yellow-900/30 rounded-lg">
         <p className="text-sm text-yellow-700 dark:text-yellow-300">
           <span className="font-medium">안내:</span> 버튼을 클릭하면 네이버 고객센터 문의 페이지가 새 탭에서 열리며, 
-          위에서 작성한 메시지가 자동으로 입력됩니다.
+          선택한 매장명(업체명)과 환불 요청 메시지가 자동으로 입력됩니다.
         </p>
       </div>
     </div>

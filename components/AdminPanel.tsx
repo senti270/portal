@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useAdmin } from '@/contexts/AdminContext'
 import { System, systems } from '@/data/systems'
+import { getSystems, updateAllSystems, deleteSystem as deleteSystemFromFirestore } from '@/lib/firestore'
 
 const ICONS = ['📅', '👥', '🛒', '📊', '💼', '📈', '🔧', '📝', '🎯', '⚙️', '📱', '💻', '🌐', '📋', '🏪']
 
@@ -13,13 +14,31 @@ export default function AdminPanel() {
   const [showAddForm, setShowAddForm] = useState(false)
 
   useEffect(() => {
-    // 로컬 스토리지에서 시스템 데이터 로드
-    const savedSystems = localStorage.getItem('portal-systems')
-    if (savedSystems) {
-      const parsedSystems = JSON.parse(savedSystems)
-      setSystemsList(parsedSystems)
-    }
+    // Firestore에서 시스템 데이터 로드
+    loadSystems()
   }, [])
+
+  const loadSystems = async () => {
+    try {
+      const firestoreSystems = await getSystems()
+      if (firestoreSystems.length > 0) {
+        setSystemsList(firestoreSystems)
+      } else {
+        // Firestore가 비어있으면 기본 데이터 사용
+        setSystemsList(systems)
+      }
+    } catch (error) {
+      console.error('Error loading systems:', error)
+      // 오류 시 로컬 스토리지에서 로드
+      const savedSystems = localStorage.getItem('portal-systems')
+      if (savedSystems) {
+        const parsedSystems = JSON.parse(savedSystems)
+        setSystemsList(parsedSystems)
+      } else {
+        setSystemsList(systems)
+      }
+    }
+  }
 
   if (!isAdmin) return null
 
@@ -30,37 +49,24 @@ export default function AdminPanel() {
 
   const handleDelete = async (id: string) => {
     if (confirm('정말 삭제하시겠습니까?')) {
-      const updatedSystems = systemsList.filter(s => s.id !== id)
-      setSystemsList(updatedSystems)
-      
       try {
-        // GitHub에 저장
-        const response = await fetch('/api/update-systems', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ systems: updatedSystems })
-        })
+        // Firestore에서 삭제
+        await deleteSystemFromFirestore(id)
         
-        if (response.ok) {
-          // 로컬 스토리지에도 저장 (백업용)
-          localStorage.setItem('portal-systems', JSON.stringify(updatedSystems))
-          
-          // 성공 메시지
-          alert('시스템이 성공적으로 삭제되었습니다!')
-          
-          // 페이지 새로고침으로 변경사항 반영
-          window.location.reload()
-        } else {
-          throw new Error('Failed to delete from GitHub')
-        }
+        // 로컬 상태 업데이트
+        const updatedSystems = systemsList.filter(s => s.id !== id)
+        setSystemsList(updatedSystems)
+        
+        // 로컬 스토리지에 백업
+        localStorage.setItem('portal-systems', JSON.stringify(updatedSystems))
+        
+        alert('시스템이 성공적으로 삭제되었습니다!')
+        
+        // 페이지 새로고침으로 변경사항 반영
+        window.location.reload()
       } catch (error) {
         console.error('Delete error:', error)
         alert('삭제 중 오류가 발생했습니다. 다시 시도해주세요.')
-        
-        // 로컬 스토리지에만 저장 (오프라인 백업)
-        localStorage.setItem('portal-systems', JSON.stringify(updatedSystems))
       }
     }
   }
@@ -79,30 +85,19 @@ export default function AdminPanel() {
     setSystemsList(updatedSystems)
     
     try {
-      // GitHub에 저장
-      const response = await fetch('/api/update-systems', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ systems: updatedSystems })
-      })
+      // Firestore에 저장
+      await updateAllSystems(updatedSystems)
       
-      if (response.ok) {
-        // 로컬 스토리지에도 저장 (백업용)
-        localStorage.setItem('portal-systems', JSON.stringify(updatedSystems))
-        
-        setShowAddForm(false)
-        setEditingSystem(null)
-        
-        // 성공 메시지
-        alert('시스템이 성공적으로 저장되었습니다!')
-        
-        // 페이지 새로고침으로 변경사항 반영
-        window.location.reload()
-      } else {
-        throw new Error('Failed to save to GitHub')
-      }
+      // 로컬 스토리지에 백업
+      localStorage.setItem('portal-systems', JSON.stringify(updatedSystems))
+      
+      setShowAddForm(false)
+      setEditingSystem(null)
+      
+      alert('시스템이 성공적으로 저장되었습니다!')
+      
+      // 페이지 새로고침으로 변경사항 반영
+      window.location.reload()
     } catch (error) {
       console.error('Save error:', error)
       alert('저장 중 오류가 발생했습니다. 다시 시도해주세요.')

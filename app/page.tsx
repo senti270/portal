@@ -7,6 +7,7 @@ import ThemeToggle from '@/components/ThemeToggle'
 import AdminLogin from '@/components/AdminLogin'
 import AdminPanel from '@/components/AdminPanel'
 import { System, systems } from '@/data/systems'
+import { getSystems } from '@/lib/firestore'
 
 export default function Home() {
   const [searchTerm, setSearchTerm] = useState('')
@@ -21,14 +22,35 @@ export default function Home() {
       document.documentElement.classList.add('dark')
     }
     
-    // 로컬 스토리지에서 시스템 데이터 로드
-    const savedSystems = localStorage.getItem('portal-systems')
-    if (savedSystems) {
-      const parsedSystems = JSON.parse(savedSystems)
-      setAllSystems(parsedSystems)
-      setFilteredSystems(parsedSystems)
-    }
+    // Firestore에서 시스템 데이터 로드
+    loadSystems()
   }, [])
+
+  const loadSystems = async () => {
+    try {
+      const firestoreSystems = await getSystems()
+      if (firestoreSystems.length > 0) {
+        setAllSystems(firestoreSystems)
+        setFilteredSystems(firestoreSystems)
+      } else {
+        // Firestore가 비어있으면 기본 데이터 사용
+        setAllSystems(systems)
+        setFilteredSystems(systems)
+      }
+    } catch (error) {
+      console.error('Error loading systems:', error)
+      // 오류 시 로컬 스토리지에서 로드
+      const savedSystems = localStorage.getItem('portal-systems')
+      if (savedSystems) {
+        const parsedSystems = JSON.parse(savedSystems)
+        setAllSystems(parsedSystems)
+        setFilteredSystems(parsedSystems)
+      } else {
+        setAllSystems(systems)
+        setFilteredSystems(systems)
+      }
+    }
+  }
 
   useEffect(() => {
     // 검색 필터링 및 정렬

@@ -83,22 +83,9 @@ export const getCoordinates = async (address: string): Promise<{
   try {
     console.log('🔍 Testing geocode API with:', address)
     
-    // 먼저 테스트 API로 확인
-    const testResponse = await fetch('/api/test-geocode', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ address }),
-    })
-    
-    if (testResponse.ok) {
-      const testData = await testResponse.json()
-      console.log('✅ Test API works:', testData)
-    } else {
-      console.log('❌ Test API failed:', testResponse.status)
-    }
-    
-    // 실제 geocode API 호출
-    const response = await fetch('/api/geocode', {
+    // 임시로 테스트 API 사용 (geocode API가 404 에러나므로)
+    console.log('⚠️ Using test API temporarily due to geocode 404 error')
+    const response = await fetch('/api/test-geocode', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ address }),

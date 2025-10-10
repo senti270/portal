@@ -121,12 +121,12 @@ export default function PurchaseItemForm({ item, onSubmit, onCancel }: PurchaseI
   }
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
-      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">
+    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-4 md:p-6">
+      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 md:mb-6">
         {item ? '물품 편집' : '새 물품 추가'}
       </h3>
 
-      <form onSubmit={handleSubmit} className="space-y-6">
+      <form onSubmit={handleSubmit} className="space-y-4 md:space-y-6">
         {/* 물품 이름 */}
         <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -266,14 +266,14 @@ export default function PurchaseItemForm({ item, onSubmit, onCancel }: PurchaseI
                   <p className="text-sm text-gray-600 dark:text-gray-400">
                     이미지를 드래그하거나 클릭해서 업로드하세요
                   </p>
-                  <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">
+                  <p className="text-xs text-gray-500 dark:text-gray-500 mt-1 hidden sm:block">
                     또는 클립보드에서 이미지를 붙여넣기(Ctrl+V)하세요
                   </p>
                 </div>
                 <button
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm"
                 >
                   파일 선택
                 </button>
@@ -290,17 +290,17 @@ export default function PurchaseItemForm({ item, onSubmit, onCancel }: PurchaseI
         </div>
 
         {/* 버튼 */}
-        <div className="flex justify-end space-x-3">
+        <div className="flex flex-col sm:flex-row justify-end gap-3 pt-4">
           <button
             type="button"
             onClick={onCancel}
-            className="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+            className="w-full sm:w-auto px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
           >
             취소
           </button>
           <button
             type="submit"
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            className="w-full sm:w-auto px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
           >
             {item ? '수정' : '추가'}
           </button>

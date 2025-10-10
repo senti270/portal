@@ -95,7 +95,7 @@ export default function PurchaseListManager() {
       )}
 
       {/* 헤더 */}
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
             구매물품 목록 ({items.length}개)
@@ -103,7 +103,7 @@ export default function PurchaseListManager() {
         </div>
         <button
           onClick={() => setShowForm(true)}
-          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors duration-200"
+          className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors duration-200"
         >
           + 새 물품 추가
         </button>

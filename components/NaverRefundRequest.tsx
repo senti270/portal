@@ -77,11 +77,21 @@ export default function NaverRefundRequest() {
     // 네이버 고객센터 URL 생성
     const naverUrl = `https://help.naver.com/inquiry/input.help?categoryNo=15008&serviceNo=30026&lang=ko`
     
-    // 네이버 고객센터 열기
-    window.open(naverUrl, '_blank')
+    // 모바일과 데스크톱에서 다르게 처리
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+    
+    if (isMobile) {
+      // 모바일에서는 현재 창에서 이동
+      window.location.href = naverUrl
+    } else {
+      // 데스크톱에서는 새 탭에서 열기
+      window.open(naverUrl, '_blank')
+    }
     
     // 안내 메시지 표시
-    alert(`네이버 고객센터가 열렸습니다!\n\n입력할 내용:\n\n1. 업체명 입력란에:\n"${selectedStore.name}"\n\n2. 문의내용 입력란에:\n붙여넣기(Ctrl+V) 하세요\n\n(예약사이트 URL이 이미 클립보드에 복사되어 있습니다)`)
+    const mobileInstruction = isMobile ? '붙여넣기(길게 누르기 → 붙여넣기) 하세요' : '붙여넣기(Ctrl+V) 하세요'
+    
+    alert(`네이버 고객센터${isMobile ? '로 이동했습니다' : '가 열렸습니다'}!\n\n입력할 내용:\n\n1. 업체명 입력란에:\n"${selectedStore.name}"\n\n2. 문의내용 입력란에:\n${mobileInstruction}\n\n(예약사이트 URL이 이미 클립보드에 복사되어 있습니다)`)
   }
 
   const handleCustomMessageChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {

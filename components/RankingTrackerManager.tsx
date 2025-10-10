@@ -173,8 +173,8 @@ export default function RankingTrackerManager() {
           const result = await fetchNaverRanking(keyword.keyword, selectedStore.name, selectedStore.address)
           
           // 순위권 밖이거나 에러인 경우에도 저장 (에러 아님)
-          const mobileRank = result.mobileRank || undefined
-          const pcRank = result.pcRank || undefined
+          const mobileRank = result.mobileRank ?? null
+          const pcRank = result.pcRank ?? null
           
           if (result.error) {
             console.warn(`⚠️ "${keyword.keyword}": ${result.error} - 순위권 밖으로 저장됩니다.`)
@@ -201,8 +201,8 @@ export default function RankingTrackerManager() {
             storeId: selectedStore.id,
             keywordId: keyword.id,
             date: new Date().toISOString().split('T')[0],
-            mobileRank: undefined,
-            pcRank: undefined,
+            mobileRank: null,
+            pcRank: null,
             isAutoTracked: false
           } as Omit<RankingRecord, 'id' | 'createdAt'>
         }

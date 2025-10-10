@@ -24,8 +24,8 @@ export interface RankingRecord {
   storeId: string
   keywordId: string
   date: string // YYYY-MM-DD 형식
-  mobileRank?: number
-  pcRank?: number
+  mobileRank?: number | null
+  pcRank?: number | null
   isAutoTracked: boolean
   createdAt: Date
 }

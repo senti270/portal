@@ -63,36 +63,26 @@ export default function NaverRefundRequest() {
     const encodedCompany = encodeURIComponent(selectedStore.name)
     const naverUrl = `https://help.naver.com/inquiry/input.help?categoryNo=15008&serviceNo=30026&lang=ko&message=${encodedMapUrl}&company=${encodedCompany}`
     
-    // 새 탭에서 열기
-    const newWindow = window.open(naverUrl, '_blank')
+    // 네이버 고객센터 열기
+    window.open(naverUrl, '_blank')
     
-    // 네이버 고객센터 페이지가 로드된 후 자동으로 입력하는 코드 추가
-    if (newWindow) {
-      newWindow.addEventListener('load', () => {
-        // URL 파라미터에서 값 추출
-        const urlParams = new URLSearchParams(newWindow.location.search)
-        const message = urlParams.get('message')
-        const company = urlParams.get('company')
-        
-        // 자동으로 입력
-        setTimeout(() => {
-          try {
-            // 업체명 입력
-            const companyInput = newWindow.document.getElementById('moText1CC') as HTMLInputElement
-            if (companyInput && company) {
-              companyInput.value = decodeURIComponent(company)
-            }
-            
-            // 네이버 지도 URL 입력
-            const messageTextarea = newWindow.document.getElementById('moText2CB') as HTMLTextAreaElement
-            if (messageTextarea && message) {
-              messageTextarea.value = decodeURIComponent(message)
-            }
-          } catch (error) {
-            console.log('자동 입력 실패 (CORS 정책):', error)
-          }
-        }, 2000) // 2초 후 실행
-      })
+    // 안내 메시지 표시
+    alert(`네이버 고객센터가 열렸습니다!\n\n복사된 내용:\n업체명: ${selectedStore.name}\n네이버 지도 URL: ${mapUrl}\n\n위 내용을 각각 복사해서 입력해주세요.`)
+  }
+
+  const copyToClipboard = async (text: string, label: string) => {
+    try {
+      await navigator.clipboard.writeText(text)
+      alert(`${label}이(가) 클립보드에 복사되었습니다!`)
+    } catch (error) {
+      // 클립보드 API가 지원되지 않는 경우
+      const textArea = document.createElement('textarea')
+      textArea.value = text
+      document.body.appendChild(textArea)
+      textArea.select()
+      document.execCommand('copy')
+      document.body.removeChild(textArea)
+      alert(`${label}이(가) 클립보드에 복사되었습니다!`)
     }
   }
 
@@ -177,13 +167,36 @@ export default function NaverRefundRequest() {
         </div>
       </div>
 
+      {/* 복사 버튼들 */}
+      {selectedStore && (
+        <div className="mb-6 space-y-3">
+          <div className="flex gap-2">
+            <button
+              onClick={() => copyToClipboard(selectedStore.name, '업체명')}
+              className="flex-1 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium transition-all duration-200"
+            >
+              업체명 복사
+            </button>
+            <button
+              onClick={() => copyToClipboard(selectedStore.naverMapUrl || '', '네이버 지도 URL')}
+              className="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-all duration-200"
+            >
+              지도 URL 복사
+            </button>
+          </div>
+          <p className="text-xs text-gray-500 dark:text-gray-400 text-center">
+            복사 후 네이버 고객센터에서 붙여넣기(Ctrl+V) 하세요
+          </p>
+        </div>
+      )}
+
       {/* 제출 버튼 */}
       <div className="flex justify-end">
         <button
           onClick={handleSubmit}
-          disabled={!selectedStore || !customMessage}
+          disabled={!selectedStore}
           className={`px-6 py-3 rounded-lg font-medium transition-all duration-200 ${
-            selectedStore && customMessage
+            selectedStore
               ? 'bg-blue-600 hover:bg-blue-700 text-white'
               : 'bg-gray-300 dark:bg-gray-600 text-gray-500 dark:text-gray-400 cursor-not-allowed'
           }`}
@@ -195,9 +208,15 @@ export default function NaverRefundRequest() {
       {/* 안내 메시지 */}
       <div className="mt-6 p-4 bg-yellow-50 dark:bg-yellow-900/30 rounded-lg">
         <p className="text-sm text-yellow-700 dark:text-yellow-300">
-          <span className="font-medium">안내:</span> 버튼을 클릭하면 네이버 고객센터 문의 페이지가 새 탭에서 열리며, 
-          선택한 매장명(업체명)과 네이버 지도 URL이 자동으로 입력됩니다.
+          <span className="font-medium">사용 방법:</span>
         </p>
+        <ol className="text-sm text-yellow-700 dark:text-yellow-300 mt-2 space-y-1 list-decimal list-inside">
+          <li>매장을 선택하세요</li>
+          <li>"업체명 복사" 버튼을 클릭하세요</li>
+          <li>"지도 URL 복사" 버튼을 클릭하세요</li>
+          <li>"네이버 고객센터로 이동" 버튼을 클릭하세요</li>
+          <li>네이버 고객센터에서 복사한 내용을 붙여넣기(Ctrl+V) 하세요</li>
+        </ol>
       </div>
     </div>
   )

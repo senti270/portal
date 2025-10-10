@@ -59,31 +59,13 @@ export default function NaverRefundRequest() {
 
     // 네이버 고객센터 URL 생성
     const mapUrl = selectedStore.naverMapUrl || ''
-    const encodedMapUrl = encodeURIComponent(mapUrl)
-    const encodedCompany = encodeURIComponent(selectedStore.name)
-    const naverUrl = `https://help.naver.com/inquiry/input.help?categoryNo=15008&serviceNo=30026&lang=ko&message=${encodedMapUrl}&company=${encodedCompany}`
+    const naverUrl = `https://help.naver.com/inquiry/input.help?categoryNo=15008&serviceNo=30026&lang=ko`
     
     // 네이버 고객센터 열기
     window.open(naverUrl, '_blank')
     
     // 안내 메시지 표시
-    alert(`네이버 고객센터가 열렸습니다!\n\n복사된 내용:\n업체명: ${selectedStore.name}\n네이버 지도 URL: ${mapUrl}\n\n위 내용을 각각 복사해서 입력해주세요.`)
-  }
-
-  const copyToClipboard = async (text: string, label: string) => {
-    try {
-      await navigator.clipboard.writeText(text)
-      alert(`${label}이(가) 클립보드에 복사되었습니다!`)
-    } catch (error) {
-      // 클립보드 API가 지원되지 않는 경우
-      const textArea = document.createElement('textarea')
-      textArea.value = text
-      document.body.appendChild(textArea)
-      textArea.select()
-      document.execCommand('copy')
-      document.body.removeChild(textArea)
-      alert(`${label}이(가) 클립보드에 복사되었습니다!`)
-    }
+    alert(`네이버 고객센터가 열렸습니다!\n\n입력할 내용:\n\n1. 업체명 입력란에:\n"${selectedStore.name}"\n\n2. 문의내용 입력란에:\n"${mapUrl}"\n\n위 내용을 복사해서 입력해주세요.`)
   }
 
   const handleCustomMessageChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -167,26 +149,22 @@ export default function NaverRefundRequest() {
         </div>
       </div>
 
-      {/* 복사 버튼들 */}
+      {/* 입력할 내용 미리보기 */}
       {selectedStore && (
-        <div className="mb-6 space-y-3">
-          <div className="flex gap-2">
-            <button
-              onClick={() => copyToClipboard(selectedStore.name, '업체명')}
-              className="flex-1 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium transition-all duration-200"
-            >
-              업체명 복사
-            </button>
-            <button
-              onClick={() => copyToClipboard(selectedStore.naverMapUrl || '', '네이버 지도 URL')}
-              className="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-all duration-200"
-            >
-              지도 URL 복사
-            </button>
+        <div className="mb-6 space-y-4">
+          <div className="p-4 bg-blue-50 dark:bg-blue-900/30 rounded-lg">
+            <h4 className="font-medium text-blue-800 dark:text-blue-200 mb-2">업체명 (moText1CC)</h4>
+            <p className="text-sm text-blue-700 dark:text-blue-300 bg-white dark:bg-gray-800 p-2 rounded border">
+              {selectedStore.name}
+            </p>
           </div>
-          <p className="text-xs text-gray-500 dark:text-gray-400 text-center">
-            복사 후 네이버 고객센터에서 붙여넣기(Ctrl+V) 하세요
-          </p>
+          
+          <div className="p-4 bg-green-50 dark:bg-green-900/30 rounded-lg">
+            <h4 className="font-medium text-green-800 dark:text-green-200 mb-2">네이버 지도 URL (moText2CB)</h4>
+            <p className="text-xs text-green-700 dark:text-green-300 bg-white dark:bg-gray-800 p-2 rounded border break-all">
+              {selectedStore.naverMapUrl}
+            </p>
+          </div>
         </div>
       )}
 
@@ -212,10 +190,9 @@ export default function NaverRefundRequest() {
         </p>
         <ol className="text-sm text-yellow-700 dark:text-yellow-300 mt-2 space-y-1 list-decimal list-inside">
           <li>매장을 선택하세요</li>
-          <li>"업체명 복사" 버튼을 클릭하세요</li>
-          <li>"지도 URL 복사" 버튼을 클릭하세요</li>
+          <li>위의 입력할 내용을 확인하세요</li>
           <li>"네이버 고객센터로 이동" 버튼을 클릭하세요</li>
-          <li>네이버 고객센터에서 복사한 내용을 붙여넣기(Ctrl+V) 하세요</li>
+          <li>네이버 고객센터에서 위 내용을 복사해서 입력하세요</li>
         </ol>
       </div>
     </div>

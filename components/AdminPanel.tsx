@@ -131,7 +131,7 @@ export default function AdminPanel({ systemsList: propSystemsList, onSystemsUpda
       // 로컬 스토리지에 백업
       localStorage.setItem('portal-systems', JSON.stringify(items))
       
-      alert('시스템 순서가 저장되었습니다!')
+      // 조용히 저장 (알림 없음)
     } catch (error) {
       console.error('Save order error:', error)
       alert('순서 저장 중 오류가 발생했습니다.')

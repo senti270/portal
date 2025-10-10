@@ -76,6 +76,19 @@ export const systems: System[] = [
     optimization: ['PC 최적화', '모바일 최적화'],
     order: 5,
   },
+  {
+    id: 'ranking-tracker',
+    title: '네이버 순위 추적',
+    description: '스마트 플레이스 키워드별 노출 순위를 자동으로 추적하고 기록합니다.',
+    icon: '📈',
+    color: '#10B981',
+    category: '마케팅',
+    url: '/ranking-tracker',
+    status: 'active',
+    tags: ['SEO', '순위', '자동추적', '키워드'],
+    optimization: ['PC 최적화', '모바일 최적화'],
+    order: 6,
+  },
   // 아래는 예시 - 나중에 추가할 시스템들
   {
     id: 'example1',
@@ -86,7 +99,7 @@ export const systems: System[] = [
     category: '기타',
     status: 'inactive',
     tags: ['준비중'],
-    order: 6,
+    order: 7,
   },
 ]
 

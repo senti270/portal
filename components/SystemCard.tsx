@@ -57,7 +57,7 @@ export default function SystemCard({ system, index }: SystemCardProps) {
       </div>
 
       {/* 설명 */}
-      <p className="text-gray-600 dark:text-gray-300 text-sm mb-4 line-clamp-2">
+      <p className="text-gray-600 dark:text-gray-300 text-sm mb-4 line-clamp-2 whitespace-pre-line">
         {system.description}
       </p>
 

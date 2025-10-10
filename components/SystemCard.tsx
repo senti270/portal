@@ -31,7 +31,7 @@ export default function SystemCard({ system, index }: SystemCardProps) {
       <div className="flex items-start justify-between mb-4">
         <div className="flex items-center gap-3">
           <div 
-            className="w-24 h-24 rounded-lg flex items-center justify-center text-4xl shadow-md"
+            className="w-12 h-12 rounded-lg flex items-center justify-center text-2xl shadow-md"
             style={{ backgroundColor: system.color + '20' }}
           >
             {system.icon}

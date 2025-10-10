@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
 
-// 주소를 좌표로 변환하는 API
 export async function POST(request: NextRequest) {
   console.log('🌍 Geocode API called')
   
@@ -29,11 +28,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'API 키가 설정되지 않았습니다.' }, { status: 500 })
     }
 
-    // 네이버 Geocoding API 호출 (검색 API로 대체)
-    // Geocoding API는 Cloud Platform 전용이므로, 검색 API를 사용
+    // 네이버 Local Search API로 주소 검색하여 좌표 획득
     const searchUrl = new URL('https://openapi.naver.com/v1/search/local.json')
     searchUrl.searchParams.append('query', address)
     searchUrl.searchParams.append('display', '1')
+
+    console.log('🔍 Calling Naver API:', searchUrl.toString())
 
     const response = await fetch(searchUrl.toString(), {
       headers: {
@@ -42,22 +42,27 @@ export async function POST(request: NextRequest) {
       },
     })
 
+    console.log('📡 Naver API response status:', response.status)
+
     if (!response.ok) {
       const errorText = await response.text()
-      console.error('Geocoding API Error:', errorText)
+      console.error('❌ Naver API Error:', errorText)
       return NextResponse.json(
-        { error: '좌표 변환 실패', details: errorText },
+        { error: '네이버 API 호출 실패', details: errorText },
         { status: response.status }
       )
     }
 
     const data = await response.json()
+    console.log('📋 Naver API response:', data)
 
     if (data.items && data.items.length > 0) {
       const item = data.items[0]
       // mapx, mapy는 카텍 좌표계이므로 10000000으로 나눠서 위경도로 변환
       const longitude = parseInt(item.mapx) / 10000000
       const latitude = parseInt(item.mapy) / 10000000
+      
+      console.log('✅ Coordinates found:', { latitude, longitude })
       
       return NextResponse.json({
         success: true,
@@ -66,14 +71,14 @@ export async function POST(request: NextRequest) {
         address: item.roadAddress || item.address,
       })
     } else {
+      console.log('❌ No items found in response')
       return NextResponse.json({ error: '좌표를 찾을 수 없습니다.' }, { status: 404 })
     }
   } catch (error) {
-    console.error('Geocoding Error:', error)
+    console.error('❌ Geocoding Error:', error)
     return NextResponse.json(
       { error: '좌표 변환 중 오류가 발생했습니다.', details: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }
     )
   }
 }
-

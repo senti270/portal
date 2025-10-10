@@ -58,6 +58,18 @@ export const systems: System[] = [
     tags: ['SEO', '순위', '분석', '블로그'],
     optimization: ['PC 최적화', '모바일 최적화'],
   },
+  {
+    id: 'naver-refund',
+    title: '네이버예약 환불접수',
+    description: '네이버 예약내역 환불 접수',
+    icon: '📝',
+    color: '#FF6B6B',
+    category: '고객서비스',
+    url: '/naver-refund',
+    status: 'active',
+    tags: ['환불', '네이버', '예약'],
+    optimization: ['PC 최적화', '모바일 최적화'],
+  },
   // 아래는 예시 - 나중에 추가할 시스템들
   {
     id: 'example1',

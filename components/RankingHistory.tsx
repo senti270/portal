@@ -71,7 +71,7 @@ export default function RankingHistory({ storeId, keywords, rankings, store }: R
               날짜
             </th>
             {sortedKeywords.map((keyword) => (
-              <th key={keyword.id} colSpan={3} className="px-4 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider border-l border-gray-200 dark:border-gray-700">
+              <th key={keyword.id} colSpan={2} className="px-4 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider border-l border-gray-200 dark:border-gray-700">
                 {keyword.keyword}
               </th>
             ))}
@@ -80,7 +80,7 @@ export default function RankingHistory({ storeId, keywords, rankings, store }: R
           {/* 두 번째 헤더 행: 월 검색량 */}
           <tr>
             {sortedKeywords.map((keyword) => (
-              <th key={`${keyword.id}-monthly`} colSpan={3} className="px-4 py-2 text-center text-xs font-medium text-gray-500 dark:text-gray-300 border-l border-gray-200 dark:border-gray-700">
+              <th key={`${keyword.id}-monthly`} colSpan={2} className="px-4 py-2 text-center text-xs font-medium text-gray-500 dark:text-gray-300 border-l border-gray-200 dark:border-gray-700">
                 월 검색량: {keyword.monthlySearchVolume.toLocaleString()}
               </th>
             ))}
@@ -104,7 +104,7 @@ export default function RankingHistory({ storeId, keywords, rankings, store }: R
         <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
           {sortedKeywords.length === 0 ? (
             <tr>
-              <td colSpan={1 + sortedKeywords.length * 3} className="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
+              <td colSpan={1 + sortedKeywords.length * 2} className="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
                 등록된 키워드가 없습니다. "키워드 관리" 버튼을 클릭하여 키워드를 추가해주세요.
               </td>
             </tr>

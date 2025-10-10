@@ -50,11 +50,11 @@ export default function NaverRefundRequest() {
     setSelectedStore(store)
     setCustomMessage(store.refundMessage)
     
-    // 예약 URL 자동 복사
+    // 예약사이트 URL 자동 복사
     if (store.naverMapUrl) {
       try {
         await navigator.clipboard.writeText(store.naverMapUrl)
-        alert(`${store.name}의 예약 URL이 클립보드에 복사되었습니다!`)
+        alert(`${store.name}의 예약사이트 URL이 클립보드에 복사되었습니다!`)
       } catch (error) {
         // 클립보드 API가 지원되지 않는 경우
         const textArea = document.createElement('textarea')
@@ -63,7 +63,7 @@ export default function NaverRefundRequest() {
         textArea.select()
         document.execCommand('copy')
         document.body.removeChild(textArea)
-        alert(`${store.name}의 예약 URL이 클립보드에 복사되었습니다!`)
+        alert(`${store.name}의 예약사이트 URL이 클립보드에 복사되었습니다!`)
       }
     }
   }
@@ -81,7 +81,7 @@ export default function NaverRefundRequest() {
     window.open(naverUrl, '_blank')
     
     // 안내 메시지 표시
-    alert(`네이버 고객센터가 열렸습니다!\n\n입력할 내용:\n\n1. 업체명 입력란에:\n"${selectedStore.name}"\n\n2. 문의내용 입력란에:\n붙여넣기(Ctrl+V) 하세요\n\n(예약 URL이 이미 클립보드에 복사되어 있습니다)`)
+    alert(`네이버 고객센터가 열렸습니다!\n\n입력할 내용:\n\n1. 업체명 입력란에:\n"${selectedStore.name}"\n\n2. 문의내용 입력란에:\n붙여넣기(Ctrl+V) 하세요\n\n(예약사이트 URL이 이미 클립보드에 복사되어 있습니다)`)
   }
 
   const handleCustomMessageChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {

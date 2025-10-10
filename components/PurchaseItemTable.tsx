@@ -6,9 +6,11 @@ interface PurchaseItemTableProps {
   items: PurchaseItem[]
   onEdit: (item: PurchaseItem) => void
   onDelete: (id: string) => void
+  onCategoryFilter?: (category: string) => void
+  selectedCategory?: string
 }
 
-export default function PurchaseItemTable({ items, onEdit, onDelete }: PurchaseItemTableProps) {
+export default function PurchaseItemTable({ items, onEdit, onDelete, onCategoryFilter, selectedCategory }: PurchaseItemTableProps) {
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden">
       {/* 데스크톱 테이블 */}
@@ -22,8 +24,19 @@ export default function PurchaseItemTable({ items, onEdit, onDelete }: PurchaseI
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                 이름
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+              <th 
+                className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider cursor-pointer transition-colors ${
+                  onCategoryFilter 
+                    ? 'text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300' 
+                    : 'text-gray-500 dark:text-gray-300'
+                }`}
+                onClick={() => onCategoryFilter && onCategoryFilter('')}
+                title={onCategoryFilter ? "카테고리 클릭으로 필터링" : ""}
+              >
                 카테고리
+                {onCategoryFilter && (
+                  <span className="ml-1 text-xs">🔍</span>
+                )}
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                 구입처
@@ -75,12 +88,20 @@ export default function PurchaseItemTable({ items, onEdit, onDelete }: PurchaseI
                   <td className="px-6 py-4">
                     <div className="flex flex-wrap gap-1">
                       {item.category.map((cat, index) => (
-                        <span
+                        <button
                           key={index}
-                          className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200"
+                          onClick={() => onCategoryFilter && onCategoryFilter(cat)}
+                          className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium transition-colors ${
+                            selectedCategory === cat
+                              ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 ring-2 ring-green-500'
+                              : onCategoryFilter
+                              ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 hover:bg-blue-200 dark:hover:bg-blue-800 cursor-pointer'
+                              : 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
+                          }`}
+                          title={onCategoryFilter ? `"${cat}" 카테고리로 필터링` : ''}
                         >
                           {cat}
-                        </span>
+                        </button>
                       ))}
                     </div>
                   </td>
@@ -165,12 +186,20 @@ export default function PurchaseItemTable({ items, onEdit, onDelete }: PurchaseI
                     <div className="flex items-center gap-2 mt-1">
                       <span className="text-xs text-gray-600 dark:text-gray-300">{item.purchaseSource}</span>
                       {item.category.map((cat, index) => (
-                        <span
+                        <button
                           key={index}
-                          className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200"
+                          onClick={() => onCategoryFilter && onCategoryFilter(cat)}
+                          className={`inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium transition-colors ${
+                            selectedCategory === cat
+                              ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 ring-1 ring-green-500'
+                              : onCategoryFilter
+                              ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 hover:bg-blue-200 dark:hover:bg-blue-800 cursor-pointer'
+                              : 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
+                          }`}
+                          title={onCategoryFilter ? `"${cat}" 카테고리로 필터링` : ''}
                         >
                           {cat}
-                        </span>
+                        </button>
                       ))}
                     </div>
                   </div>

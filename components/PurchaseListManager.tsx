@@ -10,6 +10,7 @@ export default function PurchaseListManager() {
   const [items, setItems] = useState<PurchaseItem[]>([])
   const [filteredItems, setFilteredItems] = useState<PurchaseItem[]>([])
   const [searchTerm, setSearchTerm] = useState('')
+  const [selectedCategory, setSelectedCategory] = useState<string>('') // 카테고리 필터 상태 추가
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
   const [editingItem, setEditingItem] = useState<PurchaseItem | null>(null)
@@ -33,20 +34,46 @@ export default function PurchaseListManager() {
     }
   }
 
-  // 검색 필터링
+  // 검색 및 카테고리 필터링
   useEffect(() => {
-    if (!searchTerm.trim()) {
-      setFilteredItems(items)
-    } else {
-      const filtered = items.filter(item =>
+    let filtered = items
+
+    // 검색어 필터링
+    if (searchTerm.trim()) {
+      filtered = filtered.filter(item =>
         item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         item.purchaseSource.toLowerCase().includes(searchTerm.toLowerCase()) ||
         item.category.some(cat => cat.toLowerCase().includes(searchTerm.toLowerCase())) ||
         (item.purchaseUnit && item.purchaseUnit.toLowerCase().includes(searchTerm.toLowerCase()))
       )
-      setFilteredItems(filtered)
     }
-  }, [searchTerm, items])
+
+    // 카테고리 필터링
+    if (selectedCategory) {
+      filtered = filtered.filter(item =>
+        item.category.includes(selectedCategory)
+      )
+    }
+
+    setFilteredItems(filtered)
+  }, [searchTerm, selectedCategory, items])
+
+  // 카테고리 필터 핸들러
+  const handleCategoryFilter = (category: string) => {
+    if (selectedCategory === category) {
+      // 같은 카테고리를 다시 클릭하면 필터 해제
+      setSelectedCategory('')
+    } else {
+      // 다른 카테고리 클릭하면 해당 카테고리로 필터링
+      setSelectedCategory(category)
+    }
+  }
+
+  // 필터 초기화 함수
+  const clearFilters = () => {
+    setSearchTerm('')
+    setSelectedCategory('')
+  }
 
   const handleAddItem = async (formData: PurchaseItemFormData) => {
     try {
@@ -118,6 +145,28 @@ export default function PurchaseListManager() {
           <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
             구매물품 목록 ({filteredItems.length}개)
           </h2>
+          {/* 활성 필터 표시 */}
+          {(searchTerm || selectedCategory) && (
+            <div className="flex items-center gap-2 mt-1">
+              <span className="text-sm text-gray-500 dark:text-gray-400">필터 적용됨:</span>
+              {searchTerm && (
+                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+                  검색: {searchTerm}
+                </span>
+              )}
+              {selectedCategory && (
+                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
+                  카테고리: {selectedCategory}
+                </span>
+              )}
+              <button
+                onClick={clearFilters}
+                className="text-xs text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 underline"
+              >
+                필터 초기화
+              </button>
+            </div>
+          )}
         </div>
         <button
           onClick={() => setShowForm(true)}
@@ -158,6 +207,8 @@ export default function PurchaseListManager() {
         items={filteredItems}
         onEdit={handleEdit}
         onDelete={handleDeleteItem}
+        onCategoryFilter={handleCategoryFilter}
+        selectedCategory={selectedCategory}
       />
 
       {/* 추가/편집 폼 */}

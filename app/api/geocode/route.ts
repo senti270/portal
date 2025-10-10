@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 
+// 주소를 좌표로 변환하는 API
 export async function POST(request: NextRequest) {
   console.log('🌍 Geocode API called')
   

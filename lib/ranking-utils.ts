@@ -186,13 +186,10 @@ export const fetchNaverRanking = async (keyword: string, storeName: string, stor
           return false
         })
 
-        // 임시 해결책: API 결과가 5개밖에 없을 때 하드코딩된 순위 사용
-        if (targetStoreIndex === -1 && data.items.length <= 5 && simplifiedStoreName.includes('청담장어마켓')) {
-          console.log(`🔄 API 결과 부족으로 하드코딩된 순위 사용: 청담장어마켓 = 11위`)
-          return {
-            mobileRank: 11,
-            pcRank: 11,
-          }
+        // API 결과가 부족한 경우 로그만 출력 (하드코딩 제거)
+        if (targetStoreIndex === -1 && data.items.length <= 5) {
+          console.log(`⚠️ API 결과 부족: ${data.items.length}개만 반환됨. 네이버 Local Search API 제한사항일 수 있습니다.`)
+          console.log(`💡 해결 방안: 1) 다른 검색 API 사용 2) 네이버 API 지원팀 문의 3) 키워드 변경`)
         }
 
     if (targetStoreIndex >= 0) {

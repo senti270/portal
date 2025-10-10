@@ -28,7 +28,8 @@ export async function POST(request: NextRequest) {
         searchUrl.searchParams.append('query', query)
         searchUrl.searchParams.append('display', Math.min(display, 100).toString()) // 최대 100개까지
         searchUrl.searchParams.append('start', '1') // 시작점 명시
-        searchUrl.searchParams.append('sort', 'comment') // 댓글순 정렬 (더 많은 결과)
+        // sort 파라미터 제거 (기본 관련도순 사용)
+        // searchUrl.searchParams.append('sort', 'comment') // 댓글순 정렬 (더 많은 결과)
         
         console.log('🔍 API 요청 URL:', searchUrl.toString())
     

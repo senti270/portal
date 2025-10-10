@@ -203,12 +203,12 @@ export default function PurchaseListManager() {
         )}
       </div>
 
-      {/* 추가/편집 폼 */}
-      {(showForm || editingItem) && (
+      {/* 추가 폼 (편집이 아닐 때만 검색창 아래 표시) */}
+      {showForm && !editingItem && (
         <div className="animate-fade-in">
           <PurchaseItemForm
-            item={editingItem}
-            onSubmit={editingItem ? (data) => handleEditItem(editingItem.id, data) : handleAddItem}
+            item={null}
+            onSubmit={handleAddItem}
             onCancel={handleCancel}
           />
         </div>
@@ -221,6 +221,9 @@ export default function PurchaseListManager() {
         onDelete={handleDeleteItem}
         onCategoryFilter={handleCategoryFilter}
         selectedCategory={selectedCategory}
+        editingItem={editingItem}
+        onEditSubmit={(data) => handleEditItem(editingItem!.id, data)}
+        onEditCancel={handleCancel}
       />
     </div>
   )

@@ -1,6 +1,7 @@
 'use client'
 
-import { PurchaseItem } from '@/types/purchase'
+import { PurchaseItem, PurchaseItemFormData } from '@/types/purchase'
+import PurchaseItemForm from './PurchaseItemForm'
 
 interface PurchaseItemTableProps {
   items: PurchaseItem[]
@@ -8,9 +9,21 @@ interface PurchaseItemTableProps {
   onDelete: (id: string) => void
   onCategoryFilter?: (category: string) => void
   selectedCategory?: string
+  editingItem?: PurchaseItem | null
+  onEditSubmit?: (data: PurchaseItemFormData) => void
+  onEditCancel?: () => void
 }
 
-export default function PurchaseItemTable({ items, onEdit, onDelete, onCategoryFilter, selectedCategory }: PurchaseItemTableProps) {
+export default function PurchaseItemTable({ 
+  items, 
+  onEdit, 
+  onDelete, 
+  onCategoryFilter, 
+  selectedCategory,
+  editingItem,
+  onEditSubmit,
+  onEditCancel
+}: PurchaseItemTableProps) {
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden">
       {/* 데스크톱 테이블 */}
@@ -61,6 +74,7 @@ export default function PurchaseItemTable({ items, onEdit, onDelete, onCategoryF
               </tr>
             ) : (
               items.map((item) => (
+                <>
                 <tr key={item.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
                   {/* 이미지 */}
                   <td className="px-6 py-4 whitespace-nowrap">
@@ -152,6 +166,19 @@ export default function PurchaseItemTable({ items, onEdit, onDelete, onCategoryF
                     </div>
                   </td>
                 </tr>
+                {/* 편집 폼 - 해당 아이템을 편집 중일 때만 표시 */}
+                {editingItem?.id === item.id && onEditSubmit && onEditCancel && (
+                  <tr key={`${item.id}-edit`}>
+                    <td colSpan={7} className="px-6 py-6 bg-blue-50 dark:bg-blue-900/20">
+                      <PurchaseItemForm
+                        item={editingItem}
+                        onSubmit={onEditSubmit}
+                        onCancel={onEditCancel}
+                      />
+                    </td>
+                  </tr>
+                )}
+                </>
               ))
             )}
           </tbody>
@@ -167,7 +194,8 @@ export default function PurchaseItemTable({ items, onEdit, onDelete, onCategoryF
         ) : (
           <div className="space-y-4 p-4">
             {items.map((item) => (
-              <div key={item.id} className="bg-gray-50 dark:bg-gray-700 rounded-lg p-3 space-y-2">
+              <div key={item.id}>
+              <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-3 space-y-2">
                 {/* 이미지와 기본 정보 */}
                 <div className="flex items-start gap-3">
                   {item.imageUrl ? (
@@ -239,6 +267,18 @@ export default function PurchaseItemTable({ items, onEdit, onDelete, onCategoryF
                     )}
                   </div>
                 )}
+              </div>
+              
+              {/* 편집 폼 - 해당 아이템을 편집 중일 때만 표시 */}
+              {editingItem?.id === item.id && onEditSubmit && onEditCancel && (
+                <div className="mt-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4">
+                  <PurchaseItemForm
+                    item={editingItem}
+                    onSubmit={onEditSubmit}
+                    onCancel={onEditCancel}
+                  />
+                </div>
+              )}
               </div>
             ))}
           </div>

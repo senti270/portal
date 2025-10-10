@@ -15,8 +15,8 @@ export interface DepositItem {
   amount: number // 금액
   bank: string // 은행
   accountNumber: string // 계좌번호
-  requestDate: string // 입금요청일 (YYYY-MM-DD)
-  taxInvoice: string // 세금계산서첨부 (URL 또는 텍스트)
+  requestDate: any // 입금요청일 (Date, Timestamp, string 등)
+  taxInvoiceAttached: boolean // 세금계산서 첨부 여부
   isCompleted: boolean // 입금완료
   createdAt: Date
   updatedAt: Date

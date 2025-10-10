@@ -15,7 +15,8 @@ export async function POST(request: NextRequest) {
       hasClientId: !!clientId,
       hasClientSecret: !!clientSecret,
       clientIdLength: clientId?.length || 0,
-      clientSecretLength: clientSecret?.length || 0
+      clientSecretLength: clientSecret?.length || 0,
+      allEnvVars: Object.keys(process.env).filter(key => key.includes('NAVER'))
     })
 
     if (!clientId || !clientSecret) {

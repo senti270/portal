@@ -505,6 +505,7 @@ export default function TodoList({ password }: TodoListProps) {
               onChange={(e) => setNewTodo({ ...newTodo, requester: e.target.value })}
               className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-transparent dark:bg-gray-700 dark:text-white transition-all duration-200"
               placeholder="요청자명을 입력하세요"
+              style={{ WebkitAppearance: 'none', appearance: 'none' }}
             />
             <datalist id="requester-options">
               {getExistingRequesters().map((requester, index) => (
@@ -550,6 +551,7 @@ export default function TodoList({ password }: TodoListProps) {
               className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-transparent dark:bg-gray-700 dark:text-white transition-all duration-200 resize-none"
               placeholder="할일을 입력하세요"
               rows={3}
+              style={{ WebkitAppearance: 'none', appearance: 'none' }}
             />
           </div>
           
@@ -561,7 +563,8 @@ export default function TodoList({ password }: TodoListProps) {
               type="date"
               value={newTodo.dueDate}
               onChange={(e) => setNewTodo({ ...newTodo, dueDate: e.target.value })}
-              className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-600 dark:text-white"
+              className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-transparent dark:bg-gray-700 dark:text-white transition-all duration-200"
+              style={{ WebkitAppearance: 'none', appearance: 'none' }}
             />
           </div>
           
@@ -666,8 +669,9 @@ export default function TodoList({ password }: TodoListProps) {
                         list="inline-requester-options"
                         value={newTodo.requester}
                         onChange={(e) => setNewTodo({ ...newTodo, requester: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-transparent dark:bg-gray-600 dark:text-white transition-all duration-200"
+                        className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-transparent dark:bg-gray-700 dark:text-white transition-all duration-200"
                         placeholder="요청자명을 입력하세요"
+                        style={{ WebkitAppearance: 'none', appearance: 'none' }}
                       />
                       <datalist id="inline-requester-options">
                         {getExistingRequesters().map((requester, index) => (
@@ -683,9 +687,10 @@ export default function TodoList({ password }: TodoListProps) {
                       <textarea
                         value={newTodo.task}
                         onChange={(e) => setNewTodo({ ...newTodo, task: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-transparent dark:bg-gray-600 dark:text-white transition-all duration-200 resize-none"
+                        className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-transparent dark:bg-gray-700 dark:text-white transition-all duration-200 resize-none"
                         placeholder="할일을 입력하세요"
-                        rows={2}
+                        rows={3}
+                        style={{ WebkitAppearance: 'none', appearance: 'none' }}
                       />
                     </div>
                     
@@ -697,7 +702,8 @@ export default function TodoList({ password }: TodoListProps) {
                         type="date"
                         value={newTodo.dueDate}
                         onChange={(e) => setNewTodo({ ...newTodo, dueDate: e.target.value })}
-                        className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-transparent dark:bg-gray-600 dark:text-white transition-all duration-200"
+                        className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-transparent dark:bg-gray-700 dark:text-white transition-all duration-200"
+                        style={{ WebkitAppearance: 'none', appearance: 'none' }}
                       />
                     </div>
                     

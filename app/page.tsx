@@ -84,7 +84,7 @@ export default function Home() {
             <div className="flex items-center gap-3">
               <div className="w-12 h-12 rounded-xl flex items-center justify-center shadow-lg overflow-hidden">
                 <img 
-                  src="/favicon.ico" 
+                  src="/apple-touch-icon.png" 
                   alt="드로잉컴퍼니 로고" 
                   className="w-full h-full object-contain"
                 />

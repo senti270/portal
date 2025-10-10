@@ -31,9 +31,10 @@ export default function RankingTrackerManager() {
       id: place.id,
       name: place.name,
       address: place.address,
-      category: [place.category || '기타'],
+      category: place.category || '기타',
       imageUrl: '/images/store-default.jpg', // 기본 이미지
-      naverMapUrl: `https://map.naver.com/p/entry/place/${place.id}`
+      mobileUrl: `https://m.place.naver.com/place/${place.id}/home`,
+      pcUrl: `https://map.naver.com/p/entry/place/${place.id}`
     }
     
     setStores(prev => [...prev, newStore])

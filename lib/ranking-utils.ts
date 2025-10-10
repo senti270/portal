@@ -12,18 +12,24 @@ export const searchNaverPlace = async (query: string): Promise<{
   error?: string
 }> => {
   try {
-    // CORS 문제로 인해 직접 API 호출이 제한되므로
-    // 백엔드 API 엔드포인트를 통해 호출하거나
-    // 프록시 서버를 사용해야 합니다.
+    // Next.js API 라우트를 통해 네이버 검색 API 호출
+    const response = await fetch(`/api/naver-search?query=${encodeURIComponent(query)}`)
     
-    // 현재는 샘플 데이터 반환
-    console.log(`네이버 플레이스 검색: ${query}`)
+    if (!response.ok) {
+      throw new Error(`API 호출 실패: ${response.status}`)
+    }
     
-    // 실제 구현 시에는 다음 중 하나의 방법 사용:
-    // 1. 백엔드 API 엔드포인트 생성 (/api/naver-search)
-    // 2. CORS 프록시 서버 사용
-    // 3. 네이버 공식 API 사용 (API 키 필요)
+    const data = await response.json()
     
+    if (data.error) {
+      throw new Error(data.error)
+    }
+    
+    return { places: data.places || [] }
+  } catch (error) {
+    console.error('네이버 플레이스 검색 오류:', error)
+    
+    // API 오류 시 샘플 데이터 반환
     const samplePlaces = [
       {
         id: 'place1',
@@ -64,11 +70,6 @@ export const searchNaverPlace = async (query: string): Promise<{
     )
     
     return { places: filteredPlaces }
-  } catch (error) {
-    console.error('네이버 플레이스 검색 오류:', error)
-    return {
-      error: '네이버 플레이스 검색 중 오류가 발생했습니다.'
-    }
   }
 }
 

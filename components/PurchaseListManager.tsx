@@ -188,7 +188,8 @@ export default function PurchaseListManager() {
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           placeholder="물품명, 구입처, 카테고리로 검색..."
-          className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+          style={{ WebkitAppearance: 'none', appearance: 'none' }}
+          className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
         />
         {searchTerm && (
           <button

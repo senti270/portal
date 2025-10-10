@@ -42,7 +42,7 @@ export const systems: System[] = [
     icon: '🛒',
     color: '#F59E0B',
     category: '구매관리',
-    url: '', // 실제 URL로 변경하세요
+    url: '/purchase-list',
     status: 'active',
     tags: ['구매', '발주', '재고'],
   },

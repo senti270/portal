@@ -6,11 +6,12 @@ import { Keyword } from '@/types/ranking'
 
 interface KeywordFormProps {
   keywords: Keyword[]
+  storeId: string
   onSave: (keywords: Keyword[]) => void
   onCancel: () => void
 }
 
-export default function KeywordForm({ keywords, onSave, onCancel }: KeywordFormProps) {
+export default function KeywordForm({ keywords, storeId, onSave, onCancel }: KeywordFormProps) {
   const [keywordList, setKeywordList] = useState<Keyword[]>(keywords)
   const [newKeywords, setNewKeywords] = useState('')
 
@@ -29,8 +30,9 @@ export default function KeywordForm({ keywords, onSave, onCancel }: KeywordFormP
       monthlySearchVolume: 0,
       mobileVolume: 0,
       pcVolume: 0,
-      storeId: 'store1', // 임시
-      isActive: true
+      storeId: storeId,
+      isActive: true,
+      order: keywordList.length + index + 1
     }))
     
     setKeywordList([...keywordList, ...newKeywordObjects])
@@ -48,7 +50,13 @@ export default function KeywordForm({ keywords, onSave, onCancel }: KeywordFormP
     const [reorderedItem] = items.splice(result.source.index, 1)
     items.splice(result.destination.index, 0, reorderedItem)
 
-    setKeywordList(items)
+    // 순서 업데이트
+    const updatedItems = items.map((item, index) => ({
+      ...item,
+      order: index + 1
+    }))
+
+    setKeywordList(updatedItems)
   }
 
   const handleSave = () => {
@@ -108,9 +116,6 @@ export default function KeywordForm({ keywords, onSave, onCancel }: KeywordFormP
             <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
               키워드를 드래그 앤 드롭하여 순서를 변경하세요.
             </p>
-            <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-              상위 3개의 키워드는 전체 목록에서도 검색량과 순위를 쉽게 확인하실 수 있습니다.
-            </p>
 
             <DragDropContext onDragEnd={handleDragEnd}>
               <Droppable droppableId="keywords">
@@ -153,12 +158,6 @@ export default function KeywordForm({ keywords, onSave, onCancel }: KeywordFormP
                                 </div>
                               </div>
                               
-                              {/* 표시 상태 */}
-                              {index < 3 && (
-                                <span className="text-xs text-blue-600 dark:text-blue-400">
-                                  전체 상품 목록에 표시됨
-                                </span>
-                              )}
                             </div>
 
                             {/* 삭제 버튼 */}

@@ -9,10 +9,13 @@ import RankingHistory from './RankingHistory'
 import KeywordForm from './KeywordForm'
 import AutoTrackingModal from './AutoTrackingModal'
 import { fetchNaverRanking, exportToExcel, formatRankingDataForExcel } from '@/lib/ranking-utils'
+import { getKeywords, saveKeywords } from '@/lib/keyword-firestore'
+import { getStores, addStore } from '@/lib/store-firestore'
+import { getRankings, addRankings, deleteRankingsByDate } from '@/lib/ranking-firestore'
 
 export default function RankingTrackerManager() {
   const [selectedStore, setSelectedStore] = useState<Store | null>(null)
-  const [stores, setStores] = useState<Store[]>(defaultStores)
+  const [stores, setStores] = useState<Store[]>([])
   const [loading, setLoading] = useState(true)
   const [showPlaceRegistration, setShowPlaceRegistration] = useState(false)
   
@@ -26,46 +29,125 @@ export default function RankingTrackerManager() {
   const [autoTrackingTime, setAutoTrackingTime] = useState({ hour: '17', minute: '15' })
 
   useEffect(() => {
-    // 초기 로딩 - 나중에 Firebase에서 데이터 로드
-    setLoading(false)
-    if (stores.length > 0) {
-      setSelectedStore(stores[0]) // 첫 번째 지점을 기본 선택
+    // Firebase에서 지점 데이터 로드
+    const loadStores = async () => {
+      try {
+        const firestoreStores = await getStores()
+        
+        // Firebase에 지점이 없으면 기본 지점 데이터를 사용하고 Firebase에 저장
+        if (firestoreStores.length === 0) {
+          console.log('No stores in Firebase, adding default stores...')
+          const addPromises = defaultStores.map(async (store) => {
+            const { id, ...storeData } = store
+            return await addStore(storeData)
+          })
+          await Promise.all(addPromises)
+          
+          // 다시 로드
+          const updatedStores = await getStores()
+          setStores(updatedStores)
+          
+          if (updatedStores.length > 0) {
+            setSelectedStore(updatedStores[0])
+          }
+        } else {
+          setStores(firestoreStores)
+          
+          if (firestoreStores.length > 0) {
+            setSelectedStore(firestoreStores[0])
+          }
+        }
+      } catch (error) {
+        console.error('Error loading stores from Firebase:', error)
+        // Firebase 로드 실패 시 기본 데이터 사용
+        setStores(defaultStores)
+        if (defaultStores.length > 0) {
+          setSelectedStore(defaultStores[0])
+        }
+      } finally {
+        setLoading(false)
+      }
     }
+    
+    loadStores()
   }, [])
 
   useEffect(() => {
-    // 선택된 지점이 변경될 때 해당 지점의 키워드 로드
-    if (selectedStore) {
-      const storeKeywords = defaultKeywords.filter(k => k.storeId === selectedStore.id)
-      setKeywords(storeKeywords)
+    // 선택된 지점이 변경될 때 해당 지점의 키워드와 순위 기록 로드
+    const loadKeywordsAndRankings = async () => {
+      if (selectedStore) {
+        try {
+          // Firebase에서 키워드 로드
+          const storeKeywords = await getKeywords(selectedStore.id)
+          setKeywords(storeKeywords)
+          
+          // Firebase에서 순위 기록 로드
+          const storeRankings = await getRankings(selectedStore.id)
+          setRankings(storeRankings)
+        } catch (error) {
+          console.error('Error loading keywords and rankings:', error)
+          // Firebase에서 로드 실패 시 기본 키워드 사용
+          const defaultStoreKeywords = defaultKeywords.filter(k => k.storeId === selectedStore.id)
+          setKeywords(defaultStoreKeywords)
+          setRankings([])
+        }
+      }
     }
+    
+    loadKeywordsAndRankings()
   }, [selectedStore])
 
   const handleStoreChange = (store: Store) => {
     setSelectedStore(store)
   }
 
-  const handlePlaceRegistration = (place: any) => {
-    // 새로운 플레이스 추가 로직
-    const newStore: Store = {
-      id: place.id,
-      name: place.name,
-      address: place.address,
-      category: place.category || '기타',
-      imageUrl: '/images/store-default.jpg', // 기본 이미지
-      mobileUrl: `https://m.place.naver.com/place/${place.id}/home`,
-      pcUrl: `https://map.naver.com/p/entry/place/${place.id}`
+  const handlePlaceRegistration = async (place: any) => {
+    try {
+      // 새로운 플레이스 데이터 생성
+      const newStoreData = {
+        name: place.name,
+        address: place.address,
+        category: place.category || '기타',
+        imageUrl: '/images/store-default.jpg', // 기본 이미지
+        mobileUrl: `https://m.place.naver.com/place/${place.id}/home`,
+        pcUrl: `https://map.naver.com/p/entry/place/${place.id}`
+      }
+      
+      // Firebase에 저장
+      const newStoreId = await addStore(newStoreData)
+      
+      // 로컬 상태 업데이트
+      const newStore: Store = {
+        id: newStoreId,
+        ...newStoreData
+      }
+      
+      setStores(prev => [...prev, newStore])
+      setSelectedStore(newStore)
+      alert(`${place.name}이(가) 성공적으로 등록되었습니다!`)
+    } catch (error) {
+      console.error('Error registering place:', error)
+      alert('플레이스 등록 중 오류가 발생했습니다. 다시 시도해주세요.')
     }
-    
-    setStores(prev => [...prev, newStore])
-    setSelectedStore(newStore)
-    alert(`${place.name}이(가) 성공적으로 등록되었습니다!`)
   }
 
   // 키워드 관련 핸들러들
-  const handleKeywordFormSave = (updatedKeywords: Keyword[]) => {
-    setKeywords(updatedKeywords)
-    setShowKeywordForm(false)
+  const handleKeywordFormSave = async (updatedKeywords: Keyword[]) => {
+    if (!selectedStore) return
+    
+    try {
+      // Firebase에 키워드 저장
+      await saveKeywords(selectedStore.id, updatedKeywords)
+      
+      // 로컬 상태 업데이트
+      setKeywords(updatedKeywords)
+      setShowKeywordForm(false)
+      
+      alert('키워드가 성공적으로 저장되었습니다!')
+    } catch (error) {
+      console.error('Error saving keywords:', error)
+      alert('키워드 저장 중 오류가 발생했습니다. 다시 시도해주세요.')
+    }
   }
 
   const handleExport = async () => {
@@ -93,26 +175,30 @@ export default function RankingTrackerManager() {
           return null
         }
         
-        // 새로운 순위 기록 생성
-        const newRanking: RankingRecord = {
-          id: `ranking-${Date.now()}-${keyword.id}`,
+        // 새로운 순위 기록 생성 (id와 createdAt는 Firebase에서 자동 생성)
+        const newRanking: Omit<RankingRecord, 'id' | 'createdAt'> = {
           storeId: selectedStore.id,
           keywordId: keyword.id,
           date: new Date().toISOString().split('T')[0],
           mobileRank: result.mobileRank || null,
           pcRank: result.pcRank || null,
-          isAutoTracked: false,
-          createdAt: new Date()
+          isAutoTracked: false
         }
         
         return newRanking
       })
       
-      const newRankings = (await Promise.all(updatePromises)).filter(Boolean) as RankingRecord[]
+      const newRankingsData = (await Promise.all(updatePromises)).filter(Boolean) as Omit<RankingRecord, 'id' | 'createdAt'>[]
       
-      if (newRankings.length > 0) {
-        setRankings(prev => [...newRankings, ...prev])
-        alert(`순위 업데이트 완료! ${newRankings.length}개 키워드의 순위를 조회했습니다.`)
+      if (newRankingsData.length > 0) {
+        // Firebase에 순위 기록 저장
+        await addRankings(newRankingsData)
+        
+        // Firebase에서 업데이트된 순위 기록 다시 로드
+        const updatedRankings = await getRankings(selectedStore.id)
+        setRankings(updatedRankings)
+        
+        alert(`순위 업데이트 완료! ${newRankingsData.length}개 키워드의 순위를 조회했습니다.`)
       } else {
         alert('순위 업데이트 중 오류가 발생했습니다.')
       }
@@ -137,6 +223,23 @@ export default function RankingTrackerManager() {
     setShowAutoTrackingModal(false)
   }
 
+  const handleDeleteDate = async (date: string) => {
+    if (!selectedStore) return
+    
+    try {
+      await deleteRankingsByDate(selectedStore.id, date)
+      
+      // Firebase에서 업데이트된 순위 기록 다시 로드
+      const updatedRankings = await getRankings(selectedStore.id)
+      setRankings(updatedRankings)
+      
+      alert('순위 기록이 삭제되었습니다.')
+    } catch (error) {
+      console.error('Error deleting rankings:', error)
+      alert('삭제 중 오류가 발생했습니다.')
+    }
+  }
+
   if (loading) {
     return (
       <div className="flex justify-center items-center py-12">
@@ -147,77 +250,14 @@ export default function RankingTrackerManager() {
 
   return (
     <div className="space-y-6">
-      {/* 네이버 스타일 헤더 */}
-      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
-        {/* 메인 타이틀 */}
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-              스마트플레이스 순위 추적
-            </h1>
-            <button className="w-5 h-5 rounded-full border border-gray-300 dark:border-gray-600 flex items-center justify-center hover:bg-gray-50 dark:hover:bg-gray-700">
-              <span className="text-xs text-gray-600 dark:text-gray-400">?</span>
-            </button>
-          </div>
-          <button 
-            onClick={() => setShowPlaceRegistration(true)}
-            className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium transition-colors"
-          >
-            플레이스 등록
-          </button>
-        </div>
-
-        {/* 정보 박스 */}
-        <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mb-6">
-          <div className="flex items-center gap-3">
-            <div className="w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center">
-              <span className="text-white text-xs font-bold">i</span>
-            </div>
-            <p className="text-sm text-blue-800 dark:text-blue-200">
-              스마트 플레이스 순위 추적은 네이버 지도에 등록된 가게의 노출 순위를 확인하실 수 있습니다.
-            </p>
-          </div>
-        </div>
-
-        {/* 등록된 스마트플레이스 섹션 */}
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-3">
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-              등록된 스마트플레이스
-            </h2>
-            <button className="relative px-3 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg text-sm font-medium hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">
-              플레이스 관리
-              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs px-1.5 py-0.5 rounded-full">new</span>
-            </button>
-          </div>
-          <div className="relative">
-            <input
-              type="text"
-              placeholder="등록된 스마트플레이스 검색"
-              className="w-64 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-            />
-            <svg className="absolute right-3 top-2.5 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
-          </div>
-        </div>
-
-        {/* 하단 정보 */}
-        <div className="flex items-center justify-between text-sm text-gray-500 dark:text-gray-400">
-          <div className="flex items-center gap-2">
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-            </svg>
-            <span>서울 송파구 가락로 2 기준 순위 조회 중</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <button className="w-4 h-4 rounded-full border border-gray-300 dark:border-gray-600 flex items-center justify-center hover:bg-gray-50 dark:hover:bg-gray-700">
-              <span className="text-xs text-gray-600 dark:text-gray-400">i</span>
-            </button>
-            <span>IP, 설정한 위치, 시간에 따라 순위 오차가 발생할 수 있습니다.</span>
-          </div>
-        </div>
+      {/* 플레이스 등록 버튼 */}
+      <div className="flex justify-end mb-4">
+        <button 
+          onClick={() => setShowPlaceRegistration(true)}
+          className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium transition-colors"
+        >
+          플레이스 등록
+        </button>
       </div>
 
       {/* 지점 선택기 */}
@@ -275,6 +315,7 @@ export default function RankingTrackerManager() {
             storeId={selectedStore.id}
             keywords={keywords}
             rankings={rankings}
+            onDeleteDate={handleDeleteDate}
           />
         </div>
       )}
@@ -283,6 +324,7 @@ export default function RankingTrackerManager() {
       {showKeywordForm && (
         <KeywordForm
           keywords={keywords}
+          storeId={selectedStore?.id || ''}
           onSave={handleKeywordFormSave}
           onCancel={() => setShowKeywordForm(false)}
         />

@@ -11,5 +11,20 @@ service cloud.firestore {
     match /purchase-items/{document} {
       allow read, write: if true;
     }
+    
+    // 지점 컬렉션 - 모든 사용자가 읽기/쓰기 가능
+    match /stores/{document} {
+      allow read, write: if true;
+    }
+    
+    // 키워드 컬렉션 - 모든 사용자가 읽기/쓰기 가능
+    match /keywords/{document} {
+      allow read, write: if true;
+    }
+    
+    // 순위 기록 컬렉션 - 모든 사용자가 읽기/쓰기 가능
+    match /rankings/{document} {
+      allow read, write: if true;
+    }
   }
 }

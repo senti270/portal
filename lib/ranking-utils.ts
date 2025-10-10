@@ -155,25 +155,33 @@ export const fetchNaverRanking = async (keyword: string, storeName: string, stor
       throw new Error(data.error || '네이버 검색 실패')
     }
 
-    // 4. 검색 결과에서 해당 매장의 순위 찾기
-    console.log(`📋 검색 결과 (상위 10개):`)
-    data.items.slice(0, 10).forEach((item: any, idx: number) => {
-      console.log(`  ${idx + 1}위: ${item.title} (${item.category})`)
-    })
-    
-    const targetStoreIndex = data.items.findIndex((item: any) => {
-      const itemTitle = item.title.toLowerCase().replace(/<[^>]*>/g, '') // HTML 태그 제거
-      const searchName = storeName.toLowerCase()
-      
-      // 정확한 매장명 매칭 (완전 일치 또는 포함)
-      // 예: "청담장어마켓 동탄점" === "청담장어마켓 동탄점"
-      if (itemTitle === searchName || itemTitle.includes(searchName) || searchName.includes(itemTitle)) {
-        console.log(`🎯 매칭 성공: "${item.title}" ≈ "${storeName}"`)
-        return true
-      }
-      
-      return false
-    })
+        // 4. 검색 결과에서 해당 매장의 순위 찾기
+        console.log(`📋 검색 결과 (상위 ${Math.min(10, data.items.length)}개):`)
+        data.items.slice(0, 10).forEach((item: any, idx: number) => {
+          console.log(`  ${idx + 1}위: ${item.title} (${item.category})`)
+        })
+        
+        // 매장명을 간단하게 변환 (매칭을 위해)
+        const simplifiedStoreName = storeName.replace(/점$/, '').replace(/마켓$/, '').trim()
+        console.log(`🔍 매칭 시도: "${simplifiedStoreName}" (원본: "${storeName}")`)
+        
+        const targetStoreIndex = data.items.findIndex((item: any) => {
+          const itemTitle = item.title.toLowerCase().replace(/<[^>]*>/g, '') // HTML 태그 제거
+          const searchName = storeName.toLowerCase()
+          const simplifiedSearchName = simplifiedStoreName.toLowerCase()
+          
+          // 여러 매칭 방식 시도
+          if (itemTitle === searchName || 
+              itemTitle.includes(searchName) || 
+              searchName.includes(itemTitle) ||
+              itemTitle.includes(simplifiedSearchName) ||
+              simplifiedSearchName.includes(itemTitle)) {
+            console.log(`🎯 매칭 성공: "${item.title}" ≈ "${storeName}"`)
+            return true
+          }
+          
+          return false
+        })
 
     if (targetStoreIndex >= 0) {
       const rank = targetStoreIndex + 1

@@ -94,7 +94,11 @@ export default function AdminPanel({ systemsList: propSystemsList, onSystemsUpda
       updatedSystems = systemsList.map(s => s.id === system.id ? system : s)
     } else {
       // 추가 모드
-      updatedSystems = [...systemsList, { ...system, id: `system-${Date.now()}` }]
+      // 추가 모드 - Firebase 호환 ID 생성
+      const newId = `system-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+      // 새 시스템의 order는 기존 시스템 개수로 설정 (맨 뒤에 추가)
+      const newOrder = systemsList.length
+      updatedSystems = [...systemsList, { ...system, id: newId, order: newOrder }]
     }
     
     setSystemsList(updatedSystems)
@@ -125,35 +129,59 @@ export default function AdminPanel({ systemsList: propSystemsList, onSystemsUpda
     setEditingSystem(null)
   }
 
+  // react-beautiful-dnd 핸들러
   const handleDragEnd = async (result: any) => {
-    if (!result.destination) return
+    console.log('🔄 드래그 종료:', result)
+    
+    if (!result.destination) {
+      console.log('❌ 드래그 목적지 없음')
+      return
+    }
 
-    const items = Array.from(systemsList)
+    if (result.source.index === result.destination.index) {
+      console.log('📍 같은 위치, 변경 없음')
+      return
+    }
+
+    // 현재 정렬된 시스템 목록 가져오기 (order 기준 - 오름차순)
+    const sortedSystems = [...systemsList].sort((a, b) => (a.order || 0) - (b.order || 0))
+    console.log('📋 드래그 전 순서:', sortedSystems.map((s, i) => `${i}: ${s.title} (order: ${s.order})`))
+    
+    const items = Array.from(sortedSystems)
+    
+    // 간단한 배열 재정렬
     const [reorderedItem] = items.splice(result.source.index, 1)
     items.splice(result.destination.index, 0, reorderedItem)
 
-    // order 필드 업데이트
+    console.log('📋 재정렬 후 순서:', items.map((s, i) => `${i}: ${s.title}`))
+
+    // order 필드 업데이트 (정상 순서로 저장)
     const updatedItems = items.map((item, index) => ({
       ...item,
-      order: index + 1
+      order: index // 정상 순서로 저장
     }))
 
+    console.log('🔄 최종 업데이트된 순서:', updatedItems.map(s => `${s.title}: ${s.order}`))
+    console.log('🔍 드래그 결과 상세:')
+    console.log(`   - 소스 인덱스: ${result.source.index}`)
+    console.log(`   - 목적지 인덱스: ${result.destination.index}`)
+    console.log(`   - 드래그된 아이템: ${reorderedItem.title}`)
+    console.log(`   - 최종 위치: ${result.destination.index}`)
+
     setSystemsList(updatedItems)
-    onSystemsUpdate(updatedItems) // 부모 컴포넌트 상태도 업데이트
+    onSystemsUpdate(updatedItems)
 
     try {
-      // Firestore에 저장
       await updateAllSystems(updatedItems)
-      
-      // 로컬 스토리지에 백업
       localStorage.setItem('portal-systems', JSON.stringify(updatedItems))
-      
-      // 조용히 저장 (알림 없음)
+      console.log('✅ 순서 저장 완료')
     } catch (error) {
-      console.error('Save order error:', error)
+      console.error('❌ 순서 저장 오류:', error)
       alert('순서 저장 중 오류가 발생했습니다.')
     }
   }
+
+
 
   return (
     <>
@@ -178,18 +206,14 @@ export default function AdminPanel({ systemsList: propSystemsList, onSystemsUpda
         </h3>
         <DragDropContext onDragEnd={handleDragEnd}>
           <Droppable droppableId="systems-list">
-            {(provided) => (
+            {(provided, snapshot) => (
               <div
                 {...provided.droppableProps}
                 ref={provided.innerRef}
                 className="space-y-2"
               >
                 {systemsList
-                  .sort((a, b) => {
-                    // 활성 상태 우선순위: active > maintenance > inactive
-                    const statusOrder = { active: 0, maintenance: 1, inactive: 2 }
-                    return statusOrder[a.status] - statusOrder[b.status]
-                  })
+                  .sort((a, b) => (a.order || 0) - (b.order || 0)) // 오름차순 정렬
                   .map((system, index) => (
                   <Draggable key={system.id} draggableId={system.id} index={index}>
                     {(provided, snapshot) => (
@@ -206,7 +230,8 @@ export default function AdminPanel({ systemsList: propSystemsList, onSystemsUpda
                           <div className="flex items-center gap-2">
                             <div
                               {...provided.dragHandleProps}
-                              className="cursor-grab active:cursor-grabbing text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
+                              className="cursor-grab active:cursor-grabbing text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 p-1"
+                              title="드래그하여 순서 변경"
                             >
                               ⋮⋮
                             </div>
@@ -271,6 +296,7 @@ function SystemForm({ system, onSave, onCancel }: {
     category: system?.category || '업무관리',
     url: system?.url || '',
     status: system?.status || 'active',
+    order: system?.order || 0,
     tags: system?.tags || [],
     optimization: system?.optimization || [],
   })

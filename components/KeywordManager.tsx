@@ -2,20 +2,24 @@
 
 import { useState, useEffect } from 'react'
 import { Keyword, RankingFormData, defaultKeywords } from '@/types/ranking'
+import { fetchNaverRanking, exportToExcel, formatRankingDataForExcel } from '@/lib/ranking-utils'
 import KeywordTable from './KeywordTable'
 import KeywordForm from './KeywordForm'
 import AutoTrackingModal from './AutoTrackingModal'
 
 interface KeywordManagerProps {
   storeId: string
+  storeName: string
 }
 
-export default function KeywordManager({ storeId }: KeywordManagerProps) {
+export default function KeywordManager({ storeId, storeName }: KeywordManagerProps) {
   const [keywords, setKeywords] = useState<Keyword[]>([])
   const [showForm, setShowForm] = useState(false)
   const [showAutoTrackingModal, setShowAutoTrackingModal] = useState(false)
   const [editingKeyword, setEditingKeyword] = useState<Keyword | null>(null)
   const [autoTracking, setAutoTracking] = useState(true) // 자동추적 ON/OFF
+  const [isUpdating, setIsUpdating] = useState(false)
+  const [rankings, setRankings] = useState<any[]>([]) // 순위 기록 데이터
 
   useEffect(() => {
     // 해당 지점의 키워드만 필터링 (나중에 Firebase에서 로드)
@@ -53,16 +57,60 @@ export default function KeywordManager({ storeId }: KeywordManagerProps) {
     ))
   }
 
-  const handleExport = () => {
-    // 데이터 내보내기 기능 (나중에 구현)
-    console.log('Exporting keywords:', keywords)
-    alert('데이터 내보내기 기능은 곧 구현됩니다!')
+  const handleExport = async () => {
+    try {
+      const exportData = formatRankingDataForExcel(keywords, rankings, storeName)
+      exportToExcel(exportData, `${storeName}_순위추적데이터`)
+      alert('Excel 파일이 다운로드되었습니다!')
+    } catch (error) {
+      console.error('Export error:', error)
+      alert('파일 다운로드 중 오류가 발생했습니다.')
+    }
   }
 
-  const handleUpdate = () => {
-    // 수동 업데이트 기능 (나중에 구현)
-    console.log('Manual update triggered')
-    alert('순위 업데이트 기능은 곧 구현됩니다!')
+  const handleUpdate = async () => {
+    if (isUpdating) return
+    
+    setIsUpdating(true)
+    
+    try {
+      const updatePromises = keywords.map(async (keyword) => {
+        const result = await fetchNaverRanking(keyword.keyword, storeName)
+        
+        if (result.error) {
+          console.error(`Error updating ${keyword.keyword}:`, result.error)
+          return null
+        }
+        
+        // 새로운 순위 기록 생성
+        const newRanking = {
+          id: `ranking-${Date.now()}-${keyword.id}`,
+          storeId,
+          keywordId: keyword.id,
+          date: new Date().toISOString().split('T')[0],
+          mobileRank: result.mobileRank,
+          pcRank: result.pcRank,
+          isAutoTracked: false,
+          createdAt: new Date()
+        }
+        
+        return newRanking
+      })
+      
+      const newRankings = (await Promise.all(updatePromises)).filter(Boolean)
+      
+      if (newRankings.length > 0) {
+        setRankings(prev => [...newRankings, ...prev])
+        alert(`순위 업데이트 완료! ${newRankings.length}개 키워드의 순위를 조회했습니다.`)
+      } else {
+        alert('순위 업데이트 중 오류가 발생했습니다.')
+      }
+    } catch (error) {
+      console.error('Update error:', error)
+      alert('순위 업데이트 중 오류가 발생했습니다.')
+    } finally {
+      setIsUpdating(false)
+    }
   }
 
   const handleAutoTrackingSave = (time: { hour: string; minute: string }) => {
@@ -115,9 +163,14 @@ export default function KeywordManager({ storeId }: KeywordManagerProps) {
           
           <button
             onClick={handleUpdate}
-            className="px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white text-sm rounded-lg transition-colors"
+            disabled={isUpdating}
+            className={`px-4 py-2 text-sm rounded-lg transition-colors ${
+              isUpdating 
+                ? 'bg-gray-400 cursor-not-allowed' 
+                : 'bg-orange-600 hover:bg-orange-700'
+            } text-white`}
           >
-            🔄 업데이트
+            {isUpdating ? '⏳ 업데이트 중...' : '🔄 업데이트'}
           </button>
         </div>
       </div>

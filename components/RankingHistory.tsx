@@ -5,6 +5,7 @@ import { RankingRecord, defaultKeywords } from '@/types/ranking'
 
 interface RankingHistoryProps {
   storeId: string
+  rankings?: any[]
 }
 
 // 샘플 순위 데이터
@@ -31,7 +32,7 @@ const sampleRankings: RankingRecord[] = [
   }
 ]
 
-export default function RankingHistory({ storeId }: RankingHistoryProps) {
+export default function RankingHistory({ storeId, rankings: propRankings = [] }: RankingHistoryProps) {
   const [rankings, setRankings] = useState<RankingRecord[]>([])
   const [selectedKeyword, setSelectedKeyword] = useState<string>('')
 
@@ -42,10 +43,12 @@ export default function RankingHistory({ storeId }: RankingHistoryProps) {
       setSelectedKeyword(storeKeywords[0].id)
     }
     
-    // 해당 지점의 순위 데이터만 필터링
-    const storeRankings = sampleRankings.filter(r => r.storeId === storeId)
+    // 전달받은 순위 데이터가 있으면 사용, 없으면 샘플 데이터 사용
+    const storeRankings = propRankings.length > 0 
+      ? propRankings 
+      : sampleRankings.filter(r => r.storeId === storeId)
     setRankings(storeRankings)
-  }, [storeId])
+  }, [storeId, propRankings])
 
   const handleDeleteRanking = (id: string) => {
     if (confirm('정말 삭제하시겠습니까?')) {

@@ -48,7 +48,7 @@ export default function RankingDashboard({ store }: RankingDashboardProps) {
         {/* 탭 컨텐츠 */}
         <div className="p-6">
           {activeTab === 'keywords' ? (
-            <KeywordManager storeId={store.id} />
+            <KeywordManager storeId={store.id} storeName={store.name} />
           ) : (
             <RankingHistory storeId={store.id} />
           )}

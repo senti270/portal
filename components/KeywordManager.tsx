@@ -187,6 +187,7 @@ export default function KeywordManager({ storeId, storeName }: KeywordManagerPro
       {/* 키워드 관리 모달 */}
       {showForm && (
         <KeywordForm
+          storeId={storeId}
           keywords={keywords}
           onSave={(updatedKeywords) => {
             setKeywords(updatedKeywords)

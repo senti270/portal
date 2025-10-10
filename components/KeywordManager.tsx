@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { Keyword, RankingFormData, defaultKeywords } from '@/types/ranking'
 import KeywordTable from './KeywordTable'
 import KeywordForm from './KeywordForm'
+import AutoTrackingModal from './AutoTrackingModal'
 
 interface KeywordManagerProps {
   storeId: string
@@ -12,6 +13,7 @@ interface KeywordManagerProps {
 export default function KeywordManager({ storeId }: KeywordManagerProps) {
   const [keywords, setKeywords] = useState<Keyword[]>([])
   const [showForm, setShowForm] = useState(false)
+  const [showAutoTrackingModal, setShowAutoTrackingModal] = useState(false)
   const [editingKeyword, setEditingKeyword] = useState<Keyword | null>(null)
   const [autoTracking, setAutoTracking] = useState(true) // 자동추적 ON/OFF
 
@@ -63,6 +65,17 @@ export default function KeywordManager({ storeId }: KeywordManagerProps) {
     alert('순위 업데이트 기능은 곧 구현됩니다!')
   }
 
+  const handleAutoTrackingSave = (time: { hour: string; minute: string }) => {
+    console.log('Auto tracking time saved:', time)
+    setAutoTracking(true)
+    alert(`자동추적이 ${time.hour}시 ${time.minute}분으로 설정되었습니다!`)
+  }
+
+  const handleAutoTrackingToggle = () => {
+    setAutoTracking(!autoTracking)
+    alert(autoTracking ? '자동추적이 중지되었습니다.' : '자동추적이 활성화되었습니다.')
+  }
+
   return (
     <div className="space-y-6">
       {/* 헤더 */}
@@ -83,7 +96,7 @@ export default function KeywordManager({ storeId }: KeywordManagerProps) {
           </button>
           
           <button
-            onClick={() => setAutoTracking(!autoTracking)}
+            onClick={() => setShowAutoTrackingModal(true)}
             className={`px-4 py-2 text-sm rounded-lg transition-colors ${
               autoTracking
                 ? 'bg-green-600 hover:bg-green-700 text-white'
@@ -117,19 +130,26 @@ export default function KeywordManager({ storeId }: KeywordManagerProps) {
         onToggleActive={handleToggleActive}
       />
 
-      {/* 키워드 추가/편집 폼 */}
-      {(showForm || editingKeyword) && (
-        <div className="animate-fade-in">
-          <KeywordForm
-            keyword={editingKeyword}
-            onSubmit={editingKeyword ? (data) => handleEditKeyword(editingKeyword.id, data) : handleAddKeyword}
-            onCancel={() => {
-              setShowForm(false)
-              setEditingKeyword(null)
-            }}
-          />
-        </div>
+      {/* 키워드 관리 모달 */}
+      {showForm && (
+        <KeywordForm
+          keywords={keywords}
+          onSave={(updatedKeywords) => {
+            setKeywords(updatedKeywords)
+            setShowForm(false)
+          }}
+          onCancel={() => setShowForm(false)}
+        />
       )}
+
+      {/* 자동추적 설정 모달 */}
+      <AutoTrackingModal
+        isOpen={showAutoTrackingModal}
+        onClose={() => setShowAutoTrackingModal(false)}
+        onSave={handleAutoTrackingSave}
+        isActive={autoTracking}
+        onToggleActive={handleAutoTrackingToggle}
+      />
     </div>
   )
 }

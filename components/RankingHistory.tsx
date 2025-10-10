@@ -31,7 +31,12 @@ export default function RankingHistory({ storeId, keywords, rankings }: RankingH
   const formatDate = (dateString: string) => {
     const date = new Date(dateString)
     const days = ['일', '월', '화', '수', '목', '금', '토']
-    return `${date.getFullYear()} ${date.getMonth() + 1}/${date.getDate()} (${days[date.getDay()]})`
+    return `${date.getMonth() + 1}/${date.getDate()}(${days[date.getDay()]})`
+  }
+
+  const formatYear = (dateString: string) => {
+    const date = new Date(dateString)
+    return date.getFullYear()
   }
 
   const dateRange = generateDateRange()
@@ -40,6 +45,7 @@ export default function RankingHistory({ storeId, keywords, rankings }: RankingH
     <div className="overflow-x-auto">
       <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
         <thead className="bg-gray-50 dark:bg-gray-700">
+          {/* 첫 번째 헤더 행: 키워드명들 */}
           <tr>
             <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
               키워드
@@ -53,54 +59,68 @@ export default function RankingHistory({ storeId, keywords, rankings }: RankingH
             <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
               PC
             </th>
-            {dateRange.map((date) => (
-              <th key={date} className="px-4 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider relative">
-                {formatDate(date)}
-                <button className="absolute -top-1 -right-1 text-red-500 hover:text-red-700 text-xs">
-                  🗑️
-                </button>
+            {keywords.map((keyword) => (
+              <th key={keyword.id} className="px-4 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                {keyword.keyword}
               </th>
             ))}
           </tr>
-        </thead>
-        <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-          {keywords.map((keyword) => (
-            <tr key={keyword.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
-              {/* 키워드 */}
-              <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
-                {keyword.keyword}
-              </td>
-              
-              {/* 월 검색량 */}
-              <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+          
+          {/* 두 번째 헤더 행: 월 검색량 정보 */}
+          <tr>
+            <td className="px-4 py-2 text-xs text-gray-500 dark:text-gray-400"></td>
+            <td className="px-4 py-2 text-xs text-gray-500 dark:text-gray-400">월 검색량</td>
+            <td className="px-4 py-2 text-center text-xs text-gray-500 dark:text-gray-400">📱</td>
+            <td className="px-4 py-2 text-center text-xs text-gray-500 dark:text-gray-400">💻</td>
+            {keywords.map((keyword) => (
+              <td key={keyword.id} className="px-4 py-2 text-center text-xs text-gray-500 dark:text-gray-400">
                 {keyword.monthlySearchVolume.toLocaleString()}
               </td>
-              
-              {/* 모바일 검색량 */}
-              <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900 dark:text-white text-center">
-                {keyword.mobileVolume.toLocaleString()}
+            ))}
+          </tr>
+          
+          {/* 세 번째 헤더 행: 모바일/PC 검색량 */}
+          <tr>
+            <td className="px-4 py-2 text-xs text-gray-500 dark:text-gray-400"></td>
+            <td className="px-4 py-2 text-xs text-gray-500 dark:text-gray-400"></td>
+            <td className="px-4 py-2 text-center text-xs text-gray-500 dark:text-gray-400">📱</td>
+            <td className="px-4 py-2 text-center text-xs text-gray-500 dark:text-gray-400">💻</td>
+            {keywords.map((keyword) => (
+              <td key={keyword.id} className="px-4 py-2 text-center text-xs text-gray-500 dark:text-gray-400">
+                <div className="flex justify-center gap-2">
+                  <span>{keyword.mobileVolume.toLocaleString()}</span>
+                  <span>{keyword.pcVolume.toLocaleString()}</span>
+                </div>
+              </td>
+            ))}
+          </tr>
+        </thead>
+        
+        <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+          {/* 날짜별 행들 */}
+          {dateRange.map((date) => (
+            <tr key={date} className="hover:bg-gray-50 dark:hover:bg-gray-700">
+              {/* 날짜 */}
+              <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
+                <div className="flex items-center gap-2">
+                  <span>{formatDate(date)}</span>
+                  <button className="text-red-500 hover:text-red-700 text-xs">
+                    🗑️
+                  </button>
+                </div>
               </td>
               
-              {/* PC 검색량 */}
-              <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900 dark:text-white text-center">
-                {keyword.pcVolume.toLocaleString()}
-              </td>
+              {/* 빈 셀들 */}
+              <td className="px-4 py-3"></td>
+              <td className="px-4 py-3"></td>
+              <td className="px-4 py-3"></td>
               
-              {/* 날짜별 순위 */}
-              {dateRange.map((date) => {
+              {/* 키워드별 순위 데이터 */}
+              {keywords.map((keyword) => {
                 const ranking = getRankingForDate(date, keyword.id)
                 return (
-                  <td key={`${keyword.id}-${date}`} className="px-4 py-3 whitespace-nowrap text-sm text-gray-900 dark:text-white text-center">
-                    {ranking ? (
-                      <div className="flex flex-col">
-                        <span className="font-medium">{ranking.mobileRank}위</span>
-                        {ranking.pcRank && ranking.pcRank !== ranking.mobileRank && (
-                          <span className="text-xs text-gray-500">({ranking.pcRank}위)</span>
-                        )}
-                      </div>
-                    ) : (
-                      '-'
-                    )}
+                  <td key={`${date}-${keyword.id}`} className="px-4 py-3 whitespace-nowrap text-sm text-blue-600 dark:text-blue-400 text-center">
+                    {ranking ? `${ranking.mobileRank}위` : '-'}
                   </td>
                 )
               })}

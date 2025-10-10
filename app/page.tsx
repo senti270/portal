@@ -82,8 +82,12 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex items-center justify-center gap-4">
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
-                <span className="text-white text-2xl font-bold">C</span>
+              <div className="w-12 h-12 rounded-xl flex items-center justify-center shadow-lg overflow-hidden">
+                <img 
+                  src="/favicon.ico" 
+                  alt="드로잉컴퍼니 로고" 
+                  className="w-full h-full object-contain"
+                />
               </div>
               <div className="flex items-center gap-3">
                 <div>

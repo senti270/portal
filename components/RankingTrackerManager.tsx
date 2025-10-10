@@ -1,17 +1,29 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Store, StoreRankingData } from '@/types/ranking'
-import { defaultStores } from '@/types/ranking'
+import { Store, StoreRankingData, Keyword, RankingRecord } from '@/types/ranking'
+import { defaultStores, defaultKeywords } from '@/types/ranking'
 import StoreSelector from './StoreSelector'
-import RankingDashboard from './RankingDashboard'
 import PlaceRegistrationModal from './PlaceRegistrationModal'
+import RankingHistory from './RankingHistory'
+import KeywordForm from './KeywordForm'
+import AutoTrackingModal from './AutoTrackingModal'
+import { fetchNaverRanking, exportToExcel, formatRankingDataForExcel } from '@/lib/ranking-utils'
 
 export default function RankingTrackerManager() {
   const [selectedStore, setSelectedStore] = useState<Store | null>(null)
   const [stores, setStores] = useState<Store[]>(defaultStores)
   const [loading, setLoading] = useState(true)
   const [showPlaceRegistration, setShowPlaceRegistration] = useState(false)
+  
+  // 키워드 및 순위 관련 상태
+  const [keywords, setKeywords] = useState<Keyword[]>([])
+  const [rankings, setRankings] = useState<RankingRecord[]>([])
+  const [showKeywordForm, setShowKeywordForm] = useState(false)
+  const [showAutoTrackingModal, setShowAutoTrackingModal] = useState(false)
+  const [autoTracking, setAutoTracking] = useState(true)
+  const [isUpdating, setIsUpdating] = useState(false)
+  const [autoTrackingTime, setAutoTrackingTime] = useState({ hour: '17', minute: '15' })
 
   useEffect(() => {
     // 초기 로딩 - 나중에 Firebase에서 데이터 로드
@@ -20,6 +32,14 @@ export default function RankingTrackerManager() {
       setSelectedStore(stores[0]) // 첫 번째 지점을 기본 선택
     }
   }, [])
+
+  useEffect(() => {
+    // 선택된 지점이 변경될 때 해당 지점의 키워드 로드
+    if (selectedStore) {
+      const storeKeywords = defaultKeywords.filter(k => k.storeId === selectedStore.id)
+      setKeywords(storeKeywords)
+    }
+  }, [selectedStore])
 
   const handleStoreChange = (store: Store) => {
     setSelectedStore(store)
@@ -40,6 +60,81 @@ export default function RankingTrackerManager() {
     setStores(prev => [...prev, newStore])
     setSelectedStore(newStore)
     alert(`${place.name}이(가) 성공적으로 등록되었습니다!`)
+  }
+
+  // 키워드 관련 핸들러들
+  const handleKeywordFormSave = (updatedKeywords: Keyword[]) => {
+    setKeywords(updatedKeywords)
+    setShowKeywordForm(false)
+  }
+
+  const handleExport = async () => {
+    try {
+      const exportData = formatRankingDataForExcel(keywords, rankings, selectedStore?.name || '')
+      exportToExcel(exportData, `${selectedStore?.name || '지점'}_순위추적데이터`)
+      alert('Excel 파일이 다운로드되었습니다!')
+    } catch (error) {
+      console.error('Export error:', error)
+      alert('파일 다운로드 중 오류가 발생했습니다.')
+    }
+  }
+
+  const handleUpdate = async () => {
+    if (isUpdating || !selectedStore) return
+    
+    setIsUpdating(true)
+    
+    try {
+      const updatePromises = keywords.map(async (keyword) => {
+        const result = await fetchNaverRanking(keyword.keyword, selectedStore.name)
+        
+        if (result.error) {
+          console.error(`Error updating ${keyword.keyword}:`, result.error)
+          return null
+        }
+        
+        // 새로운 순위 기록 생성
+        const newRanking: RankingRecord = {
+          id: `ranking-${Date.now()}-${keyword.id}`,
+          storeId: selectedStore.id,
+          keywordId: keyword.id,
+          date: new Date().toISOString().split('T')[0],
+          mobileRank: result.mobileRank || null,
+          pcRank: result.pcRank || null,
+          isAutoTracked: false,
+          createdAt: new Date()
+        }
+        
+        return newRanking
+      })
+      
+      const newRankings = (await Promise.all(updatePromises)).filter(Boolean) as RankingRecord[]
+      
+      if (newRankings.length > 0) {
+        setRankings(prev => [...newRankings, ...prev])
+        alert(`순위 업데이트 완료! ${newRankings.length}개 키워드의 순위를 조회했습니다.`)
+      } else {
+        alert('순위 업데이트 중 오류가 발생했습니다.')
+      }
+    } catch (error) {
+      console.error('Update error:', error)
+      alert('순위 업데이트 중 오류가 발생했습니다.')
+    } finally {
+      setIsUpdating(false)
+    }
+  }
+
+  const handleAutoTrackingSave = (time: { hour: string; minute: string }) => {
+    setAutoTrackingTime(time)
+    setAutoTracking(true)
+    alert(`자동추적이 ${time.hour}시 ${time.minute}분으로 설정되었습니다!`)
+    setShowAutoTrackingModal(false)
+  }
+
+  const handleAutoTrackingToggle = () => {
+    setAutoTracking(!autoTracking)
+    alert(autoTracking ? '자동추적이 중지되었습니다.' : '자동추적이 활성화되었습니다.')
+    setShowAutoTrackingModal(false)
   }
 
   if (loading) {
@@ -132,10 +227,75 @@ export default function RankingTrackerManager() {
         onStoreChange={handleStoreChange}
       />
 
-      {/* 선택된 지점의 순위 대시보드 */}
+      {/* 선택된 지점의 키워드 및 순위 테이블 */}
       {selectedStore && (
-        <RankingDashboard store={selectedStore} />
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
+          {/* 액션 버튼들 */}
+          <div className="flex flex-wrap gap-2 mb-6">
+            <button
+              onClick={handleExport}
+              className="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white text-sm rounded-lg transition-colors"
+            >
+              📤 내보내기
+            </button>
+
+            <button
+              onClick={() => setShowAutoTrackingModal(true)}
+              className={`px-4 py-2 text-sm rounded-lg transition-colors ${
+                autoTracking
+                  ? 'bg-green-600 hover:bg-green-700 text-white'
+                  : 'bg-gray-300 hover:bg-gray-400 text-gray-700'
+              }`}
+            >
+              {autoTracking ? '🔄 자동추적 ON' : '⏸️ 자동추적 OFF'}
+            </button>
+
+            <button
+              onClick={() => setShowKeywordForm(true)}
+              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded-lg transition-colors"
+            >
+              키워드 관리
+            </button>
+
+            <button
+              onClick={handleUpdate}
+              disabled={isUpdating}
+              className={`px-4 py-2 text-sm rounded-lg transition-colors ${
+                isUpdating 
+                  ? 'bg-gray-400 cursor-not-allowed' 
+                  : 'bg-purple-600 hover:bg-purple-700'
+              } text-white`}
+            >
+              {isUpdating ? '⏳ 업데이트 중...' : '🔄 업데이트'}
+            </button>
+          </div>
+
+          {/* 키워드 및 순위 테이블 */}
+          <RankingHistory
+            storeId={selectedStore.id}
+            keywords={keywords}
+            rankings={rankings}
+          />
+        </div>
       )}
+
+      {/* 키워드 관리 모달 */}
+      {showKeywordForm && (
+        <KeywordForm
+          keywords={keywords}
+          onSave={handleKeywordFormSave}
+          onCancel={() => setShowKeywordForm(false)}
+        />
+      )}
+
+      {/* 자동추적 설정 모달 */}
+      <AutoTrackingModal
+        isOpen={showAutoTrackingModal}
+        onClose={() => setShowAutoTrackingModal(false)}
+        onSave={handleAutoTrackingSave}
+        isActive={autoTracking}
+        onToggleActive={handleAutoTrackingToggle}
+      />
 
       {/* 플레이스 등록 모달 */}
       <PlaceRegistrationModal

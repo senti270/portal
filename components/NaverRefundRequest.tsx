@@ -78,13 +78,13 @@ export default function NaverRefundRequest() {
         setTimeout(() => {
           try {
             // 업체명 입력
-            const companyInput = newWindow.document.getElementById('moText1CC')
+            const companyInput = newWindow.document.getElementById('moText1CC') as HTMLInputElement
             if (companyInput && company) {
               companyInput.value = decodeURIComponent(company)
             }
             
             // 네이버 지도 URL 입력
-            const messageTextarea = newWindow.document.getElementById('moText2CB')
+            const messageTextarea = newWindow.document.getElementById('moText2CB') as HTMLTextAreaElement
             if (messageTextarea && message) {
               messageTextarea.value = decodeURIComponent(message)
             }

@@ -405,32 +405,32 @@ export default function TodoList({ password }: TodoListProps) {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 md:space-y-6 p-3 md:p-0">
       {/* 헤더 */}
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4 md:mb-6">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-1">
+          <h2 className="text-xl md:text-2xl font-bold text-gray-900 dark:text-white mb-1">
             할 일 관리
           </h2>
-          <p className="text-sm text-gray-500 dark:text-gray-400">
+          <p className="text-xs md:text-sm text-gray-500 dark:text-gray-400">
             {filteredTodos.length}개 표시 중 / 전체 {todos.length}개
           </p>
         </div>
         <button
           onClick={() => setShowAddForm(!showAddForm)}
-          className="px-6 py-3 bg-gradient-to-r from-gray-800 to-gray-900 hover:from-gray-900 hover:to-black text-white rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 font-medium"
+          className="w-full sm:w-auto px-4 md:px-6 py-2.5 md:py-3 bg-gradient-to-r from-gray-800 to-gray-900 hover:from-gray-900 hover:to-black text-white rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 font-medium text-sm md:text-base"
         >
           {showAddForm ? '취소' : '+ 할일 추가'}
         </button>
       </div>
 
       {/* 필터 및 검색 */}
-      <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-100 dark:border-gray-700 space-y-4">
+      <div className="bg-white dark:bg-gray-800 rounded-xl p-4 md:p-6 shadow-sm border border-gray-100 dark:border-gray-700 space-y-3 md:space-y-4">
         {/* 필터 버튼 */}
-        <div className="flex gap-3">
+        <div className="flex flex-wrap gap-2 md:gap-3">
           <button
             onClick={() => setFilter('incomplete')}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+            className={`flex-1 min-w-[80px] px-3 md:px-4 py-2 rounded-lg text-xs md:text-sm font-medium transition-all duration-200 ${
               filter === 'incomplete'
                 ? 'bg-gradient-to-r from-gray-800 to-gray-900 text-white shadow-md'
                 : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
@@ -440,7 +440,7 @@ export default function TodoList({ password }: TodoListProps) {
           </button>
           <button
             onClick={() => setFilter('completed')}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+            className={`flex-1 min-w-[80px] px-3 md:px-4 py-2 rounded-lg text-xs md:text-sm font-medium transition-all duration-200 ${
               filter === 'completed'
                 ? 'bg-gradient-to-r from-gray-800 to-gray-900 text-white shadow-md'
                 : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
@@ -450,7 +450,7 @@ export default function TodoList({ password }: TodoListProps) {
           </button>
           <button
             onClick={() => setFilter('all')}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+            className={`flex-1 min-w-[80px] px-3 md:px-4 py-2 rounded-lg text-xs md:text-sm font-medium transition-all duration-200 ${
               filter === 'all'
                 ? 'bg-gradient-to-r from-gray-800 to-gray-900 text-white shadow-md'
                 : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
@@ -466,20 +466,20 @@ export default function TodoList({ password }: TodoListProps) {
             type="text"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full px-4 py-3 pl-12 border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-transparent dark:bg-gray-700 dark:text-white transition-all duration-200"
+            className="w-full px-3 md:px-4 py-2.5 md:py-3 pl-10 md:pl-12 text-sm md:text-base border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-transparent dark:bg-gray-700 dark:text-white transition-all duration-200"
             placeholder="할일 내용이나 요청자로 검색..."
           />
-          <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-            <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="absolute inset-y-0 left-0 pl-3 md:pl-4 flex items-center pointer-events-none">
+            <svg className="h-4 w-4 md:h-5 md:w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
             </svg>
           </div>
           {searchTerm && (
             <button
               onClick={() => setSearchTerm('')}
-              className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-gray-600 transition-colors"
+              className="absolute inset-y-0 right-0 pr-3 md:pr-4 flex items-center text-gray-400 hover:text-gray-600 transition-colors"
             >
-              <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="h-4 w-4 md:h-5 md:w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
@@ -489,8 +489,8 @@ export default function TodoList({ password }: TodoListProps) {
 
       {/* 할일 추가/편집 폼 */}
       {showAddForm && (
-        <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-100 dark:border-gray-700 space-y-4">
-          <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
+        <div className="bg-white dark:bg-gray-800 rounded-xl p-4 md:p-6 shadow-sm border border-gray-100 dark:border-gray-700 space-y-3 md:space-y-4">
+          <h3 className="text-lg md:text-xl font-semibold text-gray-900 dark:text-white mb-3 md:mb-4">
             {editingTodoId ? '할일 수정' : '할일 추가'}
           </h3>
           
@@ -596,56 +596,56 @@ export default function TodoList({ password }: TodoListProps) {
           filteredTodos.map((todo) => (
             <div
               key={todo.id}
-              className={`bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border transition-all duration-200 ${
+              className={`bg-white dark:bg-gray-800 rounded-xl p-4 md:p-6 shadow-sm border transition-all duration-200 ${
                 todo.isCompleted 
                   ? 'border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-900/50' 
                   : 'border-gray-200 dark:border-gray-700 hover:shadow-md hover:border-gray-300 dark:hover:border-gray-600'
               }`}
             >
               <div className="flex items-start justify-between">
-                <div className="flex items-start gap-3 flex-1">
+                <div className="flex items-start gap-2 md:gap-3 flex-1">
                   <input
                     type="checkbox"
                     checked={todo.isCompleted}
                     onChange={(e) => toggleComplete(todo.id, e.target.checked)}
-                    className="mt-1 w-5 h-5 text-gray-800 bg-gray-100 border-gray-300 rounded-lg focus:ring-gray-400 focus:ring-2 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-800"
+                    className="mt-0.5 md:mt-1 w-4 h-4 md:w-5 md:h-5 text-gray-800 bg-gray-100 border-gray-300 rounded-lg focus:ring-gray-400 focus:ring-2 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-800"
                   />
                   
-                  <div className="flex-1">
-                    <p className={`text-gray-800 dark:text-gray-200 text-lg ${
+                  <div className="flex-1 min-w-0">
+                    <p className={`text-gray-800 dark:text-gray-200 text-sm md:text-lg break-words ${
                       todo.isCompleted ? 'line-through opacity-60' : ''
                     }`}>
                       {todo.task}
                     </p>
                     
-                    <div className="flex items-center gap-4 mt-2 text-sm text-gray-500 dark:text-gray-400">
-                      <span>요청자: {todo.requester}</span>
-                      <span className={`${getDueDateStatus(todo.dueDate)}`}>
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-4 mt-2 text-xs md:text-sm text-gray-500 dark:text-gray-400">
+                      <span className="truncate">요청자: {todo.requester}</span>
+                      <span className={`truncate ${getDueDateStatus(todo.dueDate)}`}>
                         마감: {formatDate(todo.dueDate)}
                       </span>
-                      <span>
+                      <span className="truncate">
                         작성: {new Date(todo.createdAt).toLocaleDateString('ko-KR')}
                       </span>
                     </div>
                   </div>
                 </div>
                 
-                <div className="flex gap-1">
+                <div className="flex gap-0.5 md:gap-1 ml-2">
                   <button
                     onClick={() => handleEditTodo(todo)}
-                    className="p-2 text-gray-600 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-all duration-200"
+                    className="p-1.5 md:p-2 text-gray-600 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-all duration-200"
                     title="수정"
                   >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-3.5 h-3.5 md:w-4 md:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                     </svg>
                   </button>
                   <button
                     onClick={() => deleteTodo(todo.id)}
-                    className="p-2 text-gray-600 hover:text-red-600 dark:text-gray-400 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-all duration-200"
+                    className="p-1.5 md:p-2 text-gray-600 hover:text-red-600 dark:text-gray-400 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-all duration-200"
                     title="삭제"
                   >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-3.5 h-3.5 md:w-4 md:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                     </svg>
                   </button>

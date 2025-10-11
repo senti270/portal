@@ -99,97 +99,131 @@ export default function NaverRefundRequest() {
   }
 
   return (
-    <div className="max-w-2xl mx-auto p-6 bg-white dark:bg-gray-800 rounded-xl shadow-lg">
-      <h2 className="text-2xl font-bold mb-6 text-gray-900 dark:text-white">
+    <div className="max-w-4xl mx-auto p-6 space-y-8">
+      <h2 className="text-2xl font-bold text-center text-gray-900 dark:text-white">
         네이버 예약 환불 요청
       </h2>
-      
-      {/* 매장 선택 */}
-      <div className="mb-6">
-        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-          매장 선택
-        </label>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {stores.map((store) => (
-            <button
-              key={store.id}
-              onClick={() => handleStoreSelect(store)}
-              className={`p-4 rounded-lg border-2 transition-all duration-200 min-h-[60px] flex items-center justify-center ${
-                selectedStore?.id === store.id
-                  ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
-                  : 'border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 hover:border-gray-300 dark:hover:border-gray-500 text-gray-800 dark:text-gray-200'
-              }`}
-            >
-              <span className="font-medium text-sm sm:text-base text-center leading-tight">{store.name}</span>
-            </button>
-          ))}
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* 케이스 1: 네이버 고객센터 */}
+        <div className="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-6 border-2 border-blue-200 dark:border-blue-800 shadow-lg">
+          <div className="flex items-center mb-4">
+            <div className="w-10 h-10 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold text-xl mr-3">
+              1
+            </div>
+            <h3 className="text-xl font-bold text-blue-800 dark:text-blue-300">
+              취소수수료 발생 / 예약 후 환불
+            </h3>
+          </div>
+          
+          <p className="text-sm text-gray-700 dark:text-gray-300 mb-4">
+            취소 상태에서 취소수수료가 발생한 경우 또는 완료 상태에서 환불 요청 시
+          </p>
+
+          {/* 매장 선택 */}
+          <div className="mb-4">
+            <label className="block text-sm font-bold text-blue-800 dark:text-blue-300 mb-3">
+              📍 매장 선택
+            </label>
+            <div className="grid grid-cols-2 gap-2">
+              {stores.map((store) => (
+                <button
+                  key={store.id}
+                  onClick={() => handleStoreSelect(store)}
+                  className={`p-3 rounded-lg border-2 transition-all duration-200 text-xs font-medium ${
+                    selectedStore?.id === store.id
+                      ? 'border-blue-600 bg-blue-100 dark:bg-blue-800 text-blue-800 dark:text-blue-200 shadow-md'
+                      : 'border-blue-200 dark:border-blue-700 bg-white dark:bg-blue-900/30 hover:border-blue-400 text-gray-700 dark:text-gray-300'
+                  }`}
+                >
+                  {store.name}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* 선택된 매장 */}
+          {selectedStore && (
+            <div className="mb-4 p-3 bg-blue-100 dark:bg-blue-800/50 rounded-lg border border-blue-300 dark:border-blue-600">
+              <p className="text-sm text-blue-800 dark:text-blue-200 text-center font-medium">
+                ✓ {selectedStore.name} 선택됨
+              </p>
+            </div>
+          )}
+
+          {/* 버튼 */}
+          <button
+            onClick={handleSubmit}
+            disabled={!selectedStore}
+            className={`w-full px-6 py-4 rounded-lg font-bold text-lg transition-all duration-200 ${
+              selectedStore
+                ? 'bg-blue-600 hover:bg-blue-700 text-white shadow-lg hover:shadow-xl'
+                : 'bg-gray-300 dark:bg-gray-600 text-gray-500 dark:text-gray-400 cursor-not-allowed'
+            }`}
+          >
+            {selectedStore ? '네이버 고객센터로 이동 →' : '매장을 먼저 선택하세요'}
+          </button>
+        </div>
+
+        {/* 케이스 2: 네이버페이센터 */}
+        <div className="bg-green-50 dark:bg-green-900/20 rounded-xl p-6 border-2 border-green-200 dark:border-green-800 shadow-lg">
+          <div className="flex items-center mb-4">
+            <div className="w-10 h-10 bg-green-600 text-white rounded-full flex items-center justify-center font-bold text-xl mr-3">
+              2
+            </div>
+            <h3 className="text-xl font-bold text-green-800 dark:text-green-300">
+              구매확정 후 직권취소
+            </h3>
+          </div>
+          
+          <p className="text-sm text-gray-700 dark:text-gray-300 mb-4">
+            구매가 확정된 후 직권으로 취소 처리해야 하는 경우
+          </p>
+
+          {/* 안내사항 */}
+          <div className="mb-4 p-4 bg-green-100 dark:bg-green-800/30 rounded-lg border border-green-300 dark:border-green-700">
+            <p className="text-sm font-bold text-green-800 dark:text-green-300 mb-2">
+              💡 이런 경우에 사용하세요:
+            </p>
+            <ul className="text-xs text-gray-700 dark:text-gray-300 space-y-1 ml-4">
+              <li className="flex items-start">
+                <span className="mr-2">•</span>
+                <span>이미 구매가 확정된 주문</span>
+              </li>
+              <li className="flex items-start">
+                <span className="mr-2">•</span>
+                <span>직접 주문번호로 조회하여 취소</span>
+              </li>
+              <li className="flex items-start">
+                <span className="mr-2">•</span>
+                <span>매장 선택 불필요</span>
+              </li>
+            </ul>
+          </div>
+
+          {/* 버튼 */}
+          <button
+            onClick={() => window.open('https://admin.pay.naver.com/o/v3/sale/purchaseDecision', '_blank')}
+            className="w-full px-6 py-4 rounded-lg font-bold text-lg transition-all duration-200 bg-green-600 hover:bg-green-700 text-white shadow-lg hover:shadow-xl mb-4"
+          >
+            네이버페이센터 환불처리 →
+          </button>
+
+          <p className="text-xs text-center text-gray-600 dark:text-gray-400">
+            ⬇️ 아래 직권취소 방법을 확인하세요
+          </p>
         </div>
       </div>
 
-      {/* 선택된 매장 정보 */}
-      {selectedStore && (
-        <div className="mb-6 p-4 bg-green-50 dark:bg-green-900/30 rounded-lg">
-          <p className="text-sm text-green-700 dark:text-green-300 text-center">
-            <span className="font-medium">선택된 매장:</span> {selectedStore.name}
-          </p>
-        </div>
-      )}
-
-      {/* 케이스 구분 */}
-      <div className="mb-6">
-        <h3 className="text-lg font-bold mb-3 text-gray-900 dark:text-white">
-          환불 유형 선택
-        </h3>
-        <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-          환불 상황에 맞는 버튼을 선택하세요
-        </p>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* 케이스 1: 네이버 고객센터 */}
-          <div className="border border-gray-200 dark:border-gray-600 rounded-lg p-4 bg-blue-50 dark:bg-blue-900/20">
-            <h4 className="font-bold text-blue-800 dark:text-blue-300 mb-2">
-              ① 취소수수료 발생 / 예약 후 환불
-            </h4>
-            <p className="text-xs text-gray-600 dark:text-gray-400 mb-3">
-              취소 상태에서 취소수수료가 발생한 경우 또는 완료 상태에서 환불 요청 시
-            </p>
-            <button
-              onClick={handleSubmit}
-              disabled={!selectedStore}
-              className={`w-full px-4 py-3 rounded-lg font-medium transition-all duration-200 ${
-                selectedStore
-                  ? 'bg-blue-600 hover:bg-blue-700 text-white shadow-md'
-                  : 'bg-gray-300 dark:bg-gray-600 text-gray-500 dark:text-gray-400 cursor-not-allowed'
-              }`}
-            >
-              네이버 고객센터로 이동
-            </button>
-          </div>
-
-          {/* 케이스 2: 네이버페이센터 */}
-          <div className="border border-gray-200 dark:border-gray-600 rounded-lg p-4 bg-green-50 dark:bg-green-900/20">
-            <h4 className="font-bold text-green-800 dark:text-green-300 mb-2">
-              ② 구매확정 후 직권취소
-            </h4>
-            <p className="text-xs text-gray-600 dark:text-gray-400 mb-3">
-              구매가 확정된 후 직권으로 취소 처리해야 하는 경우 (매장 선택 불필요)
-            </p>
-            <button
-              onClick={() => window.open('https://admin.pay.naver.com/o/v3/sale/purchaseDecision', '_blank')}
-              className="w-full px-4 py-3 rounded-lg font-medium transition-all duration-200 bg-green-600 hover:bg-green-700 text-white shadow-md"
-            >
-              네이버페이센터 환불처리
-            </button>
-          </div>
-        </div>
       </div>
 
       {/* 직권취소 안내 */}
-      <div className="mt-6 p-6 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600">
+      <div className="p-6 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600">
         <h3 className="text-lg font-bold mb-4 text-gray-900 dark:text-white flex items-center">
           <svg className="w-5 h-5 mr-2 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
-          직권취소 처리 방법
+          직권취소 처리 방법 (케이스 ②)
         </h3>
         <ol className="space-y-3 text-sm text-gray-700 dark:text-gray-300">
           <li className="flex">

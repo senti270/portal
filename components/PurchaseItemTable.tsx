@@ -259,19 +259,27 @@ export default function PurchaseItemTable({
 
                 {/* 추가 정보 (URL, 구매단위) */}
                 {(item.url || item.purchaseUnit) && (
-                  <div className="pl-15 space-y-1">
+                  <div className="space-y-2 pt-2 border-t border-gray-200 dark:border-gray-600">
                     {item.url && (
                       <a
                         href={item.url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 text-xs block truncate"
+                        className="flex items-center gap-2 text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 text-xs group"
                       >
-                        🔗 {item.url}
+                        <svg className="w-4 h-4 flex-shrink-0 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                        </svg>
+                        <span className="truncate">{item.url}</span>
                       </a>
                     )}
                     {item.purchaseUnit && (
-                      <p className="text-xs text-gray-600 dark:text-gray-300">📦 {item.purchaseUnit}</p>
+                      <div className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-300">
+                        <svg className="w-4 h-4 flex-shrink-0 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                        </svg>
+                        <span>{item.purchaseUnit}</span>
+                      </div>
                     )}
                   </div>
                 )}

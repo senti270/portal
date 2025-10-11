@@ -171,16 +171,11 @@ export default function NaverRefundRequest() {
               ② 구매확정 후 직권취소
             </h4>
             <p className="text-xs text-gray-600 dark:text-gray-400 mb-3">
-              구매가 확정된 후 직권으로 취소 처리해야 하는 경우
+              구매가 확정된 후 직권으로 취소 처리해야 하는 경우 (매장 선택 불필요)
             </p>
             <button
               onClick={() => window.open('https://admin.pay.naver.com/o/v3/sale/purchaseDecision', '_blank')}
-              disabled={!selectedStore}
-              className={`w-full px-4 py-3 rounded-lg font-medium transition-all duration-200 ${
-                selectedStore
-                  ? 'bg-green-600 hover:bg-green-700 text-white shadow-md'
-                  : 'bg-gray-300 dark:bg-gray-600 text-gray-500 dark:text-gray-400 cursor-not-allowed'
-              }`}
+              className="w-full px-4 py-3 rounded-lg font-medium transition-all duration-200 bg-green-600 hover:bg-green-700 text-white shadow-md"
             >
               네이버페이센터 환불처리
             </button>

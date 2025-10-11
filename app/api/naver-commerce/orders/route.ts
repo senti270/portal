@@ -24,11 +24,11 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    // 네이버 커머스 API 호출
-    const apiUrl = 'https://api.commerce.naver.com/external/v1/pay-order/seller/product-orders/last-changed-statuses'
+    // 네이버 커머스 API 호출 (올바른 엔드포인트)
+    const apiUrl = 'https://api.commerce.naver.com/external/v1/pay-order/seller/product-orders'
     
     const response = await fetch(
-      `${apiUrl}?lastChangedFrom=${startDate}&lastChangedTo=${endDate}`,
+      `${apiUrl}?startDate=${startDate}&endDate=${endDate}`,
       {
         method: 'GET',
         headers: {

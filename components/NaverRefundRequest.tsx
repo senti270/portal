@@ -215,8 +215,6 @@ export default function NaverRefundRequest() {
         </div>
       </div>
 
-      </div>
-
       {/* 직권취소 안내 */}
       <div className="p-6 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600">
         <h3 className="text-lg font-bold mb-4 text-gray-900 dark:text-white flex items-center">

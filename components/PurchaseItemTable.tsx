@@ -194,14 +194,14 @@ export default function PurchaseItemTable({
       {/* 모바일 카드 뷰 */}
       <div className="md:hidden">
         {items.length === 0 ? (
-          <div className="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
+          <div className="py-12 text-center text-gray-500 dark:text-gray-400">
             등록된 물품이 없습니다.
           </div>
         ) : (
-          <div className="space-y-4 p-4">
+          <div className="space-y-3">
             {items.map((item) => (
               <div key={item.id}>
-              <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-3 space-y-2">
+              <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 space-y-3 border border-gray-200 dark:border-gray-600">
                 {/* 이미지와 기본 정보 */}
                 <div className="flex items-start gap-3">
                   {item.imageUrl ? (

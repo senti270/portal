@@ -64,6 +64,7 @@ const depositToFirestore = (deposit: Omit<DepositItem, 'id' | 'createdAt' | 'upd
     accountNumber: deposit.accountNumber,
     requestDate: requestDateTimestamp,
     taxInvoiceAttached: deposit.taxInvoiceAttached,
+    attachedFiles: deposit.attachedFiles || [],
     isCompleted: deposit.isCompleted
   }
 }
@@ -78,6 +79,7 @@ const firestoreToDeposit = (id: string, data: any): DepositItem => ({
   accountNumber: data.accountNumber,
   requestDate: data.requestDate,
   taxInvoiceAttached: data.taxInvoiceAttached || false,
+  attachedFiles: data.attachedFiles || [],
   isCompleted: data.isCompleted,
   createdAt: data.createdAt?.toDate() || new Date(),
   updatedAt: data.updatedAt?.toDate() || new Date()

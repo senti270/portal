@@ -28,6 +28,114 @@ export default function DepositList({ password }: DepositListProps) {
     taxInvoiceAttached: false
   })
   
+  const [attachedFiles, setAttachedFiles] = useState<Array<{name: string, data: string, uploadedAt: Date}>>([])
+
+  // 이미지 압축 함수
+  const compressImage = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader()
+      reader.onload = (e) => {
+        const img = new Image()
+        img.onload = () => {
+          const canvas = document.createElement('canvas')
+          const MAX_WIDTH = 800
+          const MAX_HEIGHT = 800
+          let width = img.width
+          let height = img.height
+
+          if (width > height) {
+            if (width > MAX_WIDTH) {
+              height *= MAX_WIDTH / width
+              width = MAX_WIDTH
+            }
+          } else {
+            if (height > MAX_HEIGHT) {
+              width *= MAX_HEIGHT / height
+              height = MAX_HEIGHT
+            }
+          }
+
+          canvas.width = width
+          canvas.height = height
+          const ctx = canvas.getContext('2d')
+          ctx?.drawImage(img, 0, 0, width, height)
+          
+          // JPEG로 압축 (품질 0.7)
+          resolve(canvas.toDataURL('image/jpeg', 0.7))
+        }
+        img.onerror = reject
+        img.src = e.target?.result as string
+      }
+      reader.onerror = reject
+      reader.readAsDataURL(file)
+    })
+  }
+
+  // 파일 선택 핸들러
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || [])
+    if (files.length === 0) return
+
+    if (attachedFiles.length + files.length > 3) {
+      alert('최대 3개까지만 첨부할 수 있습니다.')
+      return
+    }
+
+    for (const file of files) {
+      if (!file.type.startsWith('image/')) {
+        alert('이미지 파일만 첨부 가능합니다.')
+        continue
+      }
+
+      try {
+        const compressedData = await compressImage(file)
+        setAttachedFiles(prev => [...prev, {
+          name: file.name,
+          data: compressedData,
+          uploadedAt: new Date()
+        }])
+      } catch (error) {
+        console.error('이미지 압축 오류:', error)
+        alert('이미지 처리 중 오류가 발생했습니다.')
+      }
+    }
+  }
+
+  // 붙여넣기 핸들러
+  const handlePaste = async (e: React.ClipboardEvent) => {
+    const items = e.clipboardData?.items
+    if (!items) return
+
+    if (attachedFiles.length >= 3) {
+      alert('최대 3개까지만 첨부할 수 있습니다.')
+      return
+    }
+
+    for (let i = 0; i < items.length; i++) {
+      if (items[i].type.indexOf('image') !== -1) {
+        const file = items[i].getAsFile()
+        if (file) {
+          try {
+            const compressedData = await compressImage(file)
+            setAttachedFiles(prev => [...prev, {
+              name: `붙여넣기_${new Date().getTime()}.jpg`,
+              data: compressedData,
+              uploadedAt: new Date()
+            }])
+          } catch (error) {
+            console.error('이미지 처리 오류:', error)
+            alert('이미지 처리 중 오류가 발생했습니다.')
+          }
+        }
+      }
+    }
+  }
+
+  // 파일 삭제
+  const removeFile = (index: number) => {
+    setAttachedFiles(prev => prev.filter((_, i) => i !== index))
+  }
+  
   // 기존 요청자 목록 추출
   const getExistingRequesters = () => {
     const requesters = (deposits || []).map(deposit => deposit.requester)
@@ -169,7 +277,8 @@ export default function DepositList({ password }: DepositListProps) {
             bank: newDeposit.bank,
             accountNumber: newDeposit.accountNumber,
             requestDate: newDeposit.requestDate ? new Date(newDeposit.requestDate) : null,
-            taxInvoiceAttached: newDeposit.taxInvoiceAttached,
+            taxInvoiceAttached: attachedFiles.length > 0,
+            attachedFiles: attachedFiles,
             isCompleted: false
           }
         })
@@ -187,6 +296,7 @@ export default function DepositList({ password }: DepositListProps) {
           requestDate: '',
           taxInvoiceAttached: false
         })
+        setAttachedFiles([])
         setShowAddForm(false)
         fetchDeposits() // 목록 새로고침
         alert('입금 항목이 추가되었습니다!')
@@ -601,6 +711,71 @@ export default function DepositList({ password }: DepositListProps) {
               세금계산서 첨부됨
             </label>
           </div>
+
+          {/* 파일 첨부 영역 */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              세금계산서/견적서 첨부 (최대 3개)
+            </label>
+            
+            {/* 파일 업로드 버튼 & 붙여넣기 영역 */}
+            <div className="space-y-3">
+              <div className="flex gap-2">
+                <label className="flex-1 px-4 py-3 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-lg border-2 border-dashed border-blue-300 dark:border-blue-700 hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-all cursor-pointer text-center">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    onChange={handleFileSelect}
+                    className="hidden"
+                    disabled={attachedFiles.length >= 3}
+                  />
+                  <span className="text-sm font-medium">
+                    📁 파일 선택 ({attachedFiles.length}/3)
+                  </span>
+                </label>
+                
+                <div
+                  onPaste={handlePaste}
+                  contentEditable
+                  className="flex-1 px-4 py-3 bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300 rounded-lg border-2 border-dashed border-green-300 dark:border-green-700 hover:bg-green-100 dark:hover:bg-green-900/50 transition-all text-center outline-none"
+                  suppressContentEditableWarning
+                >
+                  <span className="text-sm font-medium pointer-events-none">
+                    📋 여기에 붙여넣기 (Ctrl+V)
+                  </span>
+                </div>
+              </div>
+
+              {/* 첨부된 파일 목록 */}
+              {attachedFiles.length > 0 && (
+                <div className="grid grid-cols-3 gap-2">
+                  {attachedFiles.map((file, index) => (
+                    <div key={index} className="relative group">
+                      <img
+                        src={file.data}
+                        alt={file.name}
+                        className="w-full h-24 object-cover rounded-lg border border-gray-300 dark:border-gray-600 cursor-pointer hover:opacity-75 transition-opacity"
+                        onClick={() => window.open(file.data, '_blank')}
+                      />
+                      <button
+                        onClick={() => removeFile(index)}
+                        className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                        title="삭제"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
+                      <p className="text-xs text-gray-600 dark:text-gray-400 mt-1 truncate" title={file.name}>
+                        {file.name}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
           
           <div className="flex gap-2">
             <button
@@ -648,25 +823,68 @@ export default function DepositList({ password }: DepositListProps) {
                     </p>
                     
                     {deposit.bank && (
-                      <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
-                        {deposit.bank} {deposit.accountNumber}
-                      </p>
+                      <div className="flex items-center gap-2 mb-2">
+                        <p className="text-sm text-gray-600 dark:text-gray-400">
+                          {deposit.bank} {deposit.accountNumber}
+                        </p>
+                        {deposit.accountNumber && (
+                          <button
+                            onClick={async () => {
+                              try {
+                                await navigator.clipboard.writeText(deposit.accountNumber)
+                                alert('계좌번호가 복사되었습니다!')
+                              } catch (error) {
+                                // 폴백 방식
+                                const textArea = document.createElement('textarea')
+                                textArea.value = deposit.accountNumber
+                                document.body.appendChild(textArea)
+                                textArea.select()
+                                document.execCommand('copy')
+                                document.body.removeChild(textArea)
+                                alert('계좌번호가 복사되었습니다!')
+                              }
+                            }}
+                            className="p-1 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-600 rounded transition-all"
+                            title="계좌번호 복사"
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                            </svg>
+                          </button>
+                        )}
+                      </div>
                     )}
                     
-                    <div className="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
-                      <span>요청자: {deposit.requester}</span>
-                      <span className={`${getRequestDateStatus(deposit.requestDate)}`}>
+                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs md:text-sm text-gray-500 dark:text-gray-400">
+                      <span className="whitespace-nowrap">요청자: {deposit.requester}</span>
+                      <span className={`whitespace-nowrap ${getRequestDateStatus(deposit.requestDate)}`}>
                         요청일: {formatDate(deposit.requestDate)}
                       </span>
-                      <span>
+                      <span className="whitespace-nowrap">
                         등록: {new Date(deposit.createdAt).toLocaleDateString('ko-KR')}
                       </span>
                       {deposit.taxInvoiceAttached && (
-                        <span className="px-2 py-0.5 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded text-xs">
-                          계산서 첨부
+                        <span className="px-2 py-0.5 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded text-xs whitespace-nowrap">
+                          첨부 {(deposit as any).attachedFiles?.length || 0}개
                         </span>
                       )}
                     </div>
+
+                    {/* 첨부 파일 썸네일 */}
+                    {(deposit as any).attachedFiles && (deposit as any).attachedFiles.length > 0 && (
+                      <div className="flex gap-2 mt-2">
+                        {(deposit as any).attachedFiles.map((file: any, index: number) => (
+                          <img
+                            key={index}
+                            src={file.data}
+                            alt={file.name}
+                            className="w-16 h-16 object-cover rounded border border-gray-300 dark:border-gray-600 cursor-pointer hover:scale-110 transition-transform"
+                            onClick={() => window.open(file.data, '_blank')}
+                            title={`${file.name} - 클릭하여 크게 보기`}
+                          />
+                        ))}
+                      </div>
+                    )}
                   </div>
 
                   <div className="flex gap-1">

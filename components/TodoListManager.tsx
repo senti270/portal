@@ -59,10 +59,7 @@ export default function TodoListManager() {
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
       {/* 헤더 */}
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-          통합 업무 관리 시스템
-        </h1>
+      <div className="flex justify-end items-center mb-6">
         <button
           onClick={handleLogout}
           className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors"

@@ -63,6 +63,7 @@ export async function POST(request: NextRequest) {
       accountNumber: deposit.accountNumber || '',
       requestDate: deposit.requestDate ? new Date(deposit.requestDate) : null,
       taxInvoiceAttached: deposit.taxInvoiceAttached || false,
+      attachedFiles: deposit.attachedFiles || [],
       isCompleted: false
     }
 

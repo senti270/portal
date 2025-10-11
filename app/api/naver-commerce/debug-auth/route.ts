@@ -84,7 +84,7 @@ export async function GET(request: NextRequest) {
     }
 
     // 6. 실제 API 호출 테스트
-    let tokenResponse = null
+    let tokenResponse: any = null
     let tokenError = null
     
     if (client_secret_sign) {
@@ -123,7 +123,7 @@ export async function GET(request: NextRequest) {
           console.error('❌ API 오류:', tokenError)
         }
 
-      } catch (apiError) {
+      } catch (apiError: any) {
         console.error('❌ API 호출 오류:', apiError)
         tokenError = apiError.message
       }

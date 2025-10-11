@@ -84,7 +84,12 @@ export async function GET(request: NextRequest) {
     }
 
     // 6. 실제 API 호출 테스트
-    let tokenResponse: any = null
+    let tokenResponse: {
+      status: number;
+      statusText: string;
+      ok: boolean;
+      data?: any;
+    } | null = null
     let tokenError = null
     
     if (client_secret_sign) {

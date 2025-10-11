@@ -1,11 +1,7 @@
 {
   "crons": [
     {
-      "path": "/api/cron/auto-track",
-      "schedule": "0 9 * * *"
-    },
-    {
-      "path": "/api/cron/order-reports",
+      "path": "/api/cron/all-tasks",
       "schedule": "0 9,12 * * *"
     }
   ]

@@ -3,6 +3,14 @@
     {
       "path": "/api/cron/auto-track",
       "schedule": "0 9 * * *"
+    },
+    {
+      "path": "/api/cron/morning-report",
+      "schedule": "0 9 * * *"
+    },
+    {
+      "path": "/api/cron/noon-report",
+      "schedule": "0 12 * * *"
     }
   ]
 }

@@ -1,12 +1,3 @@
 {
-  "crons": [
-    {
-      "path": "/api/cron/auto-track",
-      "schedule": "0 9 * * *"
-    },
-    {
-      "path": "/api/cron/order-reports",
-      "schedule": "0 9,12 * * *"
-    }
-  ]
+  "crons": []
 }

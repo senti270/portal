@@ -112,12 +112,12 @@ export default function NaverRefundRequest() {
               1
             </div>
             <h3 className="text-xl font-bold text-blue-800 dark:text-blue-300">
-              취소수수료 발생 / 예약 후 환불
+              예약 취소 처리 후 취소수수료 발생한 건 환불
             </h3>
           </div>
           
           <p className="text-sm text-gray-700 dark:text-gray-300 mb-4">
-            취소 상태에서 취소수수료가 발생한 경우 또는 완료 상태에서 환불 요청 시
+            <strong>cafedrawing555</strong> 아이디로 로그인 후, 신청
           </p>
 
           {/* 매장 선택 */}
@@ -172,31 +172,35 @@ export default function NaverRefundRequest() {
               2
             </div>
             <h3 className="text-xl font-bold text-green-800 dark:text-green-300">
-              구매확정 후 직권취소
+              예약 완료 처리 후 환불
             </h3>
           </div>
           
           <p className="text-sm text-gray-700 dark:text-gray-300 mb-4">
-            구매가 확정된 후 직권으로 취소 처리해야 하는 경우
+            <strong>cafedrawing555</strong> 아이디로 로그인 후, 신청
           </p>
 
           {/* 안내사항 */}
           <div className="mb-4 p-4 bg-green-100 dark:bg-green-800/30 rounded-lg border border-green-300 dark:border-green-700">
-            <p className="text-sm font-bold text-green-800 dark:text-green-300 mb-2">
-              💡 이런 경우에 사용하세요:
+            <p className="text-sm font-bold text-green-800 dark:text-green-300 mb-3">
+              💡 로그인 시 2단계 인증 필요:
             </p>
-            <ul className="text-xs text-gray-700 dark:text-gray-300 space-y-1 ml-4">
+            <ul className="text-xs text-gray-700 dark:text-gray-300 space-y-2 ml-4">
               <li className="flex items-start">
-                <span className="mr-2">•</span>
-                <span>이미 구매가 확정된 주문</span>
+                <span className="mr-2 text-green-600 font-bold">•</span>
+                <span><strong>cafedrawing555</strong> 계정 로그인</span>
               </li>
               <li className="flex items-start">
-                <span className="mr-2">•</span>
-                <span>직접 주문번호로 조회하여 취소</span>
+                <span className="mr-2 text-green-600 font-bold">•</span>
+                <span>2단계 인증/메일 인증 선택화면에서 <strong>이메일인증 선택</strong></span>
               </li>
               <li className="flex items-start">
-                <span className="mr-2">•</span>
-                <span>매장 선택 불필요</span>
+                <span className="mr-2 text-green-600 font-bold">•</span>
+                <span><strong>drawing555@kakao.com</strong> 메일 주소 입력 후 인증</span>
+              </li>
+              <li className="flex items-start">
+                <span className="mr-2 text-green-600 font-bold">•</span>
+                <span>카카오메일에서 직접 확인 또는 <strong>010-9741-7415</strong>로 연락해서 인증확인 요청</span>
               </li>
             </ul>
           </div>

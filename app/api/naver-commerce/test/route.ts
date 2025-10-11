@@ -27,74 +27,76 @@ export async function GET(request: NextRequest) {
       clientSecret: NAVER_COMMERCE_CLIENT_SECRET ? '설정됨' : '미설정'
     })
 
-    // 1. OAuth 2.0 토큰 발급
-    console.log('🔑 OAuth 2.0 토큰 발급 중...')
-    
-    const tokenResponse = await fetch('https://api.commerce.naver.com/oauth/v1/access_token', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      body: new URLSearchParams({
-        grant_type: 'client_credentials',
-        client_id: NAVER_COMMERCE_CLIENT_ID,
-        client_secret: NAVER_COMMERCE_CLIENT_SECRET,
-      }),
-    })
+    // 여러 엔드포인트 테스트
+    const endpoints = [
+      'https://api.commerce.naver.com/external/v1/pay-order/seller/product-orders',
+      'https://api.commerce.naver.com/external/v1/seller/stores',
+      'https://api.commerce.naver.com/external/v1/seller',
+      'https://api.commerce.naver.com/external/v1/stores'
+    ]
 
-    if (!tokenResponse.ok) {
-      const tokenError = await tokenResponse.text()
-      console.error('❌ 토큰 발급 실패:', tokenError)
-      return NextResponse.json({
-        success: false,
-        error: '토큰 발급 실패',
-        details: tokenError
-      }, { status: tokenResponse.status })
-    }
+    const results = []
 
-    const tokenData = await tokenResponse.json()
-    console.log('✅ 토큰 발급 성공:', tokenData.access_token ? '발급됨' : '실패')
-
-    // 2. 판매자 정보 조회 (토큰 사용)
-    const storeApiUrl = 'https://api.commerce.naver.com/external/v1/seller'
-    
-    console.log('📡 판매자 정보 API 호출 중...')
-    
-    const storeResponse = await fetch(storeApiUrl, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${tokenData.access_token}`,
-      },
-    })
-
-    console.log('📡 스토어 API 응답 상태:', storeResponse.status)
-
-    if (!storeResponse.ok) {
-      const errorText = await storeResponse.text()
-      console.error('❌ 스토어 API 에러:', errorText)
+    for (const apiUrl of endpoints) {
+      console.log(`📡 API 테스트: ${apiUrl}`)
       
-      return NextResponse.json({
-        success: false,
-        error: '스토어 API 호출 실패',
-        status: storeResponse.status,
-        details: errorText,
-        apiUrl: storeApiUrl,
-        headers: {
-          'X-Naver-Client-Id': NAVER_COMMERCE_CLIENT_ID ? '설정됨' : '미설정',
-          'X-Naver-Client-Secret': NAVER_COMMERCE_CLIENT_SECRET ? '설정됨' : '미설정'
+      try {
+        const response = await fetch(apiUrl, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Naver-Client-Id': NAVER_COMMERCE_CLIENT_ID,
+            'X-Naver-Client-Secret': NAVER_COMMERCE_CLIENT_SECRET,
+          },
+        })
+
+        console.log(`📡 ${apiUrl} 응답 상태:`, response.status)
+
+        if (response.ok) {
+          const data = await response.json()
+          results.push({
+            url: apiUrl,
+            status: response.status,
+            success: true,
+            data: data
+          })
+          break // 성공한 엔드포인트 찾으면 중단
+        } else {
+          const errorText = await response.text()
+          results.push({
+            url: apiUrl,
+            status: response.status,
+            success: false,
+            error: errorText
+          })
         }
-      }, { status: storeResponse.status })
+      } catch (error) {
+        results.push({
+          url: apiUrl,
+          status: 'ERROR',
+          success: false,
+          error: error instanceof Error ? error.message : 'Unknown error'
+        })
+      }
     }
 
-    const storeData = await storeResponse.json()
+    const successfulResult = results.find(r => r.success)
     
-    return NextResponse.json({
-      success: true,
-      message: '네이버 커머스 API 연결 성공!',
-      storeData,
-      apiUrl: storeApiUrl
-    })
+    if (successfulResult) {
+      return NextResponse.json({
+        success: true,
+        message: '네이버 커머스 API 연결 성공!',
+        workingEndpoint: successfulResult.url,
+        data: successfulResult.data,
+        allResults: results
+      })
+    } else {
+      return NextResponse.json({
+        success: false,
+        error: '모든 엔드포인트 테스트 실패',
+        results: results
+      }, { status: 404 })
+    }
 
   } catch (error) {
     console.error('❌ 네이버 커머스 API 테스트 실패:', error)

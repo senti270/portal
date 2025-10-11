@@ -34,13 +34,13 @@ export async function GET(request: NextRequest) {
     const timestamp = Date.now() // 밀리초 단위 Unix 시간
     
     // 밑줄로 연결하여 password 생성
-    const password = `${NAVER_COMMERCE_CLIENT_ID}_${timestamp}`
+    const signaturePassword = `${NAVER_COMMERCE_CLIENT_ID}_${timestamp}`
     
-    console.log('📝 Password 생성:', password)
+    console.log('📝 Password 생성:', signaturePassword)
     console.log('📝 Timestamp:', timestamp)
     
     // bcrypt 해싱 (공식 문서 방식)
-    const hashed = bcrypt.hashSync(password, NAVER_COMMERCE_CLIENT_SECRET)
+    const hashed = bcrypt.hashSync(signaturePassword, NAVER_COMMERCE_CLIENT_SECRET)
     // base64 인코딩
     const client_secret_sign = Buffer.from(hashed, "utf-8").toString("base64")
     
@@ -75,7 +75,7 @@ export async function GET(request: NextRequest) {
         details: tokenError,
         debug: {
           timestamp,
-          password_string,
+          signaturePassword,
           client_secret_sign: client_secret_sign.substring(0, 20) + '...'
         }
       }, { status: tokenResponse.status })

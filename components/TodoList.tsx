@@ -405,9 +405,9 @@ export default function TodoList({ password }: TodoListProps) {
   }
 
   return (
-    <div className="space-y-4 md:space-y-6 p-3 md:p-0">
+    <div className="space-y-3 md:space-y-6">
       {/* 헤더 */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4 md:mb-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-3 md:mb-6">
         <div>
           <h2 className="text-xl md:text-2xl font-bold text-gray-900 dark:text-white mb-1">
             할 일 관리
@@ -425,7 +425,7 @@ export default function TodoList({ password }: TodoListProps) {
       </div>
 
       {/* 필터 및 검색 */}
-      <div className="bg-white dark:bg-gray-800 rounded-xl p-4 md:p-6 shadow-sm border border-gray-100 dark:border-gray-700 space-y-3 md:space-y-4">
+      <div className="bg-white dark:bg-gray-800 rounded-lg md:rounded-xl p-3 md:p-6 shadow-sm border border-gray-100 dark:border-gray-700 space-y-2 md:space-y-4">
         {/* 필터 버튼 */}
         <div className="flex flex-wrap gap-2 md:gap-3">
           <button
@@ -489,7 +489,7 @@ export default function TodoList({ password }: TodoListProps) {
 
       {/* 할일 추가/편집 폼 */}
       {showAddForm && (
-        <div className="bg-white dark:bg-gray-800 rounded-xl p-4 md:p-6 shadow-sm border border-gray-100 dark:border-gray-700 space-y-3 md:space-y-4">
+        <div className="bg-white dark:bg-gray-800 rounded-lg md:rounded-xl p-3 md:p-6 shadow-sm border border-gray-100 dark:border-gray-700 space-y-3 md:space-y-4">
           <h3 className="text-lg md:text-xl font-semibold text-gray-900 dark:text-white mb-3 md:mb-4">
             {editingTodoId ? '할일 수정' : '할일 추가'}
           </h3>
@@ -503,7 +503,7 @@ export default function TodoList({ password }: TodoListProps) {
               list="requester-options"
               value={newTodo.requester}
               onChange={(e) => setNewTodo({ ...newTodo, requester: e.target.value })}
-              className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-transparent dark:bg-gray-700 dark:text-white transition-all duration-200"
+              className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-all duration-200"
               placeholder="요청자명을 입력하세요"
               style={{ WebkitAppearance: 'none', appearance: 'none' }}
             />
@@ -563,7 +563,7 @@ export default function TodoList({ password }: TodoListProps) {
               type="date"
               value={newTodo.dueDate}
               onChange={(e) => setNewTodo({ ...newTodo, dueDate: e.target.value })}
-              className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-transparent dark:bg-gray-700 dark:text-white transition-all duration-200"
+              className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-all duration-200"
               style={{ WebkitAppearance: 'none', appearance: 'none' }}
             />
           </div>
@@ -590,7 +590,7 @@ export default function TodoList({ password }: TodoListProps) {
       )}
 
       {/* 할일 목록 */}
-      <div className="space-y-2">
+      <div className="space-y-2 md:space-y-3">
         {filteredTodos.length === 0 ? (
           <div className="text-center py-8 text-gray-500 dark:text-gray-400">
             {todos.length === 0 ? '등록된 할일이 없습니다.' : '검색 결과가 없습니다.'}
@@ -599,7 +599,7 @@ export default function TodoList({ password }: TodoListProps) {
           filteredTodos.map((todo) => (
             <div
               key={todo.id}
-              className={`bg-white dark:bg-gray-800 rounded-xl p-4 md:p-6 shadow-sm border transition-all duration-200 ${
+              className={`bg-white dark:bg-gray-800 rounded-lg md:rounded-xl p-3 md:p-6 shadow-sm border transition-all duration-200 ${
                 todo.isCompleted 
                   ? 'border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-900/50' 
                   : 'border-gray-200 dark:border-gray-700 hover:shadow-md hover:border-gray-300 dark:hover:border-gray-600'
@@ -657,7 +657,7 @@ export default function TodoList({ password }: TodoListProps) {
               
               {/* 인라인 편집 폼 */}
               {editingTodoId === todo.id && (
-                <div className="mt-4 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600">
+                <div className="mt-3 md:mt-4 p-3 md:p-4 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600">
                   <h4 className="text-lg font-medium text-gray-900 dark:text-white mb-3">할일 수정</h4>
                   <div className="space-y-3">
                     <div>
@@ -669,7 +669,7 @@ export default function TodoList({ password }: TodoListProps) {
                         list="inline-requester-options"
                         value={newTodo.requester}
                         onChange={(e) => setNewTodo({ ...newTodo, requester: e.target.value })}
-                        className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-transparent dark:bg-gray-700 dark:text-white transition-all duration-200"
+                        className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-all duration-200"
                         placeholder="요청자명을 입력하세요"
                         style={{ WebkitAppearance: 'none', appearance: 'none' }}
                       />
@@ -702,7 +702,7 @@ export default function TodoList({ password }: TodoListProps) {
                         type="date"
                         value={newTodo.dueDate}
                         onChange={(e) => setNewTodo({ ...newTodo, dueDate: e.target.value })}
-                        className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-transparent dark:bg-gray-700 dark:text-white transition-all duration-200"
+                        className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-all duration-200"
                         style={{ WebkitAppearance: 'none', appearance: 'none' }}
                       />
                     </div>

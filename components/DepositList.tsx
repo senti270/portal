@@ -394,40 +394,32 @@ export default function DepositList({ password }: DepositListProps) {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-3 md:space-y-6">
       {/* 헤더 */}
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-3 md:mb-6">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+          <h2 className="text-xl md:text-2xl font-bold text-gray-900 dark:text-white mb-1">
             입금 리스트
           </h2>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-            {filteredDeposits.length}건 / 전체 {deposits.length}건
+          <p className="text-xs md:text-sm text-gray-500 dark:text-gray-400">
+            {filteredDeposits.length}건 표시 중 / 전체 {deposits.length}건
           </p>
         </div>
-        <div className="flex gap-2">
-          <button
-            onClick={() => setShowAddForm(!showAddForm)}
-            className="px-5 py-2.5 bg-gradient-to-r from-gray-800 to-gray-900 hover:from-gray-900 hover:to-black text-white rounded-lg transition-all duration-200 shadow-md hover:shadow-lg font-medium"
-          >
-            {showAddForm ? '취소' : '+ 입금 추가'}
-          </button>
-          <button
-            onClick={handleLogout}
-            className="px-4 py-2.5 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-all duration-200 font-medium"
-          >
-            로그아웃
-          </button>
-        </div>
+        <button
+          onClick={() => setShowAddForm(!showAddForm)}
+          className="w-full sm:w-auto px-4 md:px-6 py-2.5 md:py-3 bg-gradient-to-r from-gray-800 to-gray-900 hover:from-gray-900 hover:to-black text-white rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 font-medium text-sm md:text-base"
+        >
+          {showAddForm ? '취소' : '+ 입금 추가'}
+        </button>
       </div>
 
       {/* 필터 및 검색 */}
-      <div className="flex flex-col sm:flex-row gap-4">
+      <div className="bg-white dark:bg-gray-800 rounded-lg md:rounded-xl p-3 md:p-6 shadow-sm border border-gray-100 dark:border-gray-700 space-y-2 md:space-y-4">
         {/* 필터 버튼 */}
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2 md:gap-3">
           <button
             onClick={() => setFilter('incomplete')}
-            className={`px-4 py-2 rounded-lg font-medium transition-all duration-200 ${
+            className={`flex-1 min-w-[80px] px-3 md:px-4 py-2 rounded-lg text-xs md:text-sm font-medium transition-all duration-200 ${
               filter === 'incomplete'
                 ? 'bg-gradient-to-r from-gray-800 to-gray-900 text-white shadow-md'
                 : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
@@ -437,7 +429,7 @@ export default function DepositList({ password }: DepositListProps) {
           </button>
           <button
             onClick={() => setFilter('completed')}
-            className={`px-4 py-2 rounded-lg font-medium transition-all duration-200 ${
+            className={`flex-1 min-w-[80px] px-3 md:px-4 py-2 rounded-lg text-xs md:text-sm font-medium transition-all duration-200 ${
               filter === 'completed'
                 ? 'bg-gradient-to-r from-gray-800 to-gray-900 text-white shadow-md'
                 : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
@@ -447,7 +439,7 @@ export default function DepositList({ password }: DepositListProps) {
           </button>
           <button
             onClick={() => setFilter('all')}
-            className={`px-4 py-2 rounded-lg font-medium transition-all duration-200 ${
+            className={`flex-1 min-w-[80px] px-3 md:px-4 py-2 rounded-lg text-xs md:text-sm font-medium transition-all duration-200 ${
               filter === 'all'
                 ? 'bg-gradient-to-r from-gray-800 to-gray-900 text-white shadow-md'
                 : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'

@@ -11,6 +11,8 @@ const ADMIN_PASSWORD = '43084308'
 export default function PurchaseListManager() {
   const [items, setItems] = useState<PurchaseItem[]>([])
   const [filteredItems, setFilteredItems] = useState<PurchaseItem[]>([])
+  const [displayedItems, setDisplayedItems] = useState<PurchaseItem[]>([]) // 화면에 표시할 항목
+  const [displayCount, setDisplayCount] = useState(10) // 초기 10개만 표시
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedCategory, setSelectedCategory] = useState<string>('') // 카테고리 필터 상태 추가
   const [loading, setLoading] = useState(true)
@@ -71,7 +73,34 @@ export default function PurchaseListManager() {
     }
 
     setFilteredItems(filtered)
+    // 필터링 변경 시 표시 개수 초기화
+    setDisplayCount(10)
   }, [searchTerm, selectedCategory, items])
+
+  // 무한 스크롤: 표시할 항목 업데이트
+  useEffect(() => {
+    setDisplayedItems(filteredItems.slice(0, displayCount))
+  }, [filteredItems, displayCount])
+
+  // 스크롤 이벤트 핸들러
+  useEffect(() => {
+    const handleScroll = () => {
+      // 페이지 하단에 도달했는지 확인
+      const scrollTop = window.pageYOffset || document.documentElement.scrollTop
+      const scrollHeight = document.documentElement.scrollHeight
+      const clientHeight = document.documentElement.clientHeight
+      
+      // 하단에서 500px 이내일 때 추가 로딩
+      if (scrollHeight - scrollTop - clientHeight < 500) {
+        if (displayCount < filteredItems.length) {
+          setDisplayCount(prev => Math.min(prev + 10, filteredItems.length))
+        }
+      }
+    }
+
+    window.addEventListener('scroll', handleScroll)
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [displayCount, filteredItems.length])
 
   // 카테고리 필터 핸들러
   const handleCategoryFilter = (category: string) => {
@@ -186,7 +215,10 @@ export default function PurchaseListManager() {
             )}
           </h2>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-            총 {filteredItems.length}개
+            {displayedItems.length > 0 && displayedItems.length < filteredItems.length 
+              ? `${displayedItems.length}개 표시 중 / 총 ${filteredItems.length}개`
+              : `총 ${filteredItems.length}개`
+            }
           </p>
           {/* 활성 필터 표시 */}
           {(searchTerm || selectedCategory) && (
@@ -261,7 +293,7 @@ export default function PurchaseListManager() {
 
       {/* 물품 목록 테이블 */}
       <PurchaseItemTable
-        items={filteredItems}
+        items={displayedItems}
         onEdit={handleEdit}
         onDelete={handleDeleteItem}
         onCategoryFilter={handleCategoryFilter}
@@ -271,6 +303,16 @@ export default function PurchaseListManager() {
         onEditCancel={handleCancel}
         isAdmin={isAdmin}
       />
+
+      {/* 무한 스크롤 로딩 인디케이터 */}
+      {displayedItems.length < filteredItems.length && (
+        <div className="flex justify-center items-center py-8">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+          <span className="ml-3 text-gray-600 dark:text-gray-300">
+            {filteredItems.length - displayedItems.length}개 더 로딩 중...
+          </span>
+        </div>
+      )}
 
       {/* 관리자 로그인/로그아웃 버튼 (우측 하단) */}
       <div className="fixed bottom-6 right-6 z-50">

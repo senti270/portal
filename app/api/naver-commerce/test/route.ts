@@ -27,17 +27,44 @@ export async function GET(request: NextRequest) {
       clientSecret: NAVER_COMMERCE_CLIENT_SECRET ? '설정됨' : '미설정'
     })
 
-    // 1. 판매자 정보 조회 (가장 기본적인 API)
+    // 1. OAuth 2.0 토큰 발급
+    console.log('🔑 OAuth 2.0 토큰 발급 중...')
+    
+    const tokenResponse = await fetch('https://api.commerce.naver.com/oauth/v1/access_token', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: new URLSearchParams({
+        grant_type: 'client_credentials',
+        client_id: NAVER_COMMERCE_CLIENT_ID,
+        client_secret: NAVER_COMMERCE_CLIENT_SECRET,
+      }),
+    })
+
+    if (!tokenResponse.ok) {
+      const tokenError = await tokenResponse.text()
+      console.error('❌ 토큰 발급 실패:', tokenError)
+      return NextResponse.json({
+        success: false,
+        error: '토큰 발급 실패',
+        details: tokenError
+      }, { status: tokenResponse.status })
+    }
+
+    const tokenData = await tokenResponse.json()
+    console.log('✅ 토큰 발급 성공:', tokenData.access_token ? '발급됨' : '실패')
+
+    // 2. 판매자 정보 조회 (토큰 사용)
     const storeApiUrl = 'https://api.commerce.naver.com/external/v1/seller'
     
-    console.log('📡 스토어 정보 API 호출 중...')
+    console.log('📡 판매자 정보 API 호출 중...')
     
     const storeResponse = await fetch(storeApiUrl, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
-        'X-Naver-Client-Id': NAVER_COMMERCE_CLIENT_ID,
-        'X-Naver-Client-Secret': NAVER_COMMERCE_CLIENT_SECRET,
+        'Authorization': `Bearer ${tokenData.access_token}`,
       },
     })
 

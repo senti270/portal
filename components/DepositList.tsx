@@ -29,6 +29,7 @@ export default function DepositList({ password }: DepositListProps) {
   })
   
   const [attachedFiles, setAttachedFiles] = useState<Array<{name: string, data: string, uploadedAt: Date}>>([])
+  const [viewingImage, setViewingImage] = useState<{data: string, name: string} | null>(null)
 
   // 이미지 압축 함수
   const compressImage = (file: File): Promise<string> => {
@@ -756,7 +757,7 @@ export default function DepositList({ password }: DepositListProps) {
                         src={file.data}
                         alt={file.name}
                         className="w-full h-24 object-cover rounded-lg border border-gray-300 dark:border-gray-600 cursor-pointer hover:opacity-75 transition-opacity"
-                        onClick={() => window.open(file.data, '_blank')}
+                        onClick={() => setViewingImage({data: file.data, name: file.name})}
                       />
                       <button
                         onClick={() => removeFile(index)}
@@ -879,7 +880,7 @@ export default function DepositList({ password }: DepositListProps) {
                             src={file.data}
                             alt={file.name}
                             className="w-16 h-16 object-cover rounded border border-gray-300 dark:border-gray-600 cursor-pointer hover:scale-110 transition-transform"
-                            onClick={() => window.open(file.data, '_blank')}
+                            onClick={() => setViewingImage({data: file.data, name: file.name})}
                             title={`${file.name} - 클릭하여 크게 보기`}
                           />
                         ))}
@@ -1046,6 +1047,34 @@ export default function DepositList({ password }: DepositListProps) {
           ))
         )}
       </div>
+
+      {/* 이미지 뷰어 모달 */}
+      {viewingImage && (
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-[100] p-4"
+          onClick={() => setViewingImage(null)}
+        >
+          <div className="relative max-w-5xl max-h-[90vh] w-full h-full flex flex-col items-center justify-center">
+            <button
+              onClick={() => setViewingImage(null)}
+              className="absolute top-4 right-4 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-full p-2 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors shadow-lg"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+            <img
+              src={viewingImage.data}
+              alt={viewingImage.name}
+              className="max-w-full max-h-full object-contain rounded-lg shadow-2xl"
+              onClick={(e) => e.stopPropagation()}
+            />
+            <p className="mt-4 text-white text-center bg-black bg-opacity-50 px-4 py-2 rounded-lg">
+              {viewingImage.name}
+            </p>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

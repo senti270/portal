@@ -6,6 +6,8 @@ import { getPurchaseItems, addPurchaseItem, updatePurchaseItem, deletePurchaseIt
 import PurchaseItemTable from './PurchaseItemTable'
 import PurchaseItemForm from './PurchaseItemForm'
 
+const ADMIN_PASSWORD = '43084308'
+
 export default function PurchaseListManager() {
   const [items, setItems] = useState<PurchaseItem[]>([])
   const [filteredItems, setFilteredItems] = useState<PurchaseItem[]>([])
@@ -15,6 +17,19 @@ export default function PurchaseListManager() {
   const [showForm, setShowForm] = useState(false)
   const [editingItem, setEditingItem] = useState<PurchaseItem | null>(null)
   const [error, setError] = useState<string | null>(null)
+  
+  // 관리자 인증 상태
+  const [isAdmin, setIsAdmin] = useState(false)
+  const [showLoginModal, setShowLoginModal] = useState(false)
+  const [password, setPassword] = useState('')
+
+  // 로그인 상태 로드
+  useEffect(() => {
+    const savedAuth = localStorage.getItem('purchase-admin-auth')
+    if (savedAuth === ADMIN_PASSWORD) {
+      setIsAdmin(true)
+    }
+  }, [])
 
   useEffect(() => {
     loadItems()
@@ -122,6 +137,26 @@ export default function PurchaseListManager() {
     setEditingItem(null)
   }
 
+  const handleLogin = () => {
+    if (password === ADMIN_PASSWORD) {
+      setIsAdmin(true)
+      localStorage.setItem('purchase-admin-auth', password)
+      setShowLoginModal(false)
+      setPassword('')
+    } else {
+      alert('비밀번호가 올바르지 않습니다.')
+    }
+  }
+
+  const handleLogout = () => {
+    if (confirm('관리자 모드를 종료하시겠습니까?')) {
+      setIsAdmin(false)
+      localStorage.removeItem('purchase-admin-auth')
+      setShowForm(false)
+      setEditingItem(null)
+    }
+  }
+
   if (loading) {
     return (
       <div className="flex justify-center items-center py-12">
@@ -144,6 +179,11 @@ export default function PurchaseListManager() {
         <div>
           <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
             구매물품 목록 ({filteredItems.length}개)
+            {isAdmin && (
+              <span className="ml-3 text-sm px-2 py-1 bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 rounded-full">
+                관리자 모드
+              </span>
+            )}
           </h2>
           {/* 활성 필터 표시 */}
           {(searchTerm || selectedCategory) && (
@@ -168,12 +208,14 @@ export default function PurchaseListManager() {
             </div>
           )}
         </div>
-        <button
-          onClick={() => setShowForm(true)}
-          className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors duration-200"
-        >
-          + 새 물품 추가
-        </button>
+        {isAdmin && (
+          <button
+            onClick={() => setShowForm(true)}
+            className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors duration-200"
+          >
+            + 새 물품 추가
+          </button>
+        )}
       </div>
 
       {/* 검색바 */}
@@ -224,7 +266,67 @@ export default function PurchaseListManager() {
         editingItem={editingItem}
         onEditSubmit={(data) => handleEditItem(editingItem!.id, data)}
         onEditCancel={handleCancel}
+        isAdmin={isAdmin}
       />
+
+      {/* 관리자 로그인/로그아웃 버튼 (우측 하단) */}
+      <div className="fixed bottom-6 right-6 z-50">
+        {isAdmin ? (
+          <button
+            onClick={handleLogout}
+            className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg shadow-lg transition-all duration-300"
+          >
+            관리자 로그아웃
+          </button>
+        ) : (
+          <button
+            onClick={() => setShowLoginModal(true)}
+            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg shadow-lg transition-all duration-300"
+          >
+            🔒 관리자 로그인
+          </button>
+        )}
+      </div>
+
+      {/* 관리자 로그인 모달 */}
+      {showLoginModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-gray-800 rounded-xl p-6 w-[400px] max-w-[90vw] shadow-2xl">
+            <h3 className="text-xl font-bold mb-4 text-gray-900 dark:text-white">
+              관리자 로그인
+            </h3>
+            <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+              물품을 추가/수정/삭제하려면 관리자 비밀번호를 입력하세요.
+            </p>
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              onKeyPress={(e) => e.key === 'Enter' && handleLogin()}
+              placeholder="비밀번호를 입력하세요"
+              className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white mb-4"
+              autoFocus
+            />
+            <div className="flex gap-2">
+              <button
+                onClick={handleLogin}
+                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors duration-200"
+              >
+                로그인
+              </button>
+              <button
+                onClick={() => {
+                  setShowLoginModal(false)
+                  setPassword('')
+                }}
+                className="flex-1 bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-300 px-4 py-2 rounded-lg hover:bg-gray-400 dark:hover:bg-gray-500 transition-colors duration-200"
+              >
+                취소
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

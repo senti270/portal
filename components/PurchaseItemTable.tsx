@@ -12,6 +12,7 @@ interface PurchaseItemTableProps {
   editingItem?: PurchaseItem | null
   onEditSubmit?: (data: PurchaseItemFormData) => void
   onEditCancel?: () => void
+  isAdmin: boolean
 }
 
 export default function PurchaseItemTable({ 
@@ -22,7 +23,8 @@ export default function PurchaseItemTable({
   selectedCategory,
   editingItem,
   onEditSubmit,
-  onEditCancel
+  onEditCancel,
+  isAdmin
 }: PurchaseItemTableProps) {
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden">
@@ -60,9 +62,11 @@ export default function PurchaseItemTable({
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                 구매단위&옵션
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                관리
-              </th>
+              {isAdmin && (
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                  관리
+                </th>
+              )}
             </tr>
           </thead>
           <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
@@ -149,22 +153,24 @@ export default function PurchaseItemTable({
                   </td>
                   
                   {/* 관리 */}
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                    <div className="flex space-x-2">
-                      <button
-                        onClick={() => onEdit(item)}
-                        className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300"
-                      >
-                        편집
-                      </button>
-                      <button
-                        onClick={() => onDelete(item.id)}
-                        className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300"
-                      >
-                        삭제
-                      </button>
-                    </div>
-                  </td>
+                  {isAdmin && (
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                      <div className="flex space-x-2">
+                        <button
+                          onClick={() => onEdit(item)}
+                          className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300"
+                        >
+                          편집
+                        </button>
+                        <button
+                          onClick={() => onDelete(item.id)}
+                          className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300"
+                        >
+                          삭제
+                        </button>
+                      </div>
+                    </td>
+                  )}
                 </tr>
                 {/* 편집 폼 - 해당 아이템을 편집 중일 때만 표시 */}
                 {editingItem?.id === item.id && onEditSubmit && onEditCancel && (
@@ -233,20 +239,22 @@ export default function PurchaseItemTable({
                       ))}
                     </div>
                   </div>
-                  <div className="flex space-x-1">
-                    <button
-                      onClick={() => onEdit(item)}
-                      className="text-blue-600 hover:text-blue-900 dark:text-blue-400 text-xs px-2 py-1 rounded bg-blue-50 dark:bg-blue-900/30"
-                    >
-                      편집
-                    </button>
-                    <button
-                      onClick={() => onDelete(item.id)}
-                      className="text-red-600 hover:text-red-900 dark:text-red-400 text-xs px-2 py-1 rounded bg-red-50 dark:bg-red-900/30"
-                    >
-                      삭제
-                    </button>
-                  </div>
+                  {isAdmin && (
+                    <div className="flex space-x-1">
+                      <button
+                        onClick={() => onEdit(item)}
+                        className="text-blue-600 hover:text-blue-900 dark:text-blue-400 text-xs px-2 py-1 rounded bg-blue-50 dark:bg-blue-900/30"
+                      >
+                        편집
+                      </button>
+                      <button
+                        onClick={() => onDelete(item.id)}
+                        className="text-red-600 hover:text-red-900 dark:text-red-400 text-xs px-2 py-1 rounded bg-red-50 dark:bg-red-900/30"
+                      >
+                        삭제
+                      </button>
+                    </div>
+                  )}
                 </div>
 
                 {/* 추가 정보 (URL, 구매단위) */}

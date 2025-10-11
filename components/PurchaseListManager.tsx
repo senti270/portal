@@ -178,13 +178,16 @@ export default function PurchaseListManager() {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-            구매물품 목록 ({filteredItems.length}개)
+            구매물품목록
             {isAdmin && (
               <span className="ml-3 text-sm px-2 py-1 bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 rounded-full">
                 관리자 모드
               </span>
             )}
           </h2>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+            총 {filteredItems.length}개
+          </p>
           {/* 활성 필터 표시 */}
           {(searchTerm || selectedCategory) && (
             <div className="flex items-center gap-2 mt-1">

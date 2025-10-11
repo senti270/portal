@@ -30,7 +30,7 @@ export async function GET(request: NextRequest) {
     // 1. 전자서명 생성 (공식 문서 방식)
     console.log('🔑 네이버 커머스 API 전자서명 생성 중...')
     
-    const bcrypt = require("bcrypt")
+    const bcrypt = require("bcryptjs") // bcryptjs 사용 (Vercel 호환)
     const timestamp = Date.now() // 밀리초 단위 Unix 시간
     
     // 밑줄로 연결하여 password 생성
@@ -41,7 +41,7 @@ export async function GET(request: NextRequest) {
     
     // bcrypt 해싱 (공식 문서 방식)
     const hashed = bcrypt.hashSync(signaturePassword, NAVER_COMMERCE_CLIENT_SECRET)
-    // base64 인코딩
+    // base64 인코딩 (공식 문서 방식)
     const client_secret_sign = Buffer.from(hashed, "utf-8").toString("base64")
     
     console.log('🔐 전자서명 생성 완료:', client_secret_sign.substring(0, 30) + '...')

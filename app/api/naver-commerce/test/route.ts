@@ -27,8 +27,8 @@ export async function GET(request: NextRequest) {
       clientSecret: NAVER_COMMERCE_CLIENT_SECRET ? '설정됨' : '미설정'
     })
 
-    // 1. 스토어 정보 조회 (가장 기본적인 API)
-    const storeApiUrl = 'https://api.commerce.naver.com/external/v1/seller/stores'
+    // 1. 판매자 정보 조회 (가장 기본적인 API)
+    const storeApiUrl = 'https://api.commerce.naver.com/external/v1/seller'
     
     console.log('📡 스토어 정보 API 호출 중...')
     

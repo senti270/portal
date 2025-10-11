@@ -27,17 +27,22 @@ export async function GET(request: NextRequest) {
     // 네이버 커머스 API 호출 (올바른 엔드포인트)
     const apiUrl = 'https://api.commerce.naver.com/external/v1/pay-order/seller/product-orders'
     
-    const response = await fetch(
-      `${apiUrl}?startDate=${startDate}&endDate=${endDate}`,
-      {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Naver-Client-Id': NAVER_COMMERCE_CLIENT_ID,
-          'X-Naver-Client-Secret': NAVER_COMMERCE_CLIENT_SECRET,
-        },
-      }
-    )
+    // 주문 조회 파라미터 (올바른 형식)
+    const params = new URLSearchParams({
+      startDate: startDate || '2024-01-01 00:00:00',
+      endDate: endDate || '2024-12-31 23:59:59',
+      page: '1',
+      limit: '100'
+    })
+    
+    const response = await fetch(`${apiUrl}?${params}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Naver-Client-Id': NAVER_COMMERCE_CLIENT_ID,
+        'X-Naver-Client-Secret': NAVER_COMMERCE_CLIENT_SECRET,
+      },
+    })
 
     if (!response.ok) {
       const errorText = await response.text()

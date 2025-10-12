@@ -98,7 +98,7 @@ export const systems: System[] = [
     icon: '📚',
     color: '#8B5CF6',
     category: '업무관리',
-    url: '/manual-management',
+    url: '/manual-viewer',
     status: 'active',
     tags: ['매뉴얼', '가이드', '도움말'],
     optimization: ['PC 최적화', '모바일 최적화'],

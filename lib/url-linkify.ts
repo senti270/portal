@@ -37,3 +37,36 @@ export function linkifyHtmlContent(htmlContent: string): string {
   
   return processedHtml
 }
+
+// HTML 콘텐츠를 안전하게 렌더링하기 위한 함수
+export function sanitizeHtmlContent(htmlContent: string): string {
+  // 기본적인 HTML 태그들만 허용하고 안전하게 처리
+  const allowedTags = ['p', 'br', 'strong', 'em', 'u', 'div', 'img', 'a', 'span']
+  const allowedAttributes = {
+    'img': ['src', 'alt', 'style', 'class'],
+    'a': ['href', 'target', 'rel', 'class'],
+    'div': ['style', 'class'],
+    'span': ['style', 'class'],
+    'p': ['style', 'class'],
+    'strong': ['style', 'class'],
+    'em': ['style', 'class'],
+    'u': ['style', 'class']
+  }
+  
+  // 간단한 HTML 태그 검증 및 정리
+  let sanitized = htmlContent
+  
+  // img 태그의 스타일을 안전하게 설정
+  sanitized = sanitized.replace(/<img([^>]*)>/gi, (match, attributes) => {
+    // src, alt 속성만 유지하고 style 속성 추가
+    const srcMatch = attributes.match(/src\s*=\s*["']([^"']*)["']/)
+    const altMatch = attributes.match(/alt\s*=\s*["']([^"']*)["']/)
+    
+    const src = srcMatch ? srcMatch[1] : ''
+    const alt = altMatch ? altMatch[1] : '이미지'
+    
+    return `<img src="${src}" alt="${alt}" style="max-width: 100%; height: auto; margin: 10px 0;" />`
+  })
+  
+  return sanitized
+}

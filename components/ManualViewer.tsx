@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { Manual, Store } from '@/types/manual'
 import { getManuals, getStores } from '@/lib/manual-firestore'
-import { linkifyHtmlContent } from '@/lib/url-linkify'
+import { linkifyHtmlContent, sanitizeHtmlContent } from '@/lib/url-linkify'
 
 export default function ManualViewer() {
   const [manuals, setManuals] = useState<Manual[]>([])
@@ -258,7 +258,7 @@ export default function ManualViewer() {
                 <div className="p-4 border-t border-gray-200 dark:border-gray-600">
                   <div 
                     className="prose dark:prose-invert max-w-none manual-content"
-                    dangerouslySetInnerHTML={{ __html: linkifyHtmlContent(manual.content) }}
+                    dangerouslySetInnerHTML={{ __html: sanitizeHtmlContent(linkifyHtmlContent(manual.content)) }}
                   />
                 </div>
               )}

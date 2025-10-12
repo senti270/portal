@@ -45,21 +45,18 @@ export default function ManualEditor({
     await onSubmit(formData)
   }
 
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-
+  const handleImageUpload = async (file: File) => {
     // 파일 타입 검증
     if (!file.type.startsWith('image/')) {
       alert('이미지 파일만 업로드 가능합니다.')
-      return
+      return false
     }
 
     // 파일 크기 제한 (5MB)
     const maxSize = 5 * 1024 * 1024
     if (file.size > maxSize) {
       alert('파일 크기는 5MB 이하여야 합니다.')
-      return
+      return false
     }
 
     try {
@@ -95,16 +92,48 @@ export default function ManualEditor({
             textarea.setSelectionRange(start + imageHtml.length, start + imageHtml.length)
           }, 0)
         }
+        return true
       } else {
         alert(result.error || '이미지 업로드에 실패했습니다.')
+        return false
       }
     } catch (error) {
       console.error('이미지 업로드 실패:', error)
       alert('이미지 업로드에 실패했습니다.')
+      return false
     } finally {
       setIsUploading(false)
-      if (fileInputRef.current) {
-        fileInputRef.current.value = ''
+    }
+  }
+
+  const handleFileInputChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    await handleImageUpload(file)
+    
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ''
+    }
+  }
+
+  const handlePaste = async (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
+    const items = e.clipboardData.items
+    
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i]
+      
+      if (item.type.startsWith('image/')) {
+        e.preventDefault()
+        
+        const file = item.getAsFile()
+        if (file) {
+          const success = await handleImageUpload(file)
+          if (success) {
+            alert('이미지가 성공적으로 삽입되었습니다!')
+          }
+        }
+        break
       }
     }
   }
@@ -245,8 +274,9 @@ export default function ManualEditor({
             id="manual-content"
             value={formData.content}
             onChange={(e) => setFormData(prev => ({ ...prev, content: e.target.value }))}
+            onPaste={handlePaste}
             className="w-full h-96 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white font-mono text-sm"
-            placeholder="매뉴얼 내용을 입력하세요. HTML 태그를 사용할 수 있습니다."
+            placeholder="매뉴얼 내용을 입력하세요. HTML 태그를 사용할 수 있습니다. 이미지를 붙여넣기(Ctrl+V)할 수도 있습니다."
             required
           />
           
@@ -254,12 +284,12 @@ export default function ManualEditor({
             ref={fileInputRef}
             type="file"
             accept="image/*"
-            onChange={handleImageUpload}
+            onChange={handleFileInputChange}
             className="hidden"
           />
           
           <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-            💡 HTML 태그를 사용할 수 있습니다. 이미지 버튼을 클릭하여 이미지를 삽입하세요.
+            💡 HTML 태그를 사용할 수 있습니다. 이미지 버튼을 클릭하거나 Ctrl+V로 이미지를 붙여넣기할 수 있습니다.
           </p>
         </div>
 

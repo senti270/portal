@@ -47,6 +47,33 @@ export default function ManualList({ manuals, stores, onEdit, onDelete, isAdmin 
     setExpandedManual(expandedManual === manualId ? null : manualId)
   }
 
+  const handleShare = async (manualId: string) => {
+    const shareUrl = `${window.location.origin}/manual-viewer?manual=${manualId}`
+    
+    try {
+      if (navigator.share) {
+        // 모바일에서 네이티브 공유 사용
+        await navigator.share({
+          title: manuals.find(m => m.id === manualId)?.title || '매뉴얼',
+          url: shareUrl
+        })
+      } else {
+        // 데스크톱에서 클립보드 복사
+        await navigator.clipboard.writeText(shareUrl)
+        alert('링크가 클립보드에 복사되었습니다!')
+      }
+    } catch (error) {
+      console.error('공유 실패:', error)
+      // 폴백: 클립보드 복사
+      try {
+        await navigator.clipboard.writeText(shareUrl)
+        alert('링크가 클립보드에 복사되었습니다!')
+      } catch (clipboardError) {
+        alert('공유 기능을 사용할 수 없습니다.')
+      }
+    }
+  }
+
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
       {/* 헤더 */}
@@ -151,6 +178,20 @@ export default function ManualList({ manuals, stores, onEdit, onDelete, isAdmin 
                   </div>
                   
                   <div className="flex items-center space-x-2">
+                    {/* 공유 버튼 */}
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        handleShare(manual.id)
+                      }}
+                      className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded transition-colors"
+                      title="공유하기"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z" />
+                      </svg>
+                    </button>
+
                     {isAdmin && (
                       <div className="flex space-x-1">
                         <button

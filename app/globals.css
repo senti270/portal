@@ -19,6 +19,25 @@
   line-height: 1.6;
 }
 
+/* 매뉴얼 내용 내 링크 스타일 */
+.manual-content a {
+  color: #2563eb;
+  text-decoration: underline;
+  transition: color 0.2s ease;
+}
+
+.manual-content a:hover {
+  color: #1d4ed8;
+}
+
+.dark .manual-content a {
+  color: #60a5fa;
+}
+
+.dark .manual-content a:hover {
+  color: #93c5fd;
+}
+
 :root {
   --foreground-rgb: 0, 0, 0;
   --background-start-rgb: 214, 219, 220;

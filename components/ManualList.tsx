@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { Manual, Store } from '@/types/manual'
+import { linkifyHtmlContent } from '@/lib/url-linkify'
 
 interface ManualListProps {
   manuals: Manual[]
@@ -242,7 +243,7 @@ export default function ManualList({ manuals, stores, onEdit, onDelete, isAdmin 
                 <div className="p-4 border-t border-gray-200 dark:border-gray-600">
                   <div 
                     className="prose dark:prose-invert max-w-none manual-content"
-                    dangerouslySetInnerHTML={{ __html: manual.content }}
+                    dangerouslySetInnerHTML={{ __html: linkifyHtmlContent(manual.content) }}
                   />
                 </div>
               )}

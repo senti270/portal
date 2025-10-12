@@ -91,6 +91,19 @@ export const systems: System[] = [
     optimization: ['PC 최적화', '모바일 최적화'],
     order: 6,
   },
+  {
+    id: 'manual-management',
+    title: '매뉴얼 관리',
+    description: '매장별 매뉴얼을 관리하고 조회할 수 있습니다.',
+    icon: '📚',
+    color: '#8B5CF6',
+    category: '업무관리',
+    url: '/manual-management',
+    status: 'active',
+    tags: ['매뉴얼', '가이드', '도움말'],
+    optimization: ['PC 최적화', '모바일 최적화'],
+    order: 7,
+  },
   // 아래는 예시 - 나중에 추가할 시스템들
   {
     id: 'example1',
@@ -101,7 +114,7 @@ export const systems: System[] = [
     category: '기타',
     status: 'inactive',
     tags: ['준비중'],
-    order: 7,
+    order: 8,
   },
 ]
 

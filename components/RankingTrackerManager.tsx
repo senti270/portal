@@ -230,16 +230,37 @@ export default function RankingTrackerManager() {
     }
   }
 
+  const handleStoreDelete = async (storeId: string) => {
+    try {
+      // Firebase에서 지점 삭제
+      const { deleteStore } = await import('@/lib/store-firestore')
+      await deleteStore(storeId)
+      
+      // 로컬 상태 업데이트
+      const updatedStores = stores.filter(s => s.id !== storeId)
+      setStores(updatedStores)
+      
+      // 삭제한 지점이 선택되어 있었다면 첫 번째 지점 선택
+      if (selectedStore?.id === storeId) {
+        setSelectedStore(updatedStores.length > 0 ? updatedStores[0] : null)
+      }
+      
+      alert('지점이 삭제되었습니다.')
+    } catch (error) {
+      console.error('Error deleting store:', error)
+      alert('지점 삭제 중 오류가 발생했습니다.')
+    }
+  }
+
   const handleAutoTrackingSave = (time: { hour: string; minute: string }) => {
-    setAutoTrackingTime(time)
-    setAutoTracking(true)
-    alert(`자동추적이 ${time.hour}시 ${time.minute}분으로 설정되었습니다!`)
+    // 자동추적 기능은 현재 미구현
+    alert('자동추적 기능은 현재 지원되지 않습니다.\n수동으로 "업데이트" 버튼을 클릭해주세요.')
     setShowAutoTrackingModal(false)
   }
 
   const handleAutoTrackingToggle = () => {
-    setAutoTracking(!autoTracking)
-    alert(autoTracking ? '자동추적이 중지되었습니다.' : '자동추적이 활성화되었습니다.')
+    // 자동추적 기능은 현재 미구현
+    alert('자동추적 기능은 현재 지원되지 않습니다.\n수동으로 "업데이트" 버튼을 클릭해주세요.')
     setShowAutoTrackingModal(false)
   }
 
@@ -281,6 +302,7 @@ export default function RankingTrackerManager() {
         stores={stores}
         selectedStore={selectedStore}
         onStoreChange={handleStoreChange}
+        onStoreDelete={handleStoreDelete}
       />
 
       {/* 선택된 지점의 키워드 및 순위 테이블 */}
@@ -297,14 +319,11 @@ export default function RankingTrackerManager() {
 
             <button
               onClick={() => setShowAutoTrackingModal(true)}
-              className={`px-4 py-2 text-sm rounded-lg transition-colors ${
-                autoTracking
-                  ? 'bg-gray-700 hover:bg-gray-800 text-white'
-                  : 'bg-gray-300 hover:bg-gray-400 text-gray-700'
-              }`}
-              title="매일 오전 9시에 자동으로 순위를 업데이트합니다"
+              className="px-4 py-2 text-sm rounded-lg transition-colors bg-gray-300 text-gray-500 cursor-not-allowed"
+              disabled
+              title="자동추적 기능은 현재 지원되지 않습니다"
             >
-              {autoTracking ? '🔄 자동추적 ON (매일 09:00)' : '⏸️ 자동추적 OFF'}
+              ⏸️ 자동추적 (미지원)
             </button>
 
             <button

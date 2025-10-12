@@ -98,3 +98,4 @@ async function sendKakaoWorkMessage(type: 'morning' | 'noon', orders: any[]) {
   // TODO: 실제 카카오워크 API 연동
   console.log(`💬 ${type} 메시지 발송: ${orders.length}개 주문`);
 }
+

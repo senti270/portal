@@ -9,10 +9,21 @@
   white-space: pre-wrap;
   word-break: break-word;
   line-height: 1.6;
+  color: #1f2937; /* 기본 텍스트 색상 */
+}
+
+/* 다크모드에서 매뉴얼 내용 텍스트 색상 */
+.dark .manual-content {
+  color: #f9fafb;
 }
 
 .manual-content p {
   margin-bottom: 1rem;
+  color: inherit;
+}
+
+.dark .manual-content p {
+  color: #f9fafb;
 }
 
 .manual-content br {
@@ -36,6 +47,24 @@
 
 .dark .manual-content a:hover {
   color: #93c5fd;
+}
+
+/* 매뉴얼 내용 내 모든 요소에 텍스트 색상 강제 적용 */
+.manual-content * {
+  color: inherit !important;
+}
+
+.dark .manual-content * {
+  color: #f9fafb !important;
+}
+
+/* 링크는 예외 */
+.manual-content a {
+  color: #2563eb !important;
+}
+
+.dark .manual-content a {
+  color: #60a5fa !important;
 }
 
 :root {

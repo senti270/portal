@@ -242,7 +242,10 @@ export default function ManualList({ manuals, stores, onEdit, onDelete, isAdmin 
               {expandedManual === manual.id && (
                 <div className="p-4 border-t border-gray-200 dark:border-gray-600">
                   <div 
-                    className="prose dark:prose-invert max-w-none manual-content"
+                    className="prose dark:prose-invert max-w-none manual-content text-gray-900 dark:text-gray-100"
+                    style={{
+                      color: 'inherit'
+                    }}
                     dangerouslySetInnerHTML={{ __html: sanitizeHtmlContent(linkifyHtmlContent(manual.content)) }}
                   />
                 </div>

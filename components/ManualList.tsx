@@ -244,9 +244,8 @@ export default function ManualList({ manuals, stores, onEdit, onDelete, isAdmin 
                   <div 
                     className="prose dark:prose-invert max-w-none manual-content"
                     style={{
-                      color: 'var(--text-color, #1f2937)',
-                      '--text-color': '#1f2937'
-                    }}
+                      color: '#1f2937'
+                    } as React.CSSProperties}
                     dangerouslySetInnerHTML={{ __html: sanitizeHtmlContent(linkifyHtmlContent(manual.content)) }}
                   />
                 </div>

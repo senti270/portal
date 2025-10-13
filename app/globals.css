@@ -9,21 +9,37 @@
   white-space: pre-wrap;
   word-break: break-word;
   line-height: 1.6;
-  color: #1f2937; /* 기본 텍스트 색상 */
+  color: #1f2937 !important; /* 기본 텍스트 색상 강제 */
 }
 
 /* 다크모드에서 매뉴얼 내용 텍스트 색상 */
 .dark .manual-content {
-  color: #f9fafb;
+  color: #f9fafb !important;
 }
 
 .manual-content p {
   margin-bottom: 1rem;
-  color: inherit;
+  color: #1f2937 !important;
 }
 
 .dark .manual-content p {
-  color: #f9fafb;
+  color: #f9fafb !important;
+}
+
+.manual-content div {
+  color: #1f2937 !important;
+}
+
+.dark .manual-content div {
+  color: #f9fafb !important;
+}
+
+.manual-content span {
+  color: #1f2937 !important;
+}
+
+.dark .manual-content span {
+  color: #f9fafb !important;
 }
 
 .manual-content br {
@@ -32,39 +48,80 @@
 
 /* 매뉴얼 내용 내 링크 스타일 */
 .manual-content a {
-  color: #2563eb;
+  color: #2563eb !important;
   text-decoration: underline;
   transition: color 0.2s ease;
 }
 
 .manual-content a:hover {
-  color: #1d4ed8;
-}
-
-.dark .manual-content a {
-  color: #60a5fa;
-}
-
-.dark .manual-content a:hover {
-  color: #93c5fd;
-}
-
-/* 매뉴얼 내용 내 모든 요소에 텍스트 색상 강제 적용 */
-.manual-content * {
-  color: inherit !important;
-}
-
-.dark .manual-content * {
-  color: #f9fafb !important;
-}
-
-/* 링크는 예외 */
-.manual-content a {
-  color: #2563eb !important;
+  color: #1d4ed8 !important;
 }
 
 .dark .manual-content a {
   color: #60a5fa !important;
+}
+
+.dark .manual-content a:hover {
+  color: #93c5fd !important;
+}
+
+/* 매뉴얼 내용 내 모든 요소에 텍스트 색상 강제 적용 */
+.manual-content *:not(a) {
+  color: #1f2937 !important;
+}
+
+.dark .manual-content *:not(a) {
+  color: #f9fafb !important;
+}
+
+/* prose 클래스 오버라이드 */
+.prose.manual-content {
+  color: #1f2937 !important;
+}
+
+.dark .prose.manual-content {
+  color: #f9fafb !important;
+}
+
+.prose.manual-content p {
+  color: #1f2937 !important;
+}
+
+.dark .prose.manual-content p {
+  color: #f9fafb !important;
+}
+
+.prose.manual-content div {
+  color: #1f2937 !important;
+}
+
+.dark .prose.manual-content div {
+  color: #f9fafb !important;
+}
+
+.prose.manual-content span {
+  color: #1f2937 !important;
+}
+
+.dark .prose.manual-content span {
+  color: #f9fafb !important;
+}
+
+/* prose-invert 클래스 오버라이드 */
+.prose.prose-invert.manual-content {
+  color: #1f2937 !important;
+}
+
+.dark .prose.prose-invert.manual-content {
+  color: #f9fafb !important;
+}
+
+.prose.prose-invert.manual-content p {
+  color: #1f2937 !important;
+}
+
+.dark .prose.prose-invert.manual-content p {
+  color: #f9fafb !important;
 }
 
 :root {

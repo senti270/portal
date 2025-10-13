@@ -68,5 +68,13 @@ export function sanitizeHtmlContent(htmlContent: string): string {
     return `<img src="${src}" alt="${alt}" style="max-width: 100%; height: auto; margin: 10px 0;" />`
   })
   
+  // 모든 텍스트 요소에 색상 강제 적용
+  sanitized = sanitized.replace(/<p([^>]*)>/gi, '<p$1 style="color: inherit !important;">')
+  sanitized = sanitized.replace(/<div([^>]*)>/gi, '<div$1 style="color: inherit !important;">')
+  sanitized = sanitized.replace(/<span([^>]*)>/gi, '<span$1 style="color: inherit !important;">')
+  sanitized = sanitized.replace(/<strong([^>]*)>/gi, '<strong$1 style="color: inherit !important;">')
+  sanitized = sanitized.replace(/<em([^>]*)>/gi, '<em$1 style="color: inherit !important;">')
+  sanitized = sanitized.replace(/<u([^>]*)>/gi, '<u$1 style="color: inherit !important;">')
+  
   return sanitized
 }

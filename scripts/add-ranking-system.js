@@ -40,3 +40,4 @@ async function addRankingSystem() {
 
 addRankingSystem()
 
+

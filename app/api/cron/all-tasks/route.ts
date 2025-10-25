@@ -99,3 +99,4 @@ async function sendKakaoWorkMessage(type: 'morning' | 'noon', orders: any[]) {
   console.log(`💬 ${type} 메시지 발송: ${orders.length}개 주문`);
 }
 
+

@@ -137,7 +137,7 @@ export default function PurchaseItemForm({ item, onSubmit, onCancel }: PurchaseI
             name="name"
             value={formData.name}
             onChange={handleInputChange}
-            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
             placeholder="예: 장어 보자기 포장 종이박스"
             required
           />
@@ -177,7 +177,7 @@ export default function PurchaseItemForm({ item, onSubmit, onCancel }: PurchaseI
               name="purchaseSource"
               value={formData.purchaseSource}
               onChange={handleInputChange}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
               placeholder="구입처를 입력하세요"
               required
             />
@@ -210,7 +210,7 @@ export default function PurchaseItemForm({ item, onSubmit, onCancel }: PurchaseI
             name="url"
             value={formData.url}
             onChange={handleInputChange}
-            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
             placeholder="https://..."
           />
         </div>
@@ -225,7 +225,7 @@ export default function PurchaseItemForm({ item, onSubmit, onCancel }: PurchaseI
             name="purchaseUnit"
             value={formData.purchaseUnit}
             onChange={handleInputChange}
-            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
             placeholder="예: 12개(1박스), 10kg/깐마늘/꼭지제거 중"
           />
         </div>

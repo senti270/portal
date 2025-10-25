@@ -1,10 +1,12 @@
 'use client'
 
-import { useState } from 'react'
-import { Store } from '@/types/ranking'
+import { useState, useEffect } from 'react'
+import { Store, Keyword, RankingRecord } from '@/types/ranking'
 import StoreInfo from './StoreInfo'
 import KeywordManager from './KeywordManager'
 import RankingHistory from './RankingHistory'
+import { getKeywords } from '@/lib/keyword-firestore'
+import { getRankings } from '@/lib/ranking-firestore'
 
 interface RankingDashboardProps {
   store: Store
@@ -12,6 +14,29 @@ interface RankingDashboardProps {
 
 export default function RankingDashboard({ store }: RankingDashboardProps) {
   const [activeTab, setActiveTab] = useState<'keywords' | 'history'>('keywords')
+  const [keywords, setKeywords] = useState<Keyword[]>([])
+  const [rankings, setRankings] = useState<RankingRecord[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    loadData()
+  }, [store.id])
+
+  const loadData = async () => {
+    try {
+      setLoading(true)
+      const [keywordsData, rankingsData] = await Promise.all([
+        getKeywords(store.id),
+        getRankings(store.id)
+      ])
+      setKeywords(keywordsData)
+      setRankings(rankingsData)
+    } catch (error) {
+      console.error('데이터 로드 실패:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   return (
     <div className="space-y-6">
@@ -47,10 +72,20 @@ export default function RankingDashboard({ store }: RankingDashboardProps) {
 
         {/* 탭 컨텐츠 */}
         <div className="p-6">
-          {activeTab === 'keywords' ? (
+          {loading ? (
+            <div className="flex items-center justify-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+              <span className="ml-2 text-gray-600 dark:text-gray-300">로딩 중...</span>
+            </div>
+          ) : activeTab === 'keywords' ? (
             <KeywordManager storeId={store.id} storeName={store.name} />
           ) : (
-            <RankingHistory storeId={store.id} />
+            <RankingHistory 
+              storeId={store.id} 
+              keywords={keywords} 
+              rankings={rankings}
+              store={store}
+            />
           )}
         </div>
       </div>

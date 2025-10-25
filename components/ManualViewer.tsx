@@ -21,6 +21,17 @@ export default function ManualViewer() {
     const manualId = urlParams.get('manual')
     if (manualId) {
       setExpandedManual(manualId)
+      
+      // 매뉴얼이 로드된 후 스크롤
+      setTimeout(() => {
+        const element = document.getElementById(`manual-${manualId}`)
+        if (element) {
+          element.scrollIntoView({ 
+            behavior: 'smooth', 
+            block: 'center'
+          })
+        }
+      }, 500) // 데이터 로딩 대기
     }
   }, [])
 
@@ -188,7 +199,8 @@ export default function ManualViewer() {
           filteredManuals.map((manual) => (
             <div
               key={manual.id}
-              className="border border-gray-200 dark:border-gray-600 rounded-lg overflow-hidden"
+              id={`manual-${manual.id}`}
+              className="border border-gray-200 dark:border-gray-600 rounded-lg overflow-hidden scroll-mt-20"
             >
               {/* 매뉴얼 헤더 */}
               <div

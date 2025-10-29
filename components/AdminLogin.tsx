@@ -25,7 +25,7 @@ export default function AdminLogin() {
       {/* 로그인 버튼 */}
       <button
         onClick={() => setShowModal(true)}
-        className="fixed bottom-6 right-6 bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg shadow-lg transition-all duration-300 z-50"
+        className="fixed bottom-32 left-6 bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg shadow-lg transition-all duration-300 z-50"
       >
         관리자 로그인
       </button>

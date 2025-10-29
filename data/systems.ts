@@ -104,6 +104,19 @@ export const systems: System[] = [
     optimization: ['PC 최적화', '모바일 최적화'],
     order: 7,
   },
+  {
+    id: 'chatbot-management',
+    title: '챗봇 관리',
+    description: '챗봇 히스토리와 의도-액션 사전을 관리합니다.',
+    icon: '🤖',
+    color: '#2563EB',
+    category: '운영',
+    url: '/chatbot-management',
+    status: 'active',
+    tags: ['챗봇', '로그', '의도사전'],
+    optimization: ['PC 최적화', '모바일 최적화'],
+    order: 9,
+  },
   // 아래는 예시 - 나중에 추가할 시스템들
   {
     id: 'example1',

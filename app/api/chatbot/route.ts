@@ -4,13 +4,41 @@ import { getDeposits, addDeposit, updateDeposit, deleteDeposit } from '@/lib/tod
 import { getKeywords, addKeyword, updateKeyword, deleteKeyword } from '@/lib/keyword-firestore'
 import { getStores, addStore, updateStore, deleteStore } from '@/lib/store-firestore'
 import { getRankings, addRanking } from '@/lib/ranking-firestore'
+import { getPurchaseItems, addPurchaseItem, updatePurchaseItem, deletePurchaseItem } from '@/lib/purchase-firestore'
 import { getSystems } from '@/lib/firestore'
+import { searchManuals } from '@/lib/manual-firestore'
+import { addChatMessage } from '@/lib/chatbot-firestore'
+import { listIntents, matchIntent, renderTemplate } from '@/lib/chatbot-intents-firestore'
 
 const ADMIN_PASSWORD = '43084308'
 
 // 자연어 처리 함수들
 function parseTodoCommand(message: string) {
   const lowerMessage = message.toLowerCase()
+
+  // 0) 의도 사전 기반 매칭 (최우선)
+  try {
+    const intents = await listIntents()
+    const matched = matchIntent(intents, message, 'staff')
+    if (matched) {
+      // 대표 액션 처리: open_menu / search_manuals / help / call_api(간단 안내)
+      if (matched.action === 'open_menu') {
+        return renderTemplate(matched.responseTemplate || '{menu}: {link}', matched.variables)
+      }
+      if (matched.action === 'search_manuals') {
+        const term = matched.variables?.term || message
+        const manuals = await searchManuals(term)
+        return formatManuals(manuals, term)
+      }
+      if (matched.action === 'help') {
+        return matched.responseTemplate ? renderTemplate(matched.responseTemplate, matched.variables) : '도움말 항목입니다.'
+      }
+      if (matched.action === 'call_api') {
+        // 추후 외부 API 호출용 확장 포인트
+        return matched.responseTemplate ? renderTemplate(matched.responseTemplate, matched.variables) : '요청을 처리했습니다.'
+      }
+    }
+  } catch {}
   
   if (lowerMessage.includes('할일') || lowerMessage.includes('todo')) {
     if (lowerMessage.includes('추가') || lowerMessage.includes('등록') || lowerMessage.includes('만들')) {
@@ -60,11 +88,39 @@ function parseRankingCommand(message: string) {
   return null
 }
 
+function parsePurchaseCommand(message: string) {
+  const lowerMessage = message.toLowerCase()
+  
+  if (lowerMessage.includes('구매') || lowerMessage.includes('물품') || lowerMessage.includes('purchase') || lowerMessage.includes('재고')) {
+    if (lowerMessage.includes('추가') || lowerMessage.includes('등록') || lowerMessage.includes('만들')) {
+      return { action: 'add_purchase', message }
+    } else if (lowerMessage.includes('수정') || lowerMessage.includes('편집')) {
+      return { action: 'update_purchase', message }
+    } else if (lowerMessage.includes('삭제') || lowerMessage.includes('지워')) {
+      return { action: 'delete_purchase', message }
+    } else if (lowerMessage.includes('검색') || lowerMessage.includes('찾아')) {
+      return { action: 'search_purchase', message }
+    } else {
+      return { action: 'list_purchases', message }
+    }
+  }
+  return null
+}
+
 function parseSystemCommand(message: string) {
   const lowerMessage = message.toLowerCase()
   
   if (lowerMessage.includes('시스템') || lowerMessage.includes('포털') || lowerMessage.includes('상태')) {
     return { action: 'system_status', message }
+  }
+  return null
+}
+
+function parseManualCommand(message: string) {
+  const lowerMessage = message.toLowerCase().trim()
+  // 메시지 안에 "매뉴얼/manual/문서"가 포함되면 매뉴얼 검색 동작
+  if (lowerMessage.includes('매뉴얼') || lowerMessage.includes('manual') || lowerMessage.includes('문서')) {
+    return { action: 'search_manuals', message }
   }
   return null
 }
@@ -117,6 +173,31 @@ function formatKeywords(keywords: any[]) {
   return response
 }
 
+function formatPurchaseItems(items: any[]) {
+  if (items.length === 0) {
+    return '등록된 구매물품이 없습니다.'
+  }
+  
+  let response = `🛒 **구매물품 목록 (${items.length}개)**\n\n`
+  
+  items.forEach((item, index) => {
+    const categories = item.category && item.category.length > 0 ? item.category.join(', ') : '미분류'
+    const source = item.purchaseSource || '미지정'
+    const unit = item.purchaseUnit || '개'
+    
+    response += `${index + 1}. **${item.name}**\n`
+    response += `   📂 카테고리: ${categories}\n`
+    response += `   🏪 구매처: ${source}\n`
+    response += `   📦 단위: ${unit}\n`
+    if (item.url) {
+      response += `   🔗 링크: ${item.url}\n`
+    }
+    response += `\n`
+  })
+  
+  return response
+}
+
 function formatSystems(systems: any[]) {
   let response = `🚀 **포털 시스템 현황**\n\n`
   const activeSystems = systems.filter(s => s.status === 'active')
@@ -133,6 +214,22 @@ function formatSystems(systems: any[]) {
   return response
 }
 
+function formatManuals(manuals: any[], keyword: string) {
+  if (!manuals || manuals.length === 0) {
+    return `"${keyword}"에 대한 매뉴얼을 찾지 못했습니다.`
+  }
+  let response = `📚 **매뉴얼 검색 결과 (${manuals.length}개)**\n\n`
+  manuals.slice(0, 10).forEach((m: any, index: number) => {
+    // 첫 줄 미리보기 생성
+    const preview = (m.content || '').toString().replace(/\n+/g, ' ').slice(0, 80)
+    response += `${index + 1}. **${m.title}**\n   ${preview}${preview.length === 80 ? '…' : ''}\n   링크: /manual-viewer?manual=${m.id}\n`
+  })
+  if (manuals.length > 10) {
+    response += `\n… 외 ${manuals.length - 10}개 더 있음`
+  }
+  return response
+}
+
 // 메인 챗봇 처리 함수
 async function processMessage(message: string, password: string) {
   if (password !== ADMIN_PASSWORD) {
@@ -143,32 +240,23 @@ async function processMessage(message: string, password: string) {
 
   // 인사말 처리
   if (lowerMessage.includes('안녕') || lowerMessage.includes('hello') || lowerMessage.includes('hi')) {
-    return '안녕하세요! 포털 챗봇입니다. 무엇을 도와드릴까요? 😊\n\n💡 **사용 가능한 명령어:**\n• "할일 보여줘" - 할일 목록 조회\n• "입금 현황 알려줘" - 입금 요청 현황\n• "키워드 목록 보여줘" - 키워드 목록 조회\n• "시스템 상태 확인해줘" - 포털 시스템 현황\n• "도움말" - 더 많은 명령어 보기'
+    return '안녕하세요! 포털 챗봇입니다. 무엇을 도와드릴까요? 😊\n\n💡 **예시:**\n• "주차"\n• "아몬드"\n• "네이버환불"\n• "키워드 목록 보여줘"\n• "시스템 상태 확인해줘"\n• "도움말"'
+  }
+
+  // 네이버 환불 전용 안내
+  if (lowerMessage.includes('네이버환불') || (lowerMessage.includes('네이버') && lowerMessage.includes('환불'))) {
+    return `네이버 환불 요청은 아래 메뉴에서 진행해 주세요.\n\n• 메뉴: 네이버 환불 요청\n• 바로가기: /naver-refund`
   }
 
   // 도움말
   if (lowerMessage.includes('도움말') || lowerMessage.includes('help')) {
-    return `🤖 **포털 챗봇 도움말**\n\n**📋 할일 관리:**\n• "할일 보여줘" - 할일 목록 조회\n• "할일 추가해줘" - 새 할일 등록\n• "할일 완료 처리해줘" - 할일 완료\n\n**💰 입금 관리:**\n• "입금 현황 알려줘" - 입금 요청 현황\n• "입금 요청 등록해줘" - 새 입금 요청\n\n**🔍 순위 관리:**\n• "키워드 목록 보여줘" - 키워드 목록\n• "순위 확인해줘" - 순위 조회\n• "키워드 추가해줘" - 새 키워드 등록\n\n**🚀 시스템 관리:**\n• "시스템 상태 확인해줘" - 포털 현황\n• "오늘 뭐 해야해?" - 오늘 할 일 요약`
+    return `🤖 **포털 챗봇 도움말**\n\n**📚 매뉴얼 검색:**\n• 일반 키워드로 검색: "주차", "아몬드", "네이버환불"\n\n**💰 입금 관리:**\n• "입금 현황 알려줘" - 입금 요청 현황\n\n**🛒 구매 관리:**\n• "구매물품 보여줘" - 구매물품 목록\n• "물품 검색해줘" - 구매물품 검색\n\n**🔍 순위 관리:**\n• "키워드 목록 보여줘" - 키워드 목록\n• "순위 확인해줘" - 순위 조회\n\n**🚀 시스템 관리:**\n• "시스템 상태 확인해줘" - 포털 현황`
   }
 
   // 할일 관련 명령어
   const todoCommand = parseTodoCommand(message)
   if (todoCommand) {
-    try {
-      switch (todoCommand.action) {
-        case 'list_todos':
-          const todos = await getTodos()
-          return formatTodos(todos)
-        case 'add_todo':
-          return '할일 추가 기능은 준비 중입니다. 포털에서 직접 추가해주세요.'
-        case 'complete_todo':
-          return '할일 완료 처리 기능은 준비 중입니다. 포털에서 직접 처리해주세요.'
-        case 'delete_todo':
-          return '할일 삭제 기능은 준비 중입니다. 포털에서 직접 삭제해주세요.'
-      }
-    } catch (error) {
-      return '할일 데이터를 가져오는 중 오류가 발생했습니다.'
-    }
+    return '할일 조회는 챗봇에서 제공하지 않습니다.'
   }
 
   // 입금 관련 명령어
@@ -188,6 +276,39 @@ async function processMessage(message: string, password: string) {
       }
     } catch (error) {
       return '입금 데이터를 가져오는 중 오류가 발생했습니다.'
+    }
+  }
+
+  // 구매물품 관련 명령어
+  const purchaseCommand = parsePurchaseCommand(message)
+  if (purchaseCommand) {
+    try {
+      switch (purchaseCommand.action) {
+        case 'list_purchases':
+          const purchaseItems = await getPurchaseItems()
+          return formatPurchaseItems(purchaseItems)
+        case 'search_purchase':
+          const allItems = await getPurchaseItems()
+          // 간단한 검색 로직
+          const searchTerm = message.toLowerCase().replace(/구매|물품|검색|찾아|해줘/g, '').trim()
+          const filteredItems = allItems.filter(item => 
+            item.name.toLowerCase().includes(searchTerm) ||
+            item.category.some(cat => cat.toLowerCase().includes(searchTerm)) ||
+            item.purchaseSource.toLowerCase().includes(searchTerm)
+          )
+          if (filteredItems.length === 0) {
+            return `"${searchTerm}"에 대한 검색 결과가 없습니다.`
+          }
+          return `🔍 **"${searchTerm}" 검색 결과 (${filteredItems.length}개)**\n\n` + formatPurchaseItems(filteredItems)
+        case 'add_purchase':
+          return '구매물품 추가 기능은 준비 중입니다. 포털에서 직접 추가해주세요.'
+        case 'update_purchase':
+          return '구매물품 수정 기능은 준비 중입니다. 포털에서 직접 수정해주세요.'
+        case 'delete_purchase':
+          return '구매물품 삭제 기능은 준비 중입니다. 포털에서 직접 삭제해주세요.'
+      }
+    } catch (error) {
+      return '구매물품 데이터를 가져오는 중 오류가 발생했습니다.'
     }
   }
 
@@ -221,49 +342,54 @@ async function processMessage(message: string, password: string) {
     }
   }
 
-  // 오늘 할 일 요약
-  if (lowerMessage.includes('오늘') && (lowerMessage.includes('뭐') || lowerMessage.includes('할'))) {
+  // 매뉴얼 검색 명령어
+  const manualCommand = parseManualCommand(message)
+  if (manualCommand) {
     try {
-      const todos = await getTodos()
-      const deposits = await getDeposits()
-      const incompleteTodos = todos.filter(todo => !todo.isCompleted)
-      const incompleteDeposits = deposits.filter(deposit => !deposit.isCompleted)
-      
-      let response = `📅 **오늘 할 일 요약**\n\n`
-      
-      if (incompleteTodos.length > 0) {
-        response += `📋 **할일 (${incompleteTodos.length}개):**\n`
-        incompleteTodos.slice(0, 3).forEach((todo, index) => {
-          response += `${index + 1}. ${todo.requester}: ${todo.task}\n`
-        })
-        if (incompleteTodos.length > 3) {
-          response += `... 외 ${incompleteTodos.length - 3}개\n`
-        }
-        response += `\n`
-      }
-      
-      if (incompleteDeposits.length > 0) {
-        response += `💰 **입금 요청 (${incompleteDeposits.length}개):**\n`
-        incompleteDeposits.slice(0, 3).forEach((deposit, index) => {
-          response += `${index + 1}. ${deposit.companyName}: ${deposit.amount.toLocaleString()}원\n`
-        })
-        if (incompleteDeposits.length > 3) {
-          response += `... 외 ${incompleteDeposits.length - 3}개\n`
-        }
-      }
-      
-      if (incompleteTodos.length === 0 && incompleteDeposits.length === 0) {
-        response += `🎉 **오늘 완료할 일이 없습니다!**\n모든 업무가 완료되었어요.`
-      }
-      
-      return response
+      // "매뉴얼 ~검색어"에서 검색어 추출 (앞 접두사 강제)
+      const term = message
+        .replace(/^\s*(매뉴얼|manual|문서)\b/i, '')
+        .replace(/검색|찾아|보여줘|열어줘|확인|해줘/gi, '')
+        .trim()
+      const searchTerm = term.length > 0 ? term : message
+      const manuals = await searchManuals(searchTerm)
+      return formatManuals(manuals, searchTerm)
     } catch (error) {
-      return '오늘 할 일을 가져오는 중 오류가 발생했습니다.'
+      return '매뉴얼을 검색하는 중 오류가 발생했습니다.'
     }
   }
 
+  // 폴백: 다른 명령에 해당하지 않으면 매뉴얼 자동 검색 시도
+  try {
+    const trimmed = message.trim()
+    if (trimmed.length > 1) {
+      const manuals = await searchManuals(trimmed)
+      if (Array.isArray(manuals) && manuals.length > 0) {
+        return formatManuals(manuals, trimmed)
+      }
+    }
+  } catch {}
+
+  // "오늘 할 일" 요약 기능 제거 (개인 업무 데이터 노출 방지)
+
+  // 단일 키워드 자동 구매물품 검색 (예: "박스")
+  try {
+    const term = lowerMessage.replace(/\s+/g, ' ').trim()
+    if (term.length > 0) {
+      const items = await getPurchaseItems()
+      const results = items.filter(item =>
+        item.name.toLowerCase().includes(term) ||
+        item.purchaseSource?.toLowerCase().includes(term) ||
+        (Array.isArray(item.category) && item.category.some(cat => cat.toLowerCase().includes(term)))
+      )
+      if (results.length > 0) {
+        return `🔍 "${term}" 검색 결과 (${results.length}개)\n\n` + formatPurchaseItems(results)
+      }
+    }
+  } catch {}
+
   // 기본 응답
-  return `죄송합니다. "${message}"에 대한 답변을 찾을 수 없습니다.\n\n💡 **사용 가능한 명령어:**\n• "할일 보여줘"\n• "입금 현황 알려줘"\n• "키워드 목록 보여줘"\n• "시스템 상태 확인해줘"\n• "도움말"\n\n더 정확한 답변을 위해 구체적으로 질문해주세요! 😊`
+  return `죄송합니다. "${message}"에 대한 답변을 찾을 수 없습니다.\n\n💡 **사용 가능한 명령어:**\n• "할일 보여줘"\n• "입금 현황 알려줘"\n• "구매물품 보여줘"\n• "키워드 목록 보여줘"\n• "시스템 상태 확인해줘"\n• "도움말"\n\n더 정확한 답변을 위해 구체적으로 질문해주세요! 😊`
 }
 
 export async function POST(request: NextRequest) {
@@ -279,6 +405,12 @@ export async function POST(request: NextRequest) {
     }
 
     const response = await processMessage(message, password || '')
+
+    // 대화 로그 저장 (에러가 나더라도 응답은 진행)
+    try {
+      await addChatMessage({ role: 'user', content: message })
+      await addChatMessage({ role: 'bot', content: response })
+    } catch {}
 
     return NextResponse.json({
       success: true,

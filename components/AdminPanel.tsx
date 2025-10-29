@@ -270,7 +270,7 @@ export default function AdminPanel({ systemsList: propSystemsList, onSystemsUpda
       </div>
 
       {/* 시스템 관리 버튼들 */}
-      <div className="fixed bottom-6 right-6 flex gap-2 z-50">
+      <div className="fixed bottom-6 left-6 flex gap-2 z-50 flex-col">
         <button 
           onClick={fixSystemOrders}
           className="bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-lg shadow-lg transition-all duration-300 text-sm"

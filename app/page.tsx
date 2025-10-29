@@ -6,6 +6,7 @@ import SearchBar from '@/components/SearchBar'
 import ThemeToggle from '@/components/ThemeToggle'
 import AdminLogin from '@/components/AdminLogin'
 import AdminPanel from '@/components/AdminPanel'
+import ChatBot from '@/components/ChatBot'
 import { System, systems } from '@/data/systems'
 import { getSystems } from '@/lib/firestore'
 
@@ -14,6 +15,7 @@ export default function Home() {
   const [allSystems, setAllSystems] = useState<System[]>(systems)
   const [filteredSystems, setFilteredSystems] = useState<System[]>(systems)
   const [isDark, setIsDark] = useState(false)
+  const [isChatBotOpen, setIsChatBotOpen] = useState(false)
 
   useEffect(() => {
     // 다크모드 초기 설정
@@ -161,6 +163,12 @@ export default function Home() {
             setFilteredSystems([...updatedSystems])
           }, 100)
         }}
+      />
+
+      {/* 챗봇 */}
+      <ChatBot 
+        isOpen={isChatBotOpen} 
+        onToggle={() => setIsChatBotOpen(!isChatBotOpen)} 
       />
     </main>
   )

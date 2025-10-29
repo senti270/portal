@@ -15,30 +15,6 @@ const ADMIN_PASSWORD = '43084308'
 // 자연어 처리 함수들
 function parseTodoCommand(message: string) {
   const lowerMessage = message.toLowerCase()
-
-  // 0) 의도 사전 기반 매칭 (최우선)
-  try {
-    const intents = await listIntents()
-    const matched = matchIntent(intents, message, 'staff')
-    if (matched) {
-      // 대표 액션 처리: open_menu / search_manuals / help / call_api(간단 안내)
-      if (matched.action === 'open_menu') {
-        return renderTemplate(matched.responseTemplate || '{menu}: {link}', matched.variables)
-      }
-      if (matched.action === 'search_manuals') {
-        const term = matched.variables?.term || message
-        const manuals = await searchManuals(term)
-        return formatManuals(manuals, term)
-      }
-      if (matched.action === 'help') {
-        return matched.responseTemplate ? renderTemplate(matched.responseTemplate, matched.variables) : '도움말 항목입니다.'
-      }
-      if (matched.action === 'call_api') {
-        // 추후 외부 API 호출용 확장 포인트
-        return matched.responseTemplate ? renderTemplate(matched.responseTemplate, matched.variables) : '요청을 처리했습니다.'
-      }
-    }
-  } catch {}
   
   if (lowerMessage.includes('할일') || lowerMessage.includes('todo')) {
     if (lowerMessage.includes('추가') || lowerMessage.includes('등록') || lowerMessage.includes('만들')) {
@@ -318,9 +294,15 @@ async function processMessage(message: string, password: string) {
     try {
       switch (rankingCommand.action) {
         case 'list_rankings':
-        case 'check_ranking':
-          const keywords = await getKeywords()
-          return formatKeywords(keywords)
+        case 'check_ranking': {
+          // 모든 지점의 키워드를 모아 간단히 보여줌
+          const stores = await getStores()
+          const allKeywordsArrays = await Promise.all(
+            stores.map(s => getKeywords(s.id))
+          )
+          const allKeywords = allKeywordsArrays.flat()
+          return formatKeywords(allKeywords)
+        }
         case 'add_keyword':
           return '키워드 추가 기능은 준비 중입니다. 포털에서 직접 추가해주세요.'
         case 'track_ranking':

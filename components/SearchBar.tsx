@@ -1,9 +1,10 @@
 interface SearchBarProps {
   searchTerm: string
   setSearchTerm: (term: string) => void
+  placeholder?: string
 }
 
-export default function SearchBar({ searchTerm, setSearchTerm }: SearchBarProps) {
+export default function SearchBar({ searchTerm, setSearchTerm, placeholder = "시스템 검색... (이름, 설명, 카테고리)" }: SearchBarProps) {
   return (
     <div className="relative max-w-2xl mx-auto">
       <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
@@ -25,7 +26,7 @@ export default function SearchBar({ searchTerm, setSearchTerm }: SearchBarProps)
         type="text"
         value={searchTerm}
         onChange={(e) => setSearchTerm(e.target.value)}
-        placeholder="시스템 검색... (이름, 설명, 카테고리)"
+        placeholder={placeholder}
         className="
           w-full pl-12 pr-4 py-4 
           bg-white dark:bg-gray-800 
@@ -50,6 +51,7 @@ export default function SearchBar({ searchTerm, setSearchTerm }: SearchBarProps)
     </div>
   )
 }
+
 
 
 

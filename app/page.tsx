@@ -6,16 +6,24 @@ import SearchBar from '@/components/SearchBar'
 import ThemeToggle from '@/components/ThemeToggle'
 import AdminLogin from '@/components/AdminLogin'
 import AdminPanel from '@/components/AdminPanel'
-import ChatBot from '@/components/ChatBot'
 import { System, systems } from '@/data/systems'
 import { getSystems } from '@/lib/firestore'
+import { searchManuals } from '@/lib/manual-firestore'
+import { getPurchaseItems } from '@/lib/purchase-firestore'
+import { getKeywords } from '@/lib/keyword-firestore'
+import { getStores } from '@/lib/store-firestore'
 
 export default function Home() {
   const [searchTerm, setSearchTerm] = useState('')
   const [allSystems, setAllSystems] = useState<System[]>(systems)
   const [filteredSystems, setFilteredSystems] = useState<System[]>(systems)
   const [isDark, setIsDark] = useState(false)
-  const [isChatBotOpen, setIsChatBotOpen] = useState(false)
+  const [searchResults, setSearchResults] = useState<{
+    manuals: any[]
+    purchases: any[]
+    keywords: any[]
+  } | null>(null)
+  const [isSearching, setIsSearching] = useState(false)
 
   useEffect(() => {
     // 다크모드 초기 설정
@@ -81,6 +89,52 @@ export default function Home() {
     setFilteredSystems(sorted)
   }, [searchTerm, allSystems])
 
+  useEffect(() => {
+    const performSearch = async () => {
+      if (!searchTerm.trim() || searchTerm.length < 2) {
+        setSearchResults(null)
+        return
+      }
+
+      setIsSearching(true)
+      try {
+        const [manuals, purchases, stores] = await Promise.all([
+          searchManuals(searchTerm),
+          getPurchaseItems(),
+          getStores()
+        ])
+
+        const filteredPurchases = purchases.filter(item =>
+          item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          item.purchaseSource?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          (Array.isArray(item.category) && item.category.some(cat => cat.toLowerCase().includes(searchTerm.toLowerCase())))
+        )
+
+        const allKeywordsArrays = await Promise.all(
+          stores.map(s => getKeywords(s.id))
+        )
+        const allKeywords = allKeywordsArrays.flat()
+        const filteredKeywords = allKeywords.filter(k =>
+          k.keyword.toLowerCase().includes(searchTerm.toLowerCase())
+        )
+
+        setSearchResults({
+          manuals: manuals || [],
+          purchases: filteredPurchases || [],
+          keywords: filteredKeywords || []
+        })
+      } catch (error) {
+        console.error('검색 오류:', error)
+        setSearchResults(null)
+      } finally {
+        setIsSearching(false)
+      }
+    }
+
+    const timeoutId = setTimeout(performSearch, 300)
+    return () => clearTimeout(timeoutId)
+  }, [searchTerm])
+
   const toggleTheme = () => {
     setIsDark(!isDark)
     document.documentElement.classList.toggle('dark')
@@ -118,26 +172,90 @@ export default function Home() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* 검색바 */}
         <div className="mb-8 animate-fade-in">
-          <SearchBar searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
+          <SearchBar searchTerm={searchTerm} setSearchTerm={setSearchTerm} placeholder="통합 검색... (매뉴얼, 구매물품, 키워드 등)" />
         </div>
 
+        {/* 통합 검색 결과 */}
+        {searchResults && searchTerm.trim() && (
+          <div className="mb-8 bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
+            <h2 className="text-xl font-bold mb-4 text-gray-900 dark:text-white">검색 결과: "{searchTerm}"</h2>
+            {isSearching ? (
+              <div className="text-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+                <p className="mt-2 text-gray-600 dark:text-gray-400">검색 중...</p>
+              </div>
+            ) : (
+              <div className="space-y-6">
+                {/* 매뉴얼 결과 */}
+                {searchResults.manuals.length > 0 && (
+                  <div>
+                    <h3 className="text-lg font-semibold mb-3 text-gray-800 dark:text-gray-200">📚 매뉴얼 ({searchResults.manuals.length}개)</h3>
+                    <div className="space-y-2">
+                      {searchResults.manuals.slice(0, 5).map((m: any) => (
+                        <div key={m.id} className="border-l-4 border-blue-500 pl-4 py-2 hover:bg-gray-50 dark:hover:bg-gray-700 rounded">
+                          <a href={`/manual-viewer?manual=${m.id}`} className="block">
+                            <div className="font-semibold text-blue-600 dark:text-blue-400 hover:underline">{m.title}</div>
+                            <div className="text-sm text-gray-600 dark:text-gray-400 mt-1 line-clamp-2">
+                              {(m.content || '').toString().replace(/\n+/g, ' ').slice(0, 100)}...
+                            </div>
+                            <div className="text-xs text-gray-500 dark:text-gray-500 mt-1">링크: /manual-viewer?manual={m.id}</div>
+                          </a>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* 구매물품 결과 */}
+                {searchResults.purchases.length > 0 && (
+                  <div>
+                    <h3 className="text-lg font-semibold mb-3 text-gray-800 dark:text-gray-200">🛒 구매물품 ({searchResults.purchases.length}개)</h3>
+                    <div className="space-y-2">
+                      {searchResults.purchases.slice(0, 5).map((item: any) => (
+                        <div key={item.id} className="border-l-4 border-green-500 pl-4 py-2 hover:bg-gray-50 dark:hover:bg-gray-700 rounded">
+                          <div className="font-semibold text-gray-900 dark:text-white">{item.name}</div>
+                          <div className="text-sm text-gray-600 dark:text-gray-400">
+                            카테고리: {item.category?.join(', ') || '미분류'} | 구매처: {item.purchaseSource || '미지정'}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* 키워드 결과 */}
+                {searchResults.keywords.length > 0 && (
+                  <div>
+                    <h3 className="text-lg font-semibold mb-3 text-gray-800 dark:text-gray-200">🔍 키워드 ({searchResults.keywords.length}개)</h3>
+                    <div className="space-y-2">
+                      {searchResults.keywords.slice(0, 5).map((k: any) => (
+                        <div key={k.id} className="border-l-4 border-purple-500 pl-4 py-2 hover:bg-gray-50 dark:hover:bg-gray-700 rounded">
+                          <div className="font-semibold text-gray-900 dark:text-white">{k.keyword}</div>
+                          <div className="text-sm text-gray-600 dark:text-gray-400">
+                            월 검색량: {k.monthlySearchVolume?.toLocaleString() || 0} | 상태: {k.isActive ? '🟢 활성' : '🔴 비활성'}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {searchResults.manuals.length === 0 && searchResults.purchases.length === 0 && searchResults.keywords.length === 0 && (
+                  <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                    검색 결과가 없습니다.
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
 
         {/* 시스템 카드 그리드 */}
-        {filteredSystems.length > 0 ? (
+        {(!searchResults || !searchTerm.trim()) && filteredSystems.length > 0 && (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 animate-slide-up">
             {filteredSystems.map((system, index) => (
               <SystemCard key={system.id} system={system} index={index} />
             ))}
-          </div>
-        ) : (
-          <div className="text-center py-20">
-            <div className="text-6xl mb-4">🔍</div>
-            <h3 className="text-xl font-semibold text-gray-700 dark:text-gray-300 mb-2">
-              검색 결과가 없습니다
-            </h3>
-            <p className="text-gray-500 dark:text-gray-400">
-              다른 검색어를 시도해보세요
-            </p>
           </div>
         )}
       </div>
@@ -163,12 +281,6 @@ export default function Home() {
             setFilteredSystems([...updatedSystems])
           }, 100)
         }}
-      />
-
-      {/* 챗봇 */}
-      <ChatBot 
-        isOpen={isChatBotOpen} 
-        onToggle={() => setIsChatBotOpen(!isChatBotOpen)} 
       />
     </main>
   )

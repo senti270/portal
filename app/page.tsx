@@ -157,7 +157,7 @@ export default function Home() {
               <div className="flex items-center gap-3">
                 <div>
                   <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
-                    드로잉컴퍼니
+                    카페드로잉&청담장어마켓
                   </h1>
                   <p className="text-sm text-gray-600 dark:text-gray-400">통합 업무 포털</p>
                 </div>
@@ -264,7 +264,7 @@ export default function Home() {
       <footer className="mt-20 py-8 bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm transition-colors duration-300">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <p className="text-gray-600 dark:text-gray-400">
-            © 2025 드로잉컴퍼니 | 통합 업무 포털 시스템
+            © 2025 카페드로잉&청담장어마켓 | 통합 업무 포털 시스템
           </p>
         </div>
       </footer>

@@ -3,8 +3,8 @@ import './globals.css'
 import { AdminProvider } from '@/contexts/AdminContext'
 
 export const metadata: Metadata = {
-  title: '드로잉컴퍼니',
-  description: '드로잉컴퍼니 업무 시스템 통합 포털',
+  title: '카페드로잉&청담장어마켓',
+  description: '카페드로잉&청담장어마켓 업무 시스템 통합 포털',
   icons: {
     icon: [
       { url: '/favicon.ico', sizes: '32x32', type: 'image/x-icon' },

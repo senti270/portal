@@ -262,15 +262,14 @@ export default function AdminPanel({ systemsList: propSystemsList, onSystemsUpda
 
   return (
     <>
-      {/* 관리자 패널 */}
-      <div className="fixed bottom-6 left-6 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg shadow-lg transition-all duration-300 z-50">
-        <button onClick={logout}>
+      {/* 관리자 패널 버튼들 - 수직으로 배치 */}
+      <div className="fixed bottom-6 left-6 flex flex-col gap-2 z-50">
+        <button 
+          onClick={logout}
+          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg shadow-lg transition-all duration-300"
+        >
           관리자 로그아웃
         </button>
-      </div>
-
-      {/* 시스템 관리 버튼들 */}
-      <div className="fixed bottom-6 left-6 flex gap-2 z-50 flex-col">
         <button 
           onClick={fixSystemOrders}
           className="bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-lg shadow-lg transition-all duration-300 text-sm"

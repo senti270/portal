@@ -52,10 +52,12 @@ interface PublicPayrollPageProps {
 }
 
 export default function PublicPayrollPage({ params }: PublicPayrollPageProps) {
-  // 최상단에서 즉시 로그 출력
-  console.log('🟢🟢🟢 PublicPayrollPage 컴포넌트 렌더링 시작 🟢🟢🟢');
+  // 즉시 실행되는 로그 (페이지 최상단)
   if (typeof window !== 'undefined') {
+    console.log('🟢🟢🟢 PublicPayrollPage 컴포넌트 렌더링 시작 🟢🟢🟢');
     console.log('🟢 현재 URL:', window.location.href);
+    console.log('🟢 현재 경로:', window.location.pathname);
+    console.log('🟢 현재 쿼리:', window.location.search);
   }
 
   const resolvedParams = use(params);

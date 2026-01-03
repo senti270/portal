@@ -619,6 +619,9 @@ const PayrollStatement: React.FC = () => {
         selectedPayrollId: selectedPayroll.id,
         usingEmployeeId: employeeIdForUrl
       });
+      
+      // ⚠️ 경고: employeeId가 실제로 employees 컬렉션에 있는지 확인
+      alert(`공유 링크 생성 확인\n\n직원 ID: ${employeeIdForUrl}\n직원명: ${selectedPayroll.employeeName}\n월: ${selectedMonth}\n\n이 ID가 employees 컬렉션에 존재하는지 확인하세요!`);
 
       // 토큰 생성 (월 정보를 base64로 인코딩)
       const token = btoa(JSON.stringify({ month: selectedMonth }));
@@ -628,6 +631,7 @@ const PayrollStatement: React.FC = () => {
       
       console.log('🔗 생성된 공유 링크:', shareUrl);
       console.log('🔗 사용된 employeeId:', employeeIdForUrl);
+      console.log('⚠️ 경고: 위 employeeId가 실제 employees 컬렉션에 존재하는지 Firestore에서 확인하세요!');
       
       // Web Share API 지원 확인
       if (navigator.share) {

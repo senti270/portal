@@ -10,15 +10,13 @@ interface SystemCardProps {
 export default function SystemCard({ system, index }: SystemCardProps) {
   const { hasSystemPermission } = usePermissions()
   
-  // 권한 체크: 시스템 ID가 있고 권한이 없으면 숨김
-  const systemId = system.id as SystemId
-  const hasAccess = systemId ? hasSystemPermission(systemId, 'read') : true
-  
-  // 권한이 없으면 카드 숨김
-  if (!hasAccess) {
-    return null
-  }
   const handleClick = () => {
+    // 클릭 시에만 권한 체크 (포털 메인에서는 모든 카드 표시, 접근 시 권한 확인)
+    const systemId = system.id as SystemId
+    if (systemId && !hasSystemPermission(systemId, 'read')) {
+      alert('접근 권한이 없습니다. 관리자에게 문의하세요.')
+      return
+    }
     if (system.url) {
       // 내부 라우트인 경우 (/)로 시작하면 같은 창에서 이동
       if (system.url.startsWith('/')) {

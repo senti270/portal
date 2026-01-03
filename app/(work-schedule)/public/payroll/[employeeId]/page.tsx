@@ -413,11 +413,12 @@ export default function PublicPayrollPage({ params }: PublicPayrollPageProps) {
         </div>
       )}
 
-      {!loading && !error && employee && payroll && (() => {
-        const employmentType = (payroll as any).employmentType || (employee as any).employmentType || '';
-        return (
-          <div className="max-w-4xl mx-auto px-4 py-8">
-            <div className="bg-white shadow rounded-lg p-6 mb-4">
+      {!loading && !error && employee && payroll && (
+        <div className="max-w-4xl mx-auto px-4 py-8">
+          {(() => {
+            const employmentType = (payroll as any).employmentType || (employee as any).employmentType || '';
+            return (
+              <div className="bg-white shadow rounded-lg p-6 mb-4">
           <div className="flex justify-between items-center">
             <div>
               <h1 className="text-2xl font-bold text-gray-900">{employee.name}님의 급여명세서</h1>

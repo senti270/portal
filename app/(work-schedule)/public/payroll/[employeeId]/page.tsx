@@ -395,8 +395,10 @@ export default function PublicPayrollPage({ params }: PublicPayrollPageProps) {
   if (error || !employee || !payroll) {
     console.log('❌ 에러 또는 데이터 없음:', { error, hasEmployee: !!employee, hasPayroll: !!payroll });
     return (
-      <div className="flex justify-center items-center min-h-screen">
-        <div className="text-red-600">{error || '데이터를 불러올 수 없습니다.'}</div>
+      <div className="flex justify-center items-center min-h-screen p-4">
+        <div className="text-red-600 whitespace-pre-line font-mono text-sm max-w-4xl bg-red-50 p-4 rounded border border-red-200">
+          {error || '데이터를 불러올 수 없습니다.'}
+        </div>
       </div>
     );
   }

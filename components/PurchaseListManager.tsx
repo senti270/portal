@@ -183,6 +183,11 @@ export default function PurchaseListManager() {
                 편집 가능
               </span>
             )}
+            {!canEdit && (
+              <span className="ml-3 text-sm px-2 py-1 bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-200 rounded-full">
+                조회 전용
+              </span>
+            )}
           </h2>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
             {displayedItems.length > 0 && displayedItems.length < filteredItems.length 

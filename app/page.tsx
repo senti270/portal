@@ -55,40 +55,22 @@ function PortalContent() {
   const loadSystems = async () => {
     try {
       console.log('🔄 시스템 로딩 시작...')
+      // 무조건 Firestore에서만 가져오기
       const firestoreSystems = await getSystems()
-          console.log('📊 Firebase에서 로드된 시스템:', firestoreSystems.length, '개')
-          console.log('📋 로드된 시스템 목록:', firestoreSystems.map(s => s.title))
-          console.log('🔢 메인 페이지에서 받은 order 값들:', firestoreSystems.map(s => `${s.title}: ${s.order}`))
+      console.log('📊 Firebase에서 로드된 시스템:', firestoreSystems.length, '개')
+      console.log('📋 로드된 시스템 목록:', firestoreSystems.map(s => s.title))
+      console.log('🔢 메인 페이지에서 받은 order 값들:', firestoreSystems.map(s => `${s.title}: ${s.order}`))
       
-      if (firestoreSystems.length > 0) {
-        console.log('✅ Firebase 데이터 사용')
-        // Firebase에 저장된 시스템만 사용 (기본 시스템 병합 제거)
-        // 사용자가 삭제한 시스템이 다시 나타나지 않도록
-        const sortedSystems = firestoreSystems.sort((a, b) => (a.order || 999) - (b.order || 999))
-        setAllSystems(sortedSystems)
-        setFilteredSystems(sortedSystems)
-      } else {
-        console.log('⚠️ Firebase가 비어있음, 기본 데이터 사용')
-        // Firestore가 비어있으면 기본 데이터 사용
-        setAllSystems(systems)
-        setFilteredSystems(systems)
-      }
+      // Firestore에서 가져온 데이터만 사용 (기본 시스템 병합 제거, fallback 제거)
+      const sortedSystems = firestoreSystems.sort((a, b) => (a.order || 999) - (b.order || 999))
+      setAllSystems(sortedSystems)
+      setFilteredSystems(sortedSystems)
     } catch (error) {
       console.error('❌ Firebase 로딩 오류:', error)
-      // 오류 시 로컬 스토리지에서 로드
-      const savedSystems = localStorage.getItem('portal-systems')
-      if (savedSystems) {
-        console.log('💾 로컬 스토리지에서 로드')
-        const parsedSystems = JSON.parse(savedSystems)
-        // 로컬 스토리지 데이터만 사용 (기본 시스템 병합 제거)
-        parsedSystems.sort((a: System, b: System) => (a.order || 999) - (b.order || 999))
-        setAllSystems(parsedSystems)
-        setFilteredSystems(parsedSystems)
-      } else {
-        console.log('🔄 기본 시스템 데이터 사용')
-        setAllSystems(systems)
-        setFilteredSystems(systems)
-      }
+      // 오류 발생 시 빈 배열로 설정 (Firestore에서만 가져오기)
+      setAllSystems([])
+      setFilteredSystems([])
+      alert('시스템 목록을 불러오는 중 오류가 발생했습니다. 페이지를 새로고침해주세요.')
     }
   }
 

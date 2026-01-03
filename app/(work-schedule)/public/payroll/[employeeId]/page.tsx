@@ -7,10 +7,13 @@ import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { useSearchParams } from 'next/navigation';
 
-// 클라이언트 사이드에서만 실행되는지 확인 - 즉시 실행
+// 클라이언트 사이드에서만 실행되는지 확인 - 즉시 실행 (가장 최상단)
 if (typeof window !== 'undefined') {
-  console.log('✅✅✅ 페이지 컴포넌트 로드됨 (클라이언트) ✅✅✅');
-  console.log('✅✅✅ 현재 URL:', window.location.href, '✅✅✅');
+  // 가장 확실한 방법: alert 사용
+  console.error('🔴🔴🔴 페이지 파일 로드됨 - 이것이 보이면 JavaScript는 실행 중 🔴🔴🔴');
+  console.error('🔴 현재 URL:', window.location.href);
+  // alert를 주석 처리하지 말고 일단 확인용으로 사용
+  // alert('페이지 파일 로드됨: ' + window.location.href);
 }
 
 interface Employee {
@@ -52,16 +55,21 @@ interface PublicPayrollPageProps {
 }
 
 export default function PublicPayrollPage({ params }: PublicPayrollPageProps) {
-  // 즉시 실행되는 로그 (페이지 최상단)
+  // 즉시 실행되는 로그 (페이지 최상단) - console.error 사용 (더 확실함)
+  console.error('🟢🟢🟢 PublicPayrollPage 컴포넌트 함수 시작 🟢🟢🟢');
+  
   if (typeof window !== 'undefined') {
-    console.log('🟢🟢🟢 PublicPayrollPage 컴포넌트 렌더링 시작 🟢🟢🟢');
-    console.log('🟢 현재 URL:', window.location.href);
-    console.log('🟢 현재 경로:', window.location.pathname);
-    console.log('🟢 현재 쿼리:', window.location.search);
+    console.error('🟢 window 객체 존재, 현재 URL:', window.location.href);
+    console.error('🟢 현재 경로:', window.location.pathname);
+    console.error('🟢 현재 쿼리:', window.location.search);
+  } else {
+    console.error('⚠️ window 객체 없음 - 서버 사이드 렌더링?');
   }
 
   const resolvedParams = use(params);
   const searchParams = useSearchParams();
+  
+  console.error('🟢 resolvedParams, searchParams 초기화 완료');
   const [employee, setEmployee] = useState<Employee | null>(null);
   const [payroll, setPayroll] = useState<ConfirmedPayroll | null>(null);
   const [workTimeComparisons, setWorkTimeComparisons] = useState<WorkTimeComparisonResult[]>([]);
@@ -71,8 +79,8 @@ export default function PublicPayrollPage({ params }: PublicPayrollPageProps) {
 
   // 컴포넌트 마운트 확인
   useEffect(() => {
-    console.log('🚀🚀🚀 PublicPayrollPage useEffect 실행됨 🚀🚀🚀');
-    console.log('🚀 resolvedParams:', resolvedParams);
+    console.error('🚀🚀🚀 PublicPayrollPage useEffect 실행됨 🚀🚀🚀');
+    console.error('🚀 resolvedParams:', resolvedParams);
     try {
       console.log('🚀 employeeId:', resolvedParams?.employeeId);
     } catch (e) {
@@ -101,21 +109,21 @@ export default function PublicPayrollPage({ params }: PublicPayrollPageProps) {
   };
 
   useEffect(() => {
-    console.log('🔵 useEffect 실행됨');
-    console.log('🔵 resolvedParams:', resolvedParams);
+    console.error('🔵 useEffect (loadData) 실행됨');
+    console.error('🔵 resolvedParams:', resolvedParams);
     
     const loadData = async () => {
       try {
-        console.log('🔵 loadData 함수 시작');
+        console.error('🔵 loadData 함수 시작');
         setLoading(true);
         setError(null);
 
         const employeeId = resolvedParams.employeeId;
         const token = searchParams.get('t');
 
-        console.log('🔍 공유 링크 접근:', { employeeId, token });
-        console.log('🔍 typeof employeeId:', typeof employeeId);
-        console.log('🔍 employeeId 값:', employeeId);
+        console.error('🔍 공유 링크 접근:', { employeeId, token });
+        console.error('🔍 typeof employeeId:', typeof employeeId);
+        console.error('🔍 employeeId 값:', employeeId);
 
         if (!token) {
           console.error('❌ 토큰 없음');
@@ -134,13 +142,14 @@ export default function PublicPayrollPage({ params }: PublicPayrollPageProps) {
         }
 
         // 직원 정보 로드 - 여러 방법으로 시도
-        console.log('👤 직원 정보 조회 시작, employeeId:', employeeId);
+        console.error('👤 직원 정보 조회 시작, employeeId:', employeeId);
         let employeeDoc = await getDoc(doc(db, 'employees', employeeId));
         let actualEmployeeId = employeeId;
         
         // 방법 1: URL의 ID가 employee ID인 경우
         if (!employeeDoc.exists()) {
-          console.log('⚠️ employees에서 찾지 못함, confirmedPayrolls에서 확인 시도...');
+          console.error('⚠️ employees에서 찾지 못함, employeeId:', employeeId);
+          console.error('⚠️ confirmedPayrolls에서 확인 시도...');
           
           // 방법 2: URL의 ID가 confirmedPayrolls 문서 ID인 경우
           try {
@@ -186,12 +195,29 @@ export default function PublicPayrollPage({ params }: PublicPayrollPageProps) {
         }
         
         if (!employeeDoc.exists()) {
-          console.error('❌ 모든 방법으로 직원을 찾지 못함:', employeeId);
+          console.error('❌❌❌ 모든 방법으로 직원을 찾지 못함 ❌❌❌');
+          console.error('❌ employeeId:', employeeId);
+          console.error('❌ actualEmployeeId:', actualEmployeeId);
+          console.error('❌ month:', month);
+          
+          // 디버깅: employees 컬렉션의 실제 ID들 확인
+          try {
+            const allEmployees = await getDocs(collection(db, 'employees'));
+            console.error('📋 전체 직원 수:', allEmployees.size);
+            console.error('📋 처음 10개 직원 ID:');
+            allEmployees.docs.slice(0, 10).forEach((doc, idx) => {
+              const data = doc.data();
+              console.error(`  ${idx + 1}. ID: ${doc.id}, 이름: ${data.name || '이름 없음'}`);
+            });
+          } catch (debugErr) {
+            console.error('❌ 디버깅 조회 실패:', debugErr);
+          }
+          
           setError('직원 정보를 찾을 수 없습니다.');
           return;
         }
         
-        console.log('✅ 직원 찾음:', actualEmployeeId, employeeDoc.data().name);
+        console.error('✅ 직원 찾음:', actualEmployeeId, employeeDoc.data().name);
         setEmployee({
           id: employeeDoc.id,
           ...employeeDoc.data()

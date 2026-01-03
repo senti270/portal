@@ -156,6 +156,11 @@ export default function PermissionManagement() {
       
       // 직원 기준으로 통합 (직원이 없는 승인 요청도 포함)
       employeesMap.forEach((employee) => {
+        // 퇴사한 직원이면서 카카오톡 회원가입이 안되어 있으면 리스트에서 제외
+        if (employee.status === 'inactive' && !employee.firebaseUid) {
+          return; // 이 직원은 목록에 추가하지 않음
+        }
+        
         const approval = employee.firebaseUid 
           ? approvalsMap.get(employee.firebaseUid) 
           : undefined;

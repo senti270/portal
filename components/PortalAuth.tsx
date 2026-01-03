@@ -22,10 +22,18 @@ export default function PortalAuth({ children }: PortalAuthProps) {
   const [kakaoLoading, setKakaoLoading] = useState(false);
 
   useEffect(() => {
+    // 초기 상태: 로그인 화면 표시
+    setShowLogin(true);
+    
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       setUser(user);
       setLoading(false);
-      setShowLogin(!user);
+      // 사용자가 없으면 로그인 화면 유지
+      if (!user) {
+        setShowLogin(true);
+      } else {
+        setShowLogin(false);
+      }
     });
 
     return () => unsubscribe();
@@ -145,15 +153,8 @@ export default function PortalAuth({ children }: PortalAuthProps) {
     }
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-lg">로딩중...</div>
-      </div>
-    );
-  }
-
-  if (!user || showLogin) {
+  // 로딩 중이거나 사용자가 없으면 로그인 화면 표시
+  if (loading || !user || showLogin) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
         <div className="max-w-md w-full space-y-8">
@@ -177,8 +178,9 @@ export default function PortalAuth({ children }: PortalAuthProps) {
                   placeholder="아이디를 입력하세요"
                   value={userId}
                   onChange={(e) => setUserId(e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base disabled:opacity-50 disabled:cursor-not-allowed"
                   required
+                  disabled={loading}
                 />
               </div>
               
@@ -192,8 +194,9 @@ export default function PortalAuth({ children }: PortalAuthProps) {
                     placeholder="비밀번호를 입력하세요"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base"
+                    className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base disabled:opacity-50 disabled:cursor-not-allowed"
                     required
+                    disabled={loading}
                   />
                   <button
                     type="button"
@@ -216,10 +219,10 @@ export default function PortalAuth({ children }: PortalAuthProps) {
               
               <button
                 type="submit"
-                disabled={loginLoading}
+                disabled={loginLoading || loading}
                 className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 font-medium text-base disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {loginLoading ? '로그인 중...' : '로그인'}
+                {loginLoading || loading ? '로딩 중...' : '로그인'}
               </button>
             </form>
             
@@ -236,10 +239,10 @@ export default function PortalAuth({ children }: PortalAuthProps) {
               <button
                 type="button"
                 onClick={handleKakaoLogin}
-                disabled={kakaoLoading}
+                disabled={kakaoLoading || loading}
                 className="mt-4 w-full bg-yellow-400 text-black py-3 px-4 rounded-lg hover:bg-yellow-500 font-medium text-base disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
-                {kakaoLoading ? '로그인 중...' : (
+                {kakaoLoading || loading ? '로딩 중...' : (
                   <>
                     <span>카카오톡으로 로그인</span>
                   </>

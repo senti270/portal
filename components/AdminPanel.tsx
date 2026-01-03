@@ -29,6 +29,7 @@ export default function AdminPanel({ systemsList: propSystemsList, onSystemsUpda
   const [systemsList, setSystemsList] = useState<System[]>(propSystemsList)
   const [editingSystem, setEditingSystem] = useState<System | null>(null)
   const [showAddForm, setShowAddForm] = useState(false)
+  const [showAdminPanel, setShowAdminPanel] = useState(false)
 
   useEffect(() => {
     // props에서 받은 systemsList로 초기화
@@ -272,15 +273,16 @@ export default function AdminPanel({ systemsList: propSystemsList, onSystemsUpda
           🔧 Order 수정
         </button>
         <button 
-          onClick={() => setShowAddForm(true)}
+          onClick={() => setShowAdminPanel(!showAdminPanel)}
           className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg shadow-lg transition-all duration-300"
         >
-          시스템 추가
+          {showAdminPanel ? '시스템 관리 닫기' : '시스템 추가'}
         </button>
       </div>
 
       {/* 시스템 목록 */}
-      <div className="fixed top-20 left-6 bg-white dark:bg-gray-800 rounded-lg shadow-lg p-4 w-96 max-h-[80vh] overflow-y-auto z-40">
+      {showAdminPanel && (
+        <div className="fixed top-20 left-6 bg-white dark:bg-gray-800 rounded-lg shadow-lg p-4 w-96 max-h-[80vh] overflow-y-auto z-40">
         <h3 className="text-lg font-bold mb-4 text-gray-900 dark:text-white">
           시스템 관리
         </h3>
@@ -349,7 +351,16 @@ export default function AdminPanel({ systemsList: propSystemsList, onSystemsUpda
             )}
           </Droppable>
         </DragDropContext>
+        <div className="mt-4">
+          <button
+            onClick={() => setShowAddForm(true)}
+            className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg text-sm font-medium"
+          >
+            ➕ 시스템 추가
+          </button>
+        </div>
       </div>
+      )}
 
       {/* 시스템 추가/편집 폼 */}
       {showAddForm && (

@@ -874,6 +874,7 @@ export default function PublicPayrollPage({ params }: PublicPayrollPageProps) {
               </div>
             </div>
           </div>
+              </>
             );
           })()}
         </div>

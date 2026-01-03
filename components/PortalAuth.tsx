@@ -217,7 +217,7 @@ export default function PortalAuth({ children }: PortalAuthProps) {
                   placeholder="아이디를 입력하세요"
                   value={userId}
                   onChange={(e) => setUserId(e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base text-gray-900 bg-white disabled:opacity-50 disabled:cursor-not-allowed"
                   required
                   disabled={loading}
                 />
@@ -233,7 +233,7 @@ export default function PortalAuth({ children }: PortalAuthProps) {
                     placeholder="비밀번호를 입력하세요"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base text-gray-900 bg-white disabled:opacity-50 disabled:cursor-not-allowed"
                     required
                     disabled={loading}
                   />

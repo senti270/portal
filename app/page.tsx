@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react'
 import SearchBar from '@/components/SearchBar'
-import ThemeToggle from '@/components/ThemeToggle'
 import AdminPanel from '@/components/AdminPanel'
 import PortalAuth from '@/components/PortalAuth'
 import { System, systems } from '@/data/systems'
@@ -21,7 +20,6 @@ function PortalContent() {
   const [searchTerm, setSearchTerm] = useState('')
   const [allSystems, setAllSystems] = useState<System[]>(systems)
   const [filteredSystems, setFilteredSystems] = useState<System[]>(systems)
-  const [isDark, setIsDark] = useState(false)
   const [searchResults, setSearchResults] = useState<{
     manuals: any[]
     purchases: any[]
@@ -42,12 +40,6 @@ function PortalContent() {
   }
 
   useEffect(() => {
-    // 다크모드 초기 설정
-    if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
-      setIsDark(true)
-      document.documentElement.classList.add('dark')
-    }
-    
     // Firestore에서 시스템 데이터 로드
     loadSystems()
   }, [])
@@ -138,40 +130,26 @@ function PortalContent() {
     return () => clearTimeout(timeoutId)
   }, [searchTerm])
 
-  const toggleTheme = () => {
-    setIsDark(!isDark)
-    document.documentElement.classList.toggle('dark')
-  }
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 transition-colors duration-300">
+    <main className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
       {/* 헤더 */}
-      <header className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-md shadow-sm sticky top-0 z-50 transition-colors duration-300">
+      <header className="bg-white/80 backdrop-blur-md shadow-sm sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex items-center justify-center gap-4">
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-xl flex items-center justify-center shadow-lg overflow-hidden">
-                <img 
-                  src="/apple-touch-icon.png" 
-                  alt="드로잉컴퍼니 로고" 
-                  className="w-full h-full object-contain"
-                />
+              <div>
+                <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
+                  카페드로잉&청담장어마켓
+                </h1>
+                <p className="text-sm text-gray-600">통합 업무 포털</p>
               </div>
-              <div className="flex items-center gap-3">
-                <div>
-                  <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
-                    카페드로잉&청담장어마켓
-                  </h1>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">통합 업무 포털</p>
-                </div>
-                <ThemeToggle isDark={isDark} toggleTheme={toggleTheme} />
-                <button
-                  onClick={handleLogout}
-                  className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
-                >
-                  로그아웃
-                </button>
-              </div>
+              <button
+                onClick={handleLogout}
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+              >
+                로그아웃
+              </button>
             </div>
           </div>
         </div>

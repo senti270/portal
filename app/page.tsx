@@ -13,6 +13,8 @@ import { searchManuals } from '@/lib/manual-firestore'
 import { getPurchaseItems } from '@/lib/purchase-firestore'
 import { getKeywords } from '@/lib/keyword-firestore'
 import { getStores } from '@/lib/store-firestore'
+import { auth } from '@/lib/firebase'
+import { signOut } from 'firebase/auth'
 
 function PortalContent() {
   const [searchTerm, setSearchTerm] = useState('')
@@ -25,6 +27,18 @@ function PortalContent() {
     keywords: any[]
   } | null>(null)
   const [isSearching, setIsSearching] = useState(false)
+
+  const handleLogout = async () => {
+    if (confirm('로그아웃 하시겠습니까?')) {
+      try {
+        await signOut(auth)
+        window.location.reload()
+      } catch (error) {
+        console.error('로그아웃 오류:', error)
+        alert('로그아웃 중 오류가 발생했습니다.')
+      }
+    }
+  }
 
   useEffect(() => {
     // 다크모드 초기 설정
@@ -174,6 +188,12 @@ function PortalContent() {
                   <p className="text-sm text-gray-600 dark:text-gray-400">통합 업무 포털</p>
                 </div>
                 <ThemeToggle isDark={isDark} toggleTheme={toggleTheme} />
+                <button
+                  onClick={handleLogout}
+                  className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                >
+                  로그아웃
+                </button>
               </div>
             </div>
           </div>

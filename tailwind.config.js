@@ -5,7 +5,7 @@ module.exports = {
     './components/**/*.{js,ts,jsx,tsx,mdx}',
     './app/**/*.{js,ts,jsx,tsx,mdx}',
   ],
-  darkMode: false, // 다크모드 완전 비활성화
+  darkMode: 'class', // PC는 다크모드 가능, 모바일은 CSS에서 강제 비활성화
   theme: {
     extend: {
       animation: {

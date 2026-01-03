@@ -23,15 +23,15 @@ export default function RootLayout({
   return (
     <html lang="ko" className="light">
       <head>
-        <Script id="disable-dark-mode" strategy="beforeInteractive">
+        <Script id="disable-dark-mode-mobile" strategy="beforeInteractive">
           {`
-            // 다크모드 클래스 제거 강제
-            if (typeof document !== 'undefined') {
+            // 모바일에서만 다크모드 클래스 제거 강제
+            if (typeof document !== 'undefined' && window.innerWidth <= 768) {
               document.documentElement.classList.remove('dark');
               document.documentElement.classList.add('light');
-              // 다크모드 감지 방지
+              // 모바일에서 다크모드 감지 방지
               const observer = new MutationObserver(() => {
-                if (document.documentElement.classList.contains('dark')) {
+                if (window.innerWidth <= 768 && document.documentElement.classList.contains('dark')) {
                   document.documentElement.classList.remove('dark');
                   document.documentElement.classList.add('light');
                 }
@@ -39,6 +39,13 @@ export default function RootLayout({
               observer.observe(document.documentElement, {
                 attributes: true,
                 attributeFilter: ['class']
+              });
+              // 화면 크기 변경 감지
+              window.addEventListener('resize', () => {
+                if (window.innerWidth <= 768) {
+                  document.documentElement.classList.remove('dark');
+                  document.documentElement.classList.add('light');
+                }
               });
             }
           `}

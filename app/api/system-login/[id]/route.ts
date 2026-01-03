@@ -9,10 +9,11 @@ import { getStore } from '@/lib/manual-firestore'
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const login = await getSystemLogin(params.id)
+    const { id } = await params
+    const login = await getSystemLogin(id)
     
     if (!login) {
       return NextResponse.json(
@@ -33,9 +34,10 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     const body = await request.json()
     const { storeId, systemName, username, password, note } = body as SystemLoginFormData
 
@@ -55,7 +57,7 @@ export async function PUT(
     }
 
     await updateSystemLogin(
-      params.id,
+      id,
       { storeId, systemName, username, password, note },
       store.name
     )
@@ -72,10 +74,11 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    await deleteSystemLogin(params.id)
+    const { id } = await params
+    await deleteSystemLogin(id)
     return NextResponse.json({ success: true })
   } catch (error) {
     console.error('시스템 로그인 정보 삭제 실패:', error)

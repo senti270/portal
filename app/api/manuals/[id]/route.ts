@@ -4,10 +4,11 @@ import { ManualFormData } from '@/types/manual'
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const manual = await getManual(params.id)
+    const { id } = await params
+    const manual = await getManual(id)
     
     if (!manual) {
       return NextResponse.json({ error: '매뉴얼을 찾을 수 없습니다.' }, { status: 404 })
@@ -22,9 +23,10 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     const body = await request.json()
     const { title, content, storeTags } = body as ManualFormData
 
@@ -33,7 +35,7 @@ export async function PUT(
     }
 
     const manualData: ManualFormData = { title, content, storeTags }
-    await updateManual(params.id, manualData)
+    await updateManual(id, manualData)
 
     return NextResponse.json({ success: true })
   } catch (error) {
@@ -44,10 +46,11 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    await deleteManual(params.id)
+    const { id } = await params
+    await deleteManual(id)
     return NextResponse.json({ success: true })
   } catch (error) {
     console.error('매뉴얼 삭제 실패:', error)

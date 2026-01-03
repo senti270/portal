@@ -4,10 +4,11 @@ import { StoreFormData } from '@/types/manual'
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const store = await getStore(params.id)
+    const { id } = await params
+    const store = await getStore(id)
     
     if (!store) {
       return NextResponse.json({ error: '지점을 찾을 수 없습니다.' }, { status: 404 })
@@ -22,9 +23,10 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     const body = await request.json()
     const { name } = body as StoreFormData
 
@@ -33,7 +35,7 @@ export async function PUT(
     }
 
     const storeData: StoreFormData = { name: name.trim() }
-    await updateStore(params.id, storeData)
+    await updateStore(id, storeData)
 
     return NextResponse.json({ success: true })
   } catch (error) {
@@ -44,10 +46,11 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    await deleteStore(params.id)
+    const { id } = await params
+    await deleteStore(id)
     return NextResponse.json({ success: true })
   } catch (error: any) {
     console.error('지점 삭제 실패:', error)

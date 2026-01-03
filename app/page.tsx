@@ -46,8 +46,14 @@ export default function Home() {
       
       if (firestoreSystems.length > 0) {
         console.log('✅ Firebase 데이터 사용')
-        setAllSystems(firestoreSystems)
-        setFilteredSystems(firestoreSystems)
+        // Firebase에 없는 기본 시스템들을 병합
+        const firestoreSystemIds = new Set(firestoreSystems.map(s => s.id))
+        const missingSystems = systems.filter(s => !firestoreSystemIds.has(s.id))
+        const mergedSystems = [...firestoreSystems, ...missingSystems]
+        // order 기준으로 정렬
+        mergedSystems.sort((a, b) => (a.order || 999) - (b.order || 999))
+        setAllSystems(mergedSystems)
+        setFilteredSystems(mergedSystems)
       } else {
         console.log('⚠️ Firebase가 비어있음, 기본 데이터 사용')
         // Firestore가 비어있으면 기본 데이터 사용
@@ -61,8 +67,13 @@ export default function Home() {
       if (savedSystems) {
         console.log('💾 로컬 스토리지에서 로드')
         const parsedSystems = JSON.parse(savedSystems)
-        setAllSystems(parsedSystems)
-        setFilteredSystems(parsedSystems)
+        // 로컬 스토리지에도 없는 기본 시스템들을 병합
+        const savedSystemIds = new Set(parsedSystems.map((s: System) => s.id))
+        const missingSystems = systems.filter(s => !savedSystemIds.has(s.id))
+        const mergedSystems = [...parsedSystems, ...missingSystems]
+        mergedSystems.sort((a: System, b: System) => (a.order || 999) - (b.order || 999))
+        setAllSystems(mergedSystems)
+        setFilteredSystems(mergedSystems)
       } else {
         console.log('🔄 기본 시스템 데이터 사용')
         setAllSystems(systems)

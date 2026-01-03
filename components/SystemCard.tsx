@@ -8,7 +8,13 @@ interface SystemCardProps {
 export default function SystemCard({ system, index }: SystemCardProps) {
   const handleClick = () => {
     if (system.url) {
-      window.open(system.url, '_blank')
+      // 내부 라우트인 경우 (/)로 시작하면 같은 창에서 이동
+      if (system.url.startsWith('/')) {
+        window.location.href = system.url
+      } else {
+        // 외부 URL인 경우 새 창에서 열기
+        window.open(system.url, '_blank')
+      }
     }
   }
 

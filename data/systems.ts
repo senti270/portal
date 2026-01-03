@@ -16,29 +16,17 @@ export interface System {
 
 export const systems: System[] = [
   {
-    id: 'schedule',
-    title: '스케줄 관리',
-    description: '매장의 스케줄 및 직원, 급여를 관리하는 시스템입니다.',
+    id: 'work-schedule',
+    title: '근무시간 및 급여 관리',
+    description: '스케줄 관리, 근무시간 비교, 급여 계산을 통합 관리하는 시스템입니다.',
     icon: '📅',
     color: '#3B82F6',
     category: '업무관리',
-    url: 'https://work-schedule-next.vercel.app/',
+    url: '/work-schedule',
     status: 'active',
-    tags: ['일정', '캘린더', '스케줄'],
+    tags: ['일정', '캘린더', '스케줄', '급여', '근태'],
     optimization: ['PC 최적화'],
     order: 1,
-  },
-  {
-    id: 'attendance',
-    title: '근무시간 및 급여',
-    description: '직원들의 근무시간 기록 및 급여를 확인할 수 있습니다.',
-    icon: '👥',
-    color: '#10B981',
-    category: '인사관리',
-    url: '', // 실제 URL로 변경하세요
-    status: 'active',
-    tags: ['근태', '급여', '인사'],
-    order: 2,
   },
   {
     id: 'purchase',

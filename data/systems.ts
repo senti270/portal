@@ -118,6 +118,19 @@ export const systems: System[] = [
     optimization: ['PC 최적화', '모바일 최적화'],
     order: 8,
   },
+  {
+    id: 'permission-management',
+    title: '권한 관리',
+    description: '사용자별 시스템 접근 권한 및 지점 접근 권한을 관리합니다.',
+    icon: '🛡️',
+    color: '#9333EA',
+    category: '운영',
+    url: '/permission-management',
+    status: 'active',
+    tags: ['권한', '접근제어', '회원등급'],
+    optimization: ['PC 최적화'],
+    order: 10,
+  },
 ]
 
 // 새로운 시스템 추가 방법:

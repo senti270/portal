@@ -8,9 +8,13 @@ export type SystemId =
   | 'ranking-tracker'
   | 'manual-management'
   | 'chatbot-management'
-  | 'system-login';
+  | 'system-login'
+  | 'permission-management';
 
 export type PermissionLevel = 'none' | 'read' | 'write' | 'admin';
+
+// 회원 등급 타입
+export type UserRole = 'master' | 'deputy_master' | 'branch_manager' | 'employee';
 
 export interface UserPermission {
   userId: string; // Firebase UID
@@ -19,7 +23,9 @@ export interface UserPermission {
   permissions: {
     [systemId in SystemId]?: PermissionLevel;
   };
-  role?: 'super_admin' | 'admin' | 'user'; // 전체 권한 레벨
+  role?: UserRole | 'super_admin' | 'admin' | 'user'; // 전체 권한 레벨 (기존 호환성 유지)
+  // 지점별 접근 권한 (빈 배열이면 모든 지점 접근 가능, 값이 있으면 해당 지점만 접근 가능)
+  allowedBranches?: string[]; // 지점 ID 배열
   createdAt: Date;
   updatedAt: Date;
 }
@@ -72,6 +78,11 @@ export const systemPermissions: Record<SystemId, SystemPermission> = {
     defaultPermission: 'none',
     requiredPermission: 'read',
   },
+  'permission-management': {
+    systemId: 'permission-management',
+    defaultPermission: 'none',
+    requiredPermission: 'admin',
+  },
 };
 
 // 권한 레벨 비교 함수
@@ -94,5 +105,33 @@ export function getPermissionText(level: PermissionLevel): string {
     admin: '관리',
   };
   return texts[level];
+}
+
+// 회원 등급 텍스트
+export function getRoleText(role: UserRole | 'super_admin' | 'admin' | 'user'): string {
+  const texts: Record<UserRole | 'super_admin' | 'admin' | 'user', string> = {
+    master: '마스터',
+    deputy_master: '부마스터',
+    branch_manager: '지점매니저',
+    employee: '일반직원',
+    super_admin: '최고 관리자',
+    admin: '관리자',
+    user: '일반 사용자',
+  };
+  return texts[role] || '알 수 없음';
+}
+
+// 회원 등급 설명
+export function getRoleDescription(role: UserRole | 'super_admin' | 'admin' | 'user'): string {
+  const descriptions: Record<UserRole | 'super_admin' | 'admin' | 'user', string> = {
+    master: '모든 시스템과 지점에 대한 전체 권한을 가집니다.',
+    deputy_master: '마스터와 유사한 권한을 가지며, 대부분의 시스템을 관리할 수 있습니다.',
+    branch_manager: '지정된 지점에 대한 관리 권한을 가집니다.',
+    employee: '일반 직원으로 기본 조회 권한을 가집니다.',
+    super_admin: '최고 관리자 - 모든 시스템 접근 가능',
+    admin: '관리자 - 대부분 시스템 접근 가능',
+    user: '일반 사용자 - 개별 권한 확인',
+  };
+  return descriptions[role] || '';
 }
 

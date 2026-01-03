@@ -28,6 +28,7 @@ export async function GET(
       name: data.name,
       permissions: data.permissions || {},
       role: data.role || 'user',
+      allowedBranches: data.allowedBranches || [],
       createdAt: data.createdAt?.toDate() || new Date(),
       updatedAt: data.updatedAt?.toDate() || new Date(),
     };
@@ -53,7 +54,7 @@ export async function PUT(
   try {
     const { userId } = await params;
     const body = await request.json();
-    const { permissions, role, name, email } = body;
+    const { permissions, role, name, email, allowedBranches } = body;
     
     if (!permissions && !role) {
       return NextResponse.json(
@@ -85,6 +86,10 @@ export async function PUT(
       updateData.email = email;
     }
     
+    if (allowedBranches !== undefined) {
+      updateData.allowedBranches = allowedBranches;
+    }
+    
     if (snapshot.exists()) {
       // 기존 문서 업데이트
       await updateDoc(userPermissionRef, updateData);
@@ -96,6 +101,7 @@ export async function PUT(
         name: name || '',
         permissions: permissions || {},
         role: role || 'user',
+        allowedBranches: allowedBranches || [],
         createdAt: new Date(),
         ...updateData,
       });

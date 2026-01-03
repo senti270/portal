@@ -418,7 +418,8 @@ export default function PublicPayrollPage({ params }: PublicPayrollPageProps) {
           {(() => {
             const employmentType = (payroll as any).employmentType || (employee as any).employmentType || '';
             return (
-              <div className="bg-white shadow rounded-lg p-6 mb-4">
+              <>
+                <div className="bg-white shadow rounded-lg p-6 mb-4">
                 <div className="flex justify-between items-center">
                   <div>
                     <h1 className="text-2xl font-bold text-gray-900">{employee.name}님의 급여명세서</h1>
@@ -873,8 +874,9 @@ export default function PublicPayrollPage({ params }: PublicPayrollPageProps) {
               </div>
             </div>
           </div>
-              );
-            })()}
+              </>
+            );
+          })()}
         </div>
       )}
     </div>

@@ -51,6 +51,12 @@ interface PublicPayrollPageProps {
 }
 
 export default function PublicPayrollPage({ params }: PublicPayrollPageProps) {
+  // 최상단에서 즉시 로그 출력
+  if (typeof window !== 'undefined') {
+    console.log('🟢 PublicPayrollPage 컴포넌트 렌더링 시작');
+    console.log('🟢 현재 URL:', window.location.href);
+  }
+
   const resolvedParams = use(params);
   const searchParams = useSearchParams();
   const [employee, setEmployee] = useState<Employee | null>(null);
@@ -62,12 +68,15 @@ export default function PublicPayrollPage({ params }: PublicPayrollPageProps) {
 
   // 컴포넌트 마운트 확인
   useEffect(() => {
-    console.log('🚀 PublicPayrollPage 컴포넌트 마운트됨');
-    console.log('📋 현재 URL:', typeof window !== 'undefined' ? window.location.href : 'N/A');
+    console.log('🚀 PublicPayrollPage useEffect 실행됨');
+    console.log('🚀 resolvedParams:', resolvedParams);
+    console.log('🚀 employeeId:', resolvedParams.employeeId);
+    console.log('🚀 searchParams:', searchParams.toString());
+    console.log('🚀 token:', searchParams.get('t'));
     return () => {
       console.log('🔴 PublicPayrollPage 컴포넌트 언마운트됨');
     };
-  }, []);
+  }, [resolvedParams, searchParams]);
 
   // 토큰에서 월 정보 추출 (간단한 base64 디코딩)
   const getMonthFromToken = (token: string): string | null => {

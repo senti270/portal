@@ -155,14 +155,14 @@ function SignupContent() {
           status: 'used',
           usedAt: new Date(),
         });
+
+        // 직원 데이터에 Firebase UID 연결 (나중에 승인되면 업데이트)
+        // 여기서는 아직 승인 전이므로 임시로 저장하지 않음
+        // 승인 시 업데이트
+        // const employeeDoc = doc(db, 'employees', inviteData.employeeId);
       }
 
       await addDoc(collection(db, 'userApprovals'), approvalData);
-
-      // 4. 직원 데이터에 Firebase UID 연결 (나중에 승인되면 업데이트)
-      const employeeDoc = doc(db, 'employees', inviteData.employeeId);
-      // 여기서는 아직 승인 전이므로 임시로 저장하지 않음
-      // 승인 시 업데이트
 
       setStep('complete');
     } catch (err: any) {

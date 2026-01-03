@@ -498,11 +498,12 @@ export default function PublicPayrollPage({ params }: PublicPayrollPageProps) {
                         <span className="font-medium">{hours.toFixed(1)}h</span>
                       </div>
                     ))}
-                  </div>
-                </div>
               </div>
-            );
-          })()}
+            </div>
+          </div>
+                </>
+              );
+            })()}
 
           {/* 지급/공제 항목 - 2단 레이아웃 */}
           {(() => {

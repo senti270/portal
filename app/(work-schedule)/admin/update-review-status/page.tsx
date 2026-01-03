@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { runUpdateReviewStatusScript } from '@/scripts/updateReviewStatusForConfirmedPayrolls';
+import { runUpdateReviewStatusScript } from '@/scripts/work-schedule/updateReviewStatusForConfirmedPayrolls';
 
 export default function UpdateReviewStatusPage() {
   const [isRunning, setIsRunning] = useState(false);

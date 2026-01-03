@@ -153,11 +153,11 @@ export default function PublicPayrollPage({ params }: PublicPayrollPageProps) {
           ...employeeDoc.data()
         } as Employee);
 
-        // 급여 데이터 로드 - 토큰에서 추출한 월로만 조회
-        console.log('💰 급여 데이터 조회:', { employeeId, month });
+        // 급여 데이터 로드 - 실제 employeeId로 조회
+        console.log('💰 급여 데이터 조회:', { actualEmployeeId, month });
         const payrollQuery = query(
           collection(db, 'confirmedPayrolls'),
-          where('employeeId', '==', employeeId),
+          where('employeeId', '==', actualEmployeeId),
           where('month', '==', month)
         );
         const payrollSnapshot = await getDocs(payrollQuery);
@@ -201,7 +201,7 @@ export default function PublicPayrollPage({ params }: PublicPayrollPageProps) {
         // 근무시간 비교 데이터 로드
         const comparisonsQuery = query(
           collection(db, 'workTimeComparisonResults'),
-          where('employeeId', '==', employeeId),
+          where('employeeId', '==', actualEmployeeId),
           where('month', '==', month)
         );
         const comparisonsSnapshot = await getDocs(comparisonsQuery);

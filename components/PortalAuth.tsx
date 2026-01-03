@@ -147,7 +147,13 @@ export default function PortalAuth({ children }: PortalAuthProps) {
       }
     } catch (error: any) {
       console.error('카카오 로그인 오류:', error);
-      alert('카카오톡 로그인에 실패했습니다. 다시 시도해주세요.');
+      const errorMessage = error?.message || '알 수 없는 오류';
+      
+      if (errorMessage.includes('KOE004')) {
+        alert('카카오톡 로그인 설정 오류가 발생했습니다.\n\n카카오 개발자 콘솔에서 앱 관리자 설정이 필요합니다.\n관리자에게 문의하세요.');
+      } else {
+        alert(`카카오톡 로그인에 실패했습니다.\n\n오류: ${errorMessage}\n\n다시 시도해주세요.`);
+      }
     } finally {
       setKakaoLoading(false);
     }

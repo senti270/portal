@@ -53,14 +53,27 @@ export const loginWithKakao = (): Promise<any> => {
       return;
     }
 
-    window.Kakao.Auth.login({
-      success: (authObj: any) => {
-        resolve(authObj);
-      },
-      fail: (err: any) => {
-        reject(err);
-      },
-    });
+    try {
+      window.Kakao.Auth.login({
+        success: (authObj: any) => {
+          resolve(authObj);
+        },
+        fail: (err: any) => {
+          console.error('카카오 로그인 실패:', err);
+          
+          // KOE004 에러 처리
+          if (err.error === 'KOE004' || err.error_code === 'KOE004') {
+            reject(new Error('KOE004: 카카오 개발자 콘솔에서 앱 관리자를 설정해주세요. 관리자에게 문의하세요.'));
+          } else {
+            reject(new Error(err.error || err.error_description || '카카오 로그인에 실패했습니다.'));
+          }
+        },
+        // 최신 SDK에서는 scope 옵션 추가 가능
+        scope: 'profile_nickname,profile_image,account_email',
+      });
+    } catch (error: any) {
+      reject(new Error(error.message || '카카오 로그인 중 오류가 발생했습니다.'));
+    }
   });
 };
 

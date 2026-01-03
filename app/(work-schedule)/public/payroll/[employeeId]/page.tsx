@@ -63,6 +63,7 @@ export default function PublicPayrollPage({ params }: PublicPayrollPageProps) {
   // 컴포넌트 마운트 확인
   useEffect(() => {
     console.log('🚀 PublicPayrollPage 컴포넌트 마운트됨');
+    console.log('📋 현재 URL:', typeof window !== 'undefined' ? window.location.href : 'N/A');
     return () => {
       console.log('🔴 PublicPayrollPage 컴포넌트 언마운트됨');
     };
@@ -80,8 +81,12 @@ export default function PublicPayrollPage({ params }: PublicPayrollPageProps) {
   };
 
   useEffect(() => {
+    console.log('🔵 useEffect 실행됨');
+    console.log('🔵 resolvedParams:', resolvedParams);
+    
     const loadData = async () => {
       try {
+        console.log('🔵 loadData 함수 시작');
         setLoading(true);
         setError(null);
 
@@ -89,6 +94,8 @@ export default function PublicPayrollPage({ params }: PublicPayrollPageProps) {
         const token = searchParams.get('t');
 
         console.log('🔍 공유 링크 접근:', { employeeId, token });
+        console.log('🔍 typeof employeeId:', typeof employeeId);
+        console.log('🔍 employeeId 값:', employeeId);
 
         if (!token) {
           console.error('❌ 토큰 없음');
@@ -286,6 +293,7 @@ export default function PublicPayrollPage({ params }: PublicPayrollPageProps) {
   };
 
   if (loading) {
+    console.log('⏳ 로딩 중...');
     return (
       <div className="flex justify-center items-center min-h-screen">
         <div className="text-lg">로딩 중...</div>
@@ -294,6 +302,7 @@ export default function PublicPayrollPage({ params }: PublicPayrollPageProps) {
   }
 
   if (error || !employee || !payroll) {
+    console.log('❌ 에러 또는 데이터 없음:', { error, hasEmployee: !!employee, hasPayroll: !!payroll });
     return (
       <div className="flex justify-center items-center min-h-screen">
         <div className="text-red-600">{error || '데이터를 불러올 수 없습니다.'}</div>

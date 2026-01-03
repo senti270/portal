@@ -607,11 +607,27 @@ const PayrollStatement: React.FC = () => {
     }
 
     try {
+      // 디버깅: 공유 링크 생성 정보 확인
+      console.log('🔗 공유 링크 생성:', {
+        selectedEmployeeInfo: {
+          id: selectedEmployeeInfo.id,
+          name: selectedEmployeeInfo.name
+        },
+        selectedMonth,
+        selectedPayrollId: selectedPayroll.id,
+        selectedPayrollEmployeeId: selectedPayroll.employeeId
+      });
+
       // 토큰 생성 (월 정보를 base64로 인코딩)
       const token = btoa(JSON.stringify({ month: selectedMonth }));
       
       // 공유 링크 생성 (URL에 월 정보 없이 토큰만 포함)
-      const shareUrl = `${window.location.origin}/work-schedule/public/payroll/${selectedEmployeeInfo.id}?t=${token}`;
+      // selectedPayroll.employeeId와 selectedEmployeeInfo.id가 일치하는지 확인
+      const employeeIdForUrl = selectedEmployeeInfo.id || selectedPayroll.employeeId;
+      const shareUrl = `${window.location.origin}/work-schedule/public/payroll/${employeeIdForUrl}?t=${token}`;
+      
+      console.log('🔗 생성된 공유 링크:', shareUrl);
+      console.log('🔗 사용된 employeeId:', employeeIdForUrl);
       
       // Web Share API 지원 확인
       if (navigator.share) {
@@ -633,7 +649,7 @@ const PayrollStatement: React.FC = () => {
       
       // 클립보드에 복사
       await navigator.clipboard.writeText(shareUrl);
-      alert('공유 링크가 클립보드에 복사되었습니다.');
+      alert(`공유 링크가 클립보드에 복사되었습니다.\n직원ID: ${employeeIdForUrl}`);
     } catch (error) {
       console.error('공유 링크 생성 실패:', error);
       alert('공유 링크 생성에 실패했습니다.');

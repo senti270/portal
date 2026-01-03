@@ -75,30 +75,48 @@ export default function PublicPayrollPage({ params }: PublicPayrollPageProps) {
         const employeeId = resolvedParams.employeeId;
         const token = searchParams.get('t');
 
+        console.log('🔍 공유 링크 접근:', { employeeId, token });
+
         if (!token) {
+          console.error('❌ 토큰 없음');
           setError('유효하지 않은 링크입니다.');
           return;
         }
 
         // 토큰에서 월 정보 추출
         const month = getMonthFromToken(token);
+        console.log('📅 토큰에서 추출한 월:', month);
+        
         if (!month) {
+          console.error('❌ 월 정보 추출 실패');
           setError('유효하지 않은 링크입니다.');
           return;
         }
 
         // 직원 정보 로드
+        console.log('👤 직원 정보 조회 시작, employeeId:', employeeId);
         const employeeDoc = await getDoc(doc(db, 'employees', employeeId));
+        
         if (!employeeDoc.exists()) {
+          console.error('❌ 직원 문서가 존재하지 않음:', employeeId);
+          
+          // 디버깅: employees 컬렉션의 일부 ID 확인
+          const allEmployees = await getDocs(collection(db, 'employees'));
+          console.log('📋 전체 직원 수:', allEmployees.size);
+          console.log('📋 처음 5개 직원 ID:', allEmployees.docs.slice(0, 5).map(d => d.id));
+          
           setError('직원 정보를 찾을 수 없습니다.');
           return;
         }
+        
+        console.log('✅ 직원 정보 찾음:', employeeDoc.id, employeeDoc.data().name);
         setEmployee({
           id: employeeDoc.id,
           ...employeeDoc.data()
         } as Employee);
 
         // 급여 데이터 로드 - 토큰에서 추출한 월로만 조회
+        console.log('💰 급여 데이터 조회:', { employeeId, month });
         const payrollQuery = query(
           collection(db, 'confirmedPayrolls'),
           where('employeeId', '==', employeeId),
@@ -106,7 +124,10 @@ export default function PublicPayrollPage({ params }: PublicPayrollPageProps) {
         );
         const payrollSnapshot = await getDocs(payrollQuery);
         
+        console.log('💰 급여 데이터 조회 결과:', payrollSnapshot.size, '개');
+        
         if (payrollSnapshot.empty) {
+          console.error('❌ 급여 데이터 없음:', { employeeId, month });
           setError('급여 데이터를 찾을 수 없습니다.');
           return;
         }
@@ -162,8 +183,12 @@ export default function PublicPayrollPage({ params }: PublicPayrollPageProps) {
         }));
         setBranches(branchesData);
       } catch (err) {
-        console.error('데이터 로드 실패:', err);
-        setError('데이터를 불러오는 중 오류가 발생했습니다.');
+        console.error('❌ 데이터 로드 실패:', err);
+        console.error('❌ 오류 상세:', {
+          message: err instanceof Error ? err.message : String(err),
+          stack: err instanceof Error ? err.stack : undefined
+        });
+        setError(`데이터를 불러오는 중 오류가 발생했습니다: ${err instanceof Error ? err.message : String(err)}`);
       } finally {
         setLoading(false);
       }

@@ -70,8 +70,8 @@ export const loginWithKakao = (): Promise<any> => {
             reject(new Error(err.error || err.error_description || '카카오 로그인에 실패했습니다.'));
           }
         },
-        // 최신 SDK에서는 scope 옵션 추가 가능
-        scope: 'profile_nickname,profile_image,account_email',
+        // 닉네임만 요청 (프로필 사진, 이메일 제외)
+        scope: 'profile_nickname',
       });
     } catch (error: any) {
       reject(new Error(error.message || '카카오 로그인 중 오류가 발생했습니다.'));

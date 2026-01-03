@@ -16,6 +16,8 @@ interface Employee {
   name: string;
   firebaseUid?: string;
   email?: string;
+  resignationDate?: Date;
+  status?: 'active' | 'inactive';
 }
 
 interface UserApproval {
@@ -54,10 +56,12 @@ interface UnifiedUser {
   approvalId?: string;
   permission?: UserPermission;
   canCreateInvite: boolean;
+  employeeStatus?: 'active' | 'inactive'; // 재직 상태
+  resignationDate?: Date; // 퇴사일
 }
 
 export default function PermissionManagement() {
-  const { isSuperAdmin, isMaster, isAdmin } = usePermissions();
+  const { isSuperAdmin, isMaster, isAdmin, isDeputyMaster } = usePermissions();
   const [unifiedUsers, setUnifiedUsers] = useState<UnifiedUser[]>([]);
   const [branches, setBranches] = useState<Branch[]>([]);
   const [selectedUserId, setSelectedUserId] = useState<string>('');
@@ -100,11 +104,14 @@ export default function PermissionManagement() {
       const employeesMap = new Map<string, Employee>();
       employeesSnapshot.docs.forEach((doc) => {
         const data = doc.data();
+        const resignationDate = data.resignationDate?.toDate ? data.resignationDate.toDate() : undefined;
         employeesMap.set(doc.id, {
           id: doc.id,
           name: data.name || '이름 없음',
           firebaseUid: data.firebaseUid,
           email: data.email,
+          resignationDate: resignationDate,
+          status: resignationDate ? 'inactive' : 'active',
         });
       });
 
@@ -165,6 +172,8 @@ export default function PermissionManagement() {
           approvalId: approval?.id,
           permission: employee.firebaseUid ? permissionsMap.get(employee.firebaseUid) : undefined,
           canCreateInvite: !employee.firebaseUid,
+          employeeStatus: employee.status,
+          resignationDate: employee.resignationDate,
         });
       });
 
@@ -347,6 +356,38 @@ export default function PermissionManagement() {
     }
   };
 
+  const handleDeleteUser = async (user: UnifiedUser) => {
+    if (!user.firebaseUid) {
+      alert('탈퇴할 사용자의 Firebase UID가 없습니다.');
+      return;
+    }
+
+    const confirmMessage = user.employeeStatus === 'inactive'
+      ? `${user.employeeName}님은 이미 퇴사한 직원입니다. 시스템에서 탈퇴 처리하시겠습니까?\n\n이 작업은 되돌릴 수 없습니다.`
+      : `정말로 ${user.employeeName}님을 시스템에서 탈퇴 처리하시겠습니까?\n\n이 작업은 되돌릴 수 없습니다.`;
+    
+    if (!confirm(confirmMessage)) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/users/${user.firebaseUid}/delete`, {
+        method: 'POST',
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        alert('탈퇴 처리가 완료되었습니다.');
+        await loadUnifiedUsers();
+      } else {
+        alert(`탈퇴 처리 실패: ${data.error}`);
+      }
+    } catch (error) {
+      console.error('탈퇴 처리 오류:', error);
+      alert('탈퇴 처리에 실패했습니다.');
+    }
+  };
+
   const handleSave = async () => {
     if (!selectedUserId) return;
     
@@ -525,31 +566,38 @@ export default function PermissionManagement() {
                     )}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    {user.approvalStatus === 'pending' && (
-                      <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
-                        대기 중
-                      </span>
-                    )}
-                    {user.approvalStatus === 'approved' && (
-                      <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-                        승인됨
-                      </span>
-                    )}
-                    {user.approvalStatus === 'rejected' && (
-                      <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
-                        거부됨
-                      </span>
-                    )}
-                    {user.approvalStatus === 'not_applied' && !user.firebaseUid && (
-                      <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-orange-100 text-orange-800">
-                        미가입
-                      </span>
-                    )}
-                    {user.firebaseUid && !user.approvalStatus && (
-                      <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
-                        등록됨
-                      </span>
-                    )}
+                    <div className="flex flex-col gap-1">
+                      {user.approvalStatus === 'pending' && (
+                        <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
+                          대기 중
+                        </span>
+                      )}
+                      {user.approvalStatus === 'approved' && (
+                        <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                          승인됨
+                        </span>
+                      )}
+                      {user.approvalStatus === 'rejected' && (
+                        <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
+                          거부됨
+                        </span>
+                      )}
+                      {user.approvalStatus === 'not_applied' && !user.firebaseUid && (
+                        <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-orange-100 text-orange-800">
+                          미가입
+                        </span>
+                      )}
+                      {user.firebaseUid && !user.approvalStatus && (
+                        <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
+                          등록됨
+                        </span>
+                      )}
+                      {user.employeeStatus === 'inactive' && (
+                        <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">
+                          퇴사
+                        </span>
+                      )}
+                    </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     {user.permission ? (
@@ -601,6 +649,17 @@ export default function PermissionManagement() {
                           className="text-purple-600 hover:text-purple-900 font-medium"
                         >
                           초대링크
+                        </button>
+                      )}
+                      {/* 퇴사한 직원이면서 시스템에 가입되어 있는 경우 탈퇴 버튼 표시 (마스터/부마스터만) */}
+                      {user.employeeStatus === 'inactive' && 
+                       user.firebaseUid && 
+                       (isMaster || isDeputyMaster) && (
+                        <button
+                          onClick={() => handleDeleteUser(user)}
+                          className="text-red-600 hover:text-red-900 font-medium"
+                        >
+                          탈퇴 처리
                         </button>
                       )}
                     </div>

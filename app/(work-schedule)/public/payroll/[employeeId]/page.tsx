@@ -383,31 +383,44 @@ export default function PublicPayrollPage({ params }: PublicPayrollPageProps) {
     }
   };
 
-  if (loading) {
-    console.log('⏳ 로딩 중...');
-    return (
-      <div className="flex justify-center items-center min-h-screen">
-        <div className="text-lg">로딩 중...</div>
-      </div>
-    );
-  }
-
-  if (error || !employee || !payroll) {
-    console.log('❌ 에러 또는 데이터 없음:', { error, hasEmployee: !!employee, hasPayroll: !!payroll });
-    return (
-      <div className="flex justify-center items-center min-h-screen p-4">
-        <div className="text-red-600 whitespace-pre-line font-mono text-sm max-w-4xl bg-red-50 p-4 rounded border border-red-200">
-          {error || '데이터를 불러올 수 없습니다.'}
-        </div>
-      </div>
-    );
-  }
-
-  const employmentType = (payroll as any).employmentType || (employee as any).employmentType || '';
-
+  // 페이지가 로드되는지 확인하기 위한 무조건 표시되는 요소
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-4xl mx-auto px-4">
+    <div className="min-h-screen bg-white">
+      {/* 디버깅: 페이지 로드 확인 */}
+      <div className="bg-yellow-100 border-b-2 border-yellow-400 p-2 text-sm font-mono">
+        🟢 페이지 로드됨 | loading: {loading ? 'true' : 'false'} | error: {error ? '있음' : '없음'} | employee: {employee ? '있음' : '없음'} | payroll: {payroll ? '있음' : '없음'}
+      </div>
+      
+      {loading && (
+        <div className="flex justify-center items-center min-h-screen">
+          <div className="text-lg">로딩 중...</div>
+        </div>
+      )}
+
+      {!loading && (error || !employee || !payroll) && (
+        <div className="flex justify-center items-center min-h-screen p-4">
+          <div className="text-red-600 whitespace-pre-line font-mono text-sm max-w-4xl bg-red-50 p-4 rounded border border-red-200">
+            <div className="font-bold mb-2">에러 또는 데이터 없음:</div>
+            <div>error: {error || '없음'}</div>
+            <div>employee: {employee ? '있음' : '없음'}</div>
+            <div>payroll: {payroll ? '있음' : '없음'}</div>
+            {error && (
+              <div className="mt-4 p-2 bg-white rounded border">
+                {error}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {!loading && !error && employee && payroll && (
+        <div className="max-w-4xl mx-auto px-4">
+
+      {/* 실제 급여명세서 내용 */}
+      {(() => {
+        const employmentType = (payroll as any).employmentType || (employee as any).employmentType || '';
+        
+        return (
         <div className="bg-white shadow rounded-lg p-6 mb-4">
           <div className="flex justify-between items-center">
             <div>

@@ -45,10 +45,15 @@ export default function PermissionManagement() {
   const [searchTerm, setSearchTerm] = useState('');
   
   // 사용자 승인 관련 상태
-  const [activeTab, setActiveTab] = useState<'permissions' | 'approvals'>('permissions');
+  const [activeTab, setActiveTab] = useState<'permissions' | 'approvals' | 'invitations'>('permissions');
   const [approvals, setApprovals] = useState<UserApproval[]>([]);
   const [approvalFilter, setApprovalFilter] = useState<'all' | 'pending' | 'approved' | 'rejected'>('pending');
   const [loadingApprovals, setLoadingApprovals] = useState(true);
+  
+  // 초대링크 관련 상태
+  const [employees, setEmployees] = useState<Array<{id: string; name: string; firebaseUid?: string}>>([]);
+  const [loadingEmployees, setLoadingEmployees] = useState(false);
+  const [inviteEmployeeSearch, setInviteEmployeeSearch] = useState('');
 
   useEffect(() => {
     if (!isSuperAdmin && !isMaster && !isAdmin) {
@@ -253,6 +258,56 @@ export default function PermissionManagement() {
     }
   };
 
+  // 초대링크 관련 함수
+  const loadEmployees = async () => {
+    try {
+      setLoadingEmployees(true);
+      const employeesSnapshot = await getDocs(collection(db, 'employees'));
+      const employeesList = employeesSnapshot.docs.map((doc) => ({
+        id: doc.id,
+        name: doc.data().name || '이름 없음',
+        firebaseUid: doc.data().firebaseUid,
+      }));
+      setEmployees(employeesList.sort((a, b) => a.name.localeCompare(b.name)));
+    } catch (error) {
+      console.error('직원 목록 로드 오류:', error);
+    } finally {
+      setLoadingEmployees(false);
+    }
+  };
+
+  const sendInviteLink = async (employeeId: string, employeeName: string) => {
+    try {
+      const response = await fetch('/api/work-schedule/invitations', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          employeeId,
+          employeeName,
+          invitedBy: auth.currentUser?.uid || 'admin',
+        }),
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        // 초대링크를 클립보드에 복사
+        if (navigator.clipboard) {
+          await navigator.clipboard.writeText(data.inviteUrl);
+          alert(`초대링크가 생성되었습니다!\n\n링크: ${data.inviteUrl}\n\n링크가 클립보드에 복사되었습니다.`);
+        } else {
+          alert(`초대링크가 생성되었습니다!\n\n링크: ${data.inviteUrl}\n\n링크를 복사해서 전송해주세요.`);
+        }
+      } else {
+        alert(`초대링크 생성 실패: ${data.error}`);
+      }
+    } catch (error) {
+      console.error('초대링크 생성 오류:', error);
+      alert('초대링크 생성에 실패했습니다.');
+    }
+  };
+
   const handleSave = async () => {
     if (!selectedUserId) return;
     
@@ -346,6 +401,19 @@ export default function PermissionManagement() {
                 {pendingApprovals.length}
               </span>
             )}
+          </button>
+          <button
+            onClick={() => {
+              setActiveTab('invitations');
+              loadEmployees();
+            }}
+            className={`py-4 px-1 border-b-2 font-medium text-sm ${
+              activeTab === 'invitations'
+                ? 'border-blue-500 text-blue-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+            }`}
+          >
+            초대링크 생성
           </button>
         </nav>
       </div>
@@ -502,6 +570,79 @@ export default function PermissionManagement() {
               </table>
             </div>
           )}
+        </div>
+      )}
+
+      {/* 초대링크 생성 탭 */}
+      {activeTab === 'invitations' && (
+        <div className="space-y-6">
+          <div>
+            <h3 className="text-xl font-semibold mb-2">초대링크 생성</h3>
+            <p className="text-sm text-gray-600">
+              직원에게 카카오톡 가입을 위한 초대링크를 생성하고 전송할 수 있습니다.
+            </p>
+          </div>
+
+          <div className="bg-white rounded-lg shadow p-6">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              직원 검색
+            </label>
+            <input
+              type="text"
+              placeholder="직원 이름으로 검색..."
+              value={inviteEmployeeSearch}
+              onChange={(e) => setInviteEmployeeSearch(e.target.value)}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 mb-4"
+            />
+
+            {loadingEmployees ? (
+              <div className="text-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+                <p className="mt-2 text-gray-600">직원 목록을 불러오는 중...</p>
+              </div>
+            ) : (
+              <div className="space-y-2 max-h-96 overflow-y-auto">
+                {employees
+                  .filter((emp) =>
+                    emp.name.toLowerCase().includes(inviteEmployeeSearch.toLowerCase())
+                  )
+                  .map((employee) => (
+                    <div
+                      key={employee.id}
+                      className="flex items-center justify-between p-3 border border-gray-200 rounded-lg hover:bg-gray-50"
+                    >
+                      <div className="flex items-center gap-3">
+                        <span className="font-medium text-gray-900">{employee.name}</span>
+                        {employee.firebaseUid ? (
+                          <span className="text-xs text-green-600 bg-green-50 px-2 py-1 rounded">
+                            ✅ 가입 완료
+                          </span>
+                        ) : (
+                          <span className="text-xs text-orange-600 bg-orange-50 px-2 py-1 rounded">
+                            ⏳ 미가입
+                          </span>
+                        )}
+                      </div>
+                      {!employee.firebaseUid && (
+                        <button
+                          onClick={() => sendInviteLink(employee.id, employee.name)}
+                          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium"
+                        >
+                          📱 초대링크 생성
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                {employees.filter((emp) =>
+                  emp.name.toLowerCase().includes(inviteEmployeeSearch.toLowerCase())
+                ).length === 0 && (
+                  <div className="text-center py-8 text-gray-500">
+                    검색 결과가 없습니다.
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
         </div>
       )}
 

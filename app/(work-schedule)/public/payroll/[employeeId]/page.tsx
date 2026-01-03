@@ -7,9 +7,10 @@ import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { useSearchParams } from 'next/navigation';
 
-// 클라이언트 사이드에서만 실행되는지 확인
+// 클라이언트 사이드에서만 실행되는지 확인 - 즉시 실행
 if (typeof window !== 'undefined') {
-  console.log('✅ 페이지 컴포넌트 로드됨 (클라이언트)');
+  console.log('✅✅✅ 페이지 컴포넌트 로드됨 (클라이언트) ✅✅✅');
+  console.log('✅✅✅ 현재 URL:', window.location.href, '✅✅✅');
 }
 
 interface Employee {
@@ -52,8 +53,8 @@ interface PublicPayrollPageProps {
 
 export default function PublicPayrollPage({ params }: PublicPayrollPageProps) {
   // 최상단에서 즉시 로그 출력
+  console.log('🟢🟢🟢 PublicPayrollPage 컴포넌트 렌더링 시작 🟢🟢🟢');
   if (typeof window !== 'undefined') {
-    console.log('🟢 PublicPayrollPage 컴포넌트 렌더링 시작');
     console.log('🟢 현재 URL:', window.location.href);
   }
 
@@ -68,11 +69,19 @@ export default function PublicPayrollPage({ params }: PublicPayrollPageProps) {
 
   // 컴포넌트 마운트 확인
   useEffect(() => {
-    console.log('🚀 PublicPayrollPage useEffect 실행됨');
+    console.log('🚀🚀🚀 PublicPayrollPage useEffect 실행됨 🚀🚀🚀');
     console.log('🚀 resolvedParams:', resolvedParams);
-    console.log('🚀 employeeId:', resolvedParams.employeeId);
-    console.log('🚀 searchParams:', searchParams.toString());
-    console.log('🚀 token:', searchParams.get('t'));
+    try {
+      console.log('🚀 employeeId:', resolvedParams?.employeeId);
+    } catch (e) {
+      console.error('🚀 employeeId 접근 오류:', e);
+    }
+    try {
+      console.log('🚀 searchParams:', searchParams?.toString());
+      console.log('🚀 token:', searchParams?.get('t'));
+    } catch (e) {
+      console.error('🚀 searchParams 접근 오류:', e);
+    }
     return () => {
       console.log('🔴 PublicPayrollPage 컴포넌트 언마운트됨');
     };

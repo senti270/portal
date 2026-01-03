@@ -657,7 +657,7 @@ export default function ScheduleInputNew({ selectedBranchId, onWeekChange }: Sch
 
       // 공유 URL 생성
       const weekString = toLocalDateString(currentWeekStart);
-      const shareUrl = `${window.location.origin}/public/schedule/${selectedBranchId || 'all'}/${weekString}`;
+      const shareUrl = `${window.location.origin}/work-schedule/public/schedule/${selectedBranchId || 'all'}/${weekString}`;
 
       // 포맷된 텍스트 생성
       const shareText = `${branch.name}, ${dateRange} 스케쥴\n${shareUrl}`;
@@ -707,7 +707,7 @@ export default function ScheduleInputNew({ selectedBranchId, onWeekChange }: Sch
 
       // 공유 URL 생성
       const weekString = toLocalDateString(currentWeekStart);
-      const shareUrl = `${window.location.origin}/public/schedule/${selectedBranchId || 'all'}/${weekString}`;
+      const shareUrl = `${window.location.origin}/work-schedule/public/schedule/${selectedBranchId || 'all'}/${weekString}`;
 
       // 포맷된 텍스트 생성
       const shareText = `${branch.name}, ${dateRange} 스케쥴\n${shareUrl}`;

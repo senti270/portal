@@ -181,7 +181,7 @@ export default function WeeklyScheduleView({ selectedBranchId }: WeeklyScheduleV
 
   const handleShare = async () => {
     const weekString = currentWeekStart.toISOString().split('T')[0];
-    const shareUrl = `${window.location.origin}/public/schedule/${selectedBranchId || 'all'}/${weekString}`;
+    const shareUrl = `${window.location.origin}/work-schedule/public/schedule/${selectedBranchId || 'all'}/${weekString}`;
     
     // Web Share API 지원 확인
     if (navigator.share) {

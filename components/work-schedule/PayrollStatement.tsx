@@ -601,29 +601,29 @@ const PayrollStatement: React.FC = () => {
 
   // 공유 링크 생성
   const handleShareLink = async () => {
-    if (!selectedPayroll || !selectedEmployeeInfo) {
-      alert('직원과 급여 데이터를 선택해주세요.');
+    if (!selectedPayroll) {
+      alert('급여 데이터를 선택해주세요.');
       return;
     }
 
     try {
+      // selectedPayroll.employeeId를 우선 사용 (이게 확실한 employee ID)
+      const employeeIdForUrl = selectedPayroll.employeeId;
+      
       // 디버깅: 공유 링크 생성 정보 확인
       console.log('🔗 공유 링크 생성:', {
-        selectedEmployeeInfo: {
-          id: selectedEmployeeInfo.id,
-          name: selectedEmployeeInfo.name
-        },
+        selectedPayrollEmployeeId: selectedPayroll.employeeId,
+        selectedEmployeeInfoId: selectedEmployeeInfo?.id,
+        selectedEmployeeInfoName: selectedEmployeeInfo?.name,
         selectedMonth,
         selectedPayrollId: selectedPayroll.id,
-        selectedPayrollEmployeeId: selectedPayroll.employeeId
+        usingEmployeeId: employeeIdForUrl
       });
 
       // 토큰 생성 (월 정보를 base64로 인코딩)
       const token = btoa(JSON.stringify({ month: selectedMonth }));
       
-      // 공유 링크 생성 (URL에 월 정보 없이 토큰만 포함)
-      // selectedPayroll.employeeId와 selectedEmployeeInfo.id가 일치하는지 확인
-      const employeeIdForUrl = selectedEmployeeInfo.id || selectedPayroll.employeeId;
+      // 공유 링크 생성 (selectedPayroll.employeeId 사용 - 이게 확실함)
       const shareUrl = `${window.location.origin}/work-schedule/public/payroll/${employeeIdForUrl}?t=${token}`;
       
       console.log('🔗 생성된 공유 링크:', shareUrl);
@@ -633,8 +633,8 @@ const PayrollStatement: React.FC = () => {
       if (navigator.share) {
         try {
           await navigator.share({
-            title: `${selectedEmployeeInfo.name}님의 ${selectedMonth} 급여명세서`,
-            text: `${selectedEmployeeInfo.name}님의 ${selectedMonth} 급여명세서를 확인하세요.`,
+            title: `${selectedPayroll.employeeName}님의 ${selectedMonth} 급여명세서`,
+            text: `${selectedPayroll.employeeName}님의 ${selectedMonth} 급여명세서를 확인하세요.`,
             url: shareUrl
           });
           return;
@@ -649,7 +649,7 @@ const PayrollStatement: React.FC = () => {
       
       // 클립보드에 복사
       await navigator.clipboard.writeText(shareUrl);
-      alert(`공유 링크가 클립보드에 복사되었습니다.\n직원ID: ${employeeIdForUrl}`);
+      alert(`공유 링크가 클립보드에 복사되었습니다.\n직원: ${selectedPayroll.employeeName} (ID: ${employeeIdForUrl})`);
     } catch (error) {
       console.error('공유 링크 생성 실패:', error);
       alert('공유 링크 생성에 실패했습니다.');

@@ -418,7 +418,7 @@ export default function PublicPayrollPage({ params }: PublicPayrollPageProps) {
           {(() => {
             const employmentType = (payroll as any).employmentType || (employee as any).employmentType || '';
             return (
-              <>
+              <div>
                 <div className="bg-white shadow rounded-lg p-6 mb-4">
                 <div className="flex justify-between items-center">
                   <div>
@@ -501,9 +501,9 @@ export default function PublicPayrollPage({ params }: PublicPayrollPageProps) {
               </div>
             </div>
           </div>
-                </>
-              );
-            })()}
+              </div>
+            );
+          })()}
 
           {/* 지급/공제 항목 - 2단 레이아웃 */}
           {(() => {

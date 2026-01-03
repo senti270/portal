@@ -65,3 +65,5 @@ NEXT_PUBLIC_KAKAO_APP_KEY=5c13f632a4dcaa7607e1c45bf4100b81
 - 하지만 카카오 JS SDK를 사용하려면 JavaScript 키가 필요합니다
 - REST API 키는 서버 사이드에서만 사용해야 합니다
 
+
+

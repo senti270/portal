@@ -98,6 +98,35 @@ interface EmployeeManagementProps {
 export default function EmployeeManagement({ userBranch, isManager }: EmployeeManagementProps) {
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [branches, setBranches] = useState<Branch[]>([]);
+  
+  // 초대링크 전송 함수
+  const sendInviteLink = async (employee: Employee) => {
+    try {
+      const response = await fetch('/api/work-schedule/invitations', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          employeeId: employee.id,
+          employeeName: employee.name,
+          invitedBy: 'admin', // 실제로는 현재 로그인한 사용자 ID
+        }),
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        // 초대링크를 클립보드에 복사
+        await navigator.clipboard.writeText(data.inviteUrl);
+        alert(`초대링크가 생성되었습니다!\n\n링크: ${data.inviteUrl}\n\n링크가 클립보드에 복사되었습니다.`);
+      } else {
+        alert(`초대링크 생성 실패: ${data.error}`);
+      }
+    } catch (error) {
+      console.error('초대링크 전송 오류:', error);
+      alert('초대링크 전송에 실패했습니다.');
+    }
+  };
   const [bankCodes, setBankCodes] = useState<BankCode[]>([]);
   const [selectedBranchId, setSelectedBranchId] = useState<string>('');
   const [showForm, setShowForm] = useState(false);
@@ -2078,7 +2107,7 @@ export default function EmployeeManagement({ userBranch, isManager }: EmployeeMa
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     <div className="space-y-1">
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 flex-wrap">
                         <button
                           onClick={() => {
                             setShowDocumentModal({ show: true, employee });
@@ -2096,6 +2125,15 @@ export default function EmployeeManagement({ userBranch, isManager }: EmployeeMa
                           >
                             ⚠️
                           </span>
+                        )}
+                        {!employee.firebaseUid && (
+                          <button
+                            onClick={() => sendInviteLink(employee)}
+                            className="text-yellow-600 hover:text-yellow-900 text-xs"
+                            title="카카오톡 가입 초대링크 전송"
+                          >
+                            📱 초대링크
+                          </button>
                         )}
                       </div>
                       {!hasNoContract(employee.id) && (() => {

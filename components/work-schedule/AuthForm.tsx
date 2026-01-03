@@ -1,15 +1,24 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
-import { collection, getDocs } from 'firebase/firestore';
+import { collection, getDocs, query, where } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase';
+import { loadKakaoSDK, loginWithKakao, getKakaoUserInfo } from '@/lib/kakao';
 
 export default function AuthForm() {
   const [userId, setUserId] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [kakaoLoading, setKakaoLoading] = useState(false);
+
+  useEffect(() => {
+    // 카카오 SDK 로드
+    loadKakaoSDK().catch((err) => {
+      console.error('카카오 SDK 로드 실패:', err);
+    });
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -76,6 +85,55 @@ export default function AuthForm() {
       alert(`로그인에 실패했습니다. 관리자에게 문의하세요.\n오류: ${error?.code || error?.message || '알 수 없는 오류'}`);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleKakaoLogin = async () => {
+    try {
+      setKakaoLoading(true);
+      
+      // 카카오톡 로그인
+      await loginWithKakao();
+      
+      // 카카오톡 사용자 정보 가져오기
+      const kakaoUser = await getKakaoUserInfo();
+      const kakaoId = kakaoUser.id.toString();
+      
+      // Firestore에서 승인된 사용자 찾기
+      const approvalsSnapshot = await getDocs(
+        query(collection(db, 'userApprovals'), where('kakaoId', '==', kakaoId), where('status', '==', 'approved'))
+      );
+      
+      if (approvalsSnapshot.empty) {
+        alert('승인되지 않은 계정입니다. 관리자에게 문의하세요.');
+        return;
+      }
+      
+      const approvalData = approvalsSnapshot.docs[0].data();
+      
+      // Firebase Auth로 로그인 (카카오 ID를 이메일로 사용)
+      const kakaoEmail = `kakao_${kakaoId}@kakao.workschedule.local`;
+      
+      try {
+        // 이미 생성된 계정으로 로그인 시도
+        // 비밀번호는 가입 시 생성된 임시 비밀번호를 사용해야 하지만,
+        // 실제로는 카카오 로그인만으로 인증해야 하므로
+        // 여기서는 사용자 승인 데이터를 기반으로 Firebase Custom Token을 생성해야 합니다.
+        // 하지만 간단하게 하기 위해, 승인된 사용자의 Firebase UID로 직접 인증하는 방식으로 변경
+        // 또는 서버 사이드에서 Custom Token 생성 필요
+        
+        // 임시: 승인된 사용자의 Firebase UID가 있으면 해당 계정으로 로그인
+        // 실제로는 서버에서 Custom Token을 생성해야 합니다.
+        alert('카카오톡 로그인은 현재 개발 중입니다. 관리자에게 문의하세요.');
+      } catch (error: any) {
+        console.error('카카오 로그인 오류:', error);
+        alert('카카오톡 로그인에 실패했습니다. 관리자에게 문의하세요.');
+      }
+    } catch (error: any) {
+      console.error('카카오 로그인 오류:', error);
+      alert('카카오톡 로그인에 실패했습니다. 다시 시도해주세요.');
+    } finally {
+      setKakaoLoading(false);
     }
   };
 
@@ -148,6 +206,29 @@ export default function AuthForm() {
             </button>
           </form>
           
+          <div className="mt-6">
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-gray-300"></div>
+              </div>
+              <div className="relative flex justify-center text-sm">
+                <span className="px-2 bg-white text-gray-500">또는</span>
+              </div>
+            </div>
+            
+            <button
+              type="button"
+              onClick={handleKakaoLogin}
+              disabled={kakaoLoading}
+              className="mt-4 w-full bg-yellow-400 text-black py-3 px-4 rounded-lg hover:bg-yellow-500 font-medium text-base disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            >
+              {kakaoLoading ? '로그인 중...' : (
+                <>
+                  <span>카카오톡으로 로그인</span>
+                </>
+              )}
+            </button>
+          </div>
         </div>
       </div>
     </div>

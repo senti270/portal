@@ -18,6 +18,7 @@ import TransferFileGeneration from '@/components/work-schedule/TransferFileGener
 import ShortTermWorkerManagement from '@/components/work-schedule/ShortTermWorkerManagement';
 import PayrollStatement from '@/components/work-schedule/PayrollStatement';
 import CurrentExpectedPayroll from '@/components/work-schedule/CurrentExpectedPayroll';
+import UserApprovalManagement from '@/components/work-schedule/UserApprovalManagement';
 
 interface DashboardProps {
   user: User;
@@ -667,6 +668,18 @@ export default function Dashboard({ user }: DashboardProps) {
             >
               서식관리
             </button>
+            {!isManager && (
+              <button
+                onClick={() => handleTabChange('user-approval')}
+                className={`py-3 sm:py-4 px-2 sm:px-1 border-b-2 font-medium text-sm whitespace-nowrap ${
+                  activeTab === 'user-approval'
+                    ? 'border-blue-500 text-blue-600'
+                    : 'border-transparent text-gray-700 hover:text-gray-900 hover:border-gray-300'
+                }`}
+              >
+                사용자 승인
+              </button>
+            )}
           </div>
         </div>
       </nav>
@@ -1401,6 +1414,11 @@ export default function Dashboard({ user }: DashboardProps) {
             </div>
           )}
 
+          {activeTab === 'user-approval' && (
+            <div className="space-y-6">
+              <UserApprovalManagement />
+            </div>
+          )}
           
           {activeTab === 'payroll' && (
             <div className="space-y-6">

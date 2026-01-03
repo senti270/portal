@@ -75,8 +75,6 @@ export default function PublicPayrollPage({ params }: PublicPayrollPageProps) {
         const employeeId = resolvedParams.employeeId;
         const token = searchParams.get('t');
 
-        console.log('🔍 공유 링크 접근:', { employeeId, token });
-
         if (!token) {
           setError('유효하지 않은 링크입니다.');
           return;
@@ -84,42 +82,15 @@ export default function PublicPayrollPage({ params }: PublicPayrollPageProps) {
 
         // 토큰에서 월 정보 추출
         const month = getMonthFromToken(token);
-        console.log('📅 토큰에서 추출한 월:', month);
-        
         if (!month) {
           setError('유효하지 않은 링크입니다.');
           return;
         }
 
-        // 먼저 confirmedPayrolls에서 해당 월의 급여 데이터를 찾아서 실제 employeeId 확인
-        // URL의 ID가 employeeId일 수도 있고, payroll 문서 ID일 수도 있음
-        let actualEmployeeId: string | null = null;
-        
-        // 방법 1: URL ID가 employeeId인 경우
-        let employeeDoc = await getDoc(doc(db, 'employees', employeeId));
-        if (employeeDoc.exists()) {
-          actualEmployeeId = employeeId;
-          console.log('✅ employees 컬렉션에서 직원 찾음 (ID로):', employeeId);
-        } else {
-          // 방법 2: URL ID가 confirmedPayrolls 문서 ID인 경우
-          try {
-            const payrollDoc = await getDoc(doc(db, 'confirmedPayrolls', employeeId));
-            if (payrollDoc.exists()) {
-              const payrollData = payrollDoc.data();
-              actualEmployeeId = payrollData.employeeId;
-              console.log('✅ confirmedPayrolls에서 찾음, 실제 employeeId:', actualEmployeeId);
-              
-              // 실제 employeeId로 employees 조회
-              employeeDoc = await getDoc(doc(db, 'employees', actualEmployeeId));
-            }
-          } catch (err) {
-            console.error('confirmedPayrolls 조회 오류:', err);
-          }
-        }
-        
-        if (!employeeDoc.exists() || !actualEmployeeId) {
-          console.error('❌ 직원 정보를 찾을 수 없습니다. employeeId:', employeeId);
-          setError(`직원 정보를 찾을 수 없습니다. (ID: ${employeeId})`);
+        // 직원 정보 로드
+        const employeeDoc = await getDoc(doc(db, 'employees', employeeId));
+        if (!employeeDoc.exists()) {
+          setError('직원 정보를 찾을 수 없습니다.');
           return;
         }
         setEmployee({
@@ -128,10 +99,9 @@ export default function PublicPayrollPage({ params }: PublicPayrollPageProps) {
         } as Employee);
 
         // 급여 데이터 로드 - 토큰에서 추출한 월로만 조회
-        console.log('💰 급여 데이터 조회:', { actualEmployeeId, month });
         const payrollQuery = query(
           collection(db, 'confirmedPayrolls'),
-          where('employeeId', '==', actualEmployeeId),
+          where('employeeId', '==', employeeId),
           where('month', '==', month)
         );
         const payrollSnapshot = await getDocs(payrollQuery);
@@ -172,7 +142,7 @@ export default function PublicPayrollPage({ params }: PublicPayrollPageProps) {
         // 근무시간 비교 데이터 로드
         const comparisonsQuery = query(
           collection(db, 'workTimeComparisonResults'),
-          where('employeeId', '==', actualEmployeeId),
+          where('employeeId', '==', employeeId),
           where('month', '==', month)
         );
         const comparisonsSnapshot = await getDocs(comparisonsQuery);

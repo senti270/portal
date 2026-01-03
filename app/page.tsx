@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react'
 import SearchBar from '@/components/SearchBar'
 import ThemeToggle from '@/components/ThemeToggle'
-import AdminLogin from '@/components/AdminLogin'
 import AdminPanel from '@/components/AdminPanel'
 import PortalAuth from '@/components/PortalAuth'
 import { System, systems } from '@/data/systems'
@@ -18,7 +17,7 @@ import { auth } from '@/lib/firebase'
 import { signOut } from 'firebase/auth'
 
 function PortalContent() {
-  const { hasSystemPermission, isMaster } = usePermissions()
+  const { hasSystemPermission } = usePermissions()
   const [searchTerm, setSearchTerm] = useState('')
   const [allSystems, setAllSystems] = useState<System[]>(systems)
   const [filteredSystems, setFilteredSystems] = useState<System[]>(systems)
@@ -394,7 +393,6 @@ function PortalContent() {
       </footer>
 
       {/* 관리자 기능 */}
-      <AdminLogin />
       <AdminPanel 
         systemsList={allSystems}
         onSystemsUpdate={(updatedSystems) => {

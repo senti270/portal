@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react'
 import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd'
-import { useAdmin } from '@/contexts/AdminContext'
 import { usePermissions } from '@/contexts/PermissionContext'
 import { System, systems } from '@/data/systems'
 import { getSystems, updateAllSystems, deleteSystem as deleteSystemFromFirestore } from '@/lib/firestore'
@@ -26,7 +25,6 @@ interface AdminPanelProps {
 }
 
 export default function AdminPanel({ systemsList: propSystemsList, onSystemsUpdate }: AdminPanelProps) {
-  const { isAdmin, logout } = useAdmin()
   const { isMaster } = usePermissions()
   const [systemsList, setSystemsList] = useState<System[]>(propSystemsList)
   const [editingSystem, setEditingSystem] = useState<System | null>(null)
@@ -59,8 +57,8 @@ export default function AdminPanel({ systemsList: propSystemsList, onSystemsUpda
     }
   }
 
-  // 마스터 권한 또는 기존 관리자 로그인 상태여야 편집 가능
-  if (!isMaster && !isAdmin) return null
+  // 마스터 권한만 편집 가능
+  if (!isMaster) return null
 
   const handleEdit = (system: System) => {
     setEditingSystem({ ...system })
@@ -268,7 +266,7 @@ export default function AdminPanel({ systemsList: propSystemsList, onSystemsUpda
       {/* 관리자 패널 버튼들 - 수직으로 배치 */}
       <div className="fixed bottom-6 left-6 flex flex-col gap-2 z-50">
         <button 
-          onClick={logout}
+          onClick={() => {}}
           className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg shadow-lg transition-all duration-300"
         >
           관리자 로그아웃

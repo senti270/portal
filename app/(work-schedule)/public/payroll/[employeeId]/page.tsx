@@ -131,23 +131,65 @@ export default function PublicPayrollPage({ params }: PublicPayrollPageProps) {
           return;
         }
 
-        // 직원 정보 로드
+        // 직원 정보 로드 - 여러 방법으로 시도
         console.log('👤 직원 정보 조회 시작, employeeId:', employeeId);
-        const employeeDoc = await getDoc(doc(db, 'employees', employeeId));
+        let employeeDoc = await getDoc(doc(db, 'employees', employeeId));
+        let actualEmployeeId = employeeId;
+        
+        // 방법 1: URL의 ID가 employee ID인 경우
+        if (!employeeDoc.exists()) {
+          console.log('⚠️ employees에서 찾지 못함, confirmedPayrolls에서 확인 시도...');
+          
+          // 방법 2: URL의 ID가 confirmedPayrolls 문서 ID인 경우
+          try {
+            const payrollDoc = await getDoc(doc(db, 'confirmedPayrolls', employeeId));
+            if (payrollDoc.exists()) {
+              const payrollData = payrollDoc.data();
+              actualEmployeeId = payrollData.employeeId;
+              console.log('✅ confirmedPayrolls 문서 ID로 찾음, 실제 employeeId:', actualEmployeeId);
+              
+              // 실제 employeeId로 employees 조회
+              employeeDoc = await getDoc(doc(db, 'employees', actualEmployeeId));
+            }
+          } catch (e) {
+            console.error('❌ confirmedPayrolls 조회 실패:', e);
+          }
+          
+          // 방법 3: confirmedPayrolls에서 해당 월의 employeeId로 검색
+          if (!employeeDoc.exists() && month) {
+            console.log('⚠️ 여전히 찾지 못함, 해당 월의 급여 데이터에서 employeeId 찾기...');
+            try {
+              const payrollQuery = query(
+                collection(db, 'confirmedPayrolls'),
+                where('month', '==', month)
+              );
+              const allPayrolls = await getDocs(payrollQuery);
+              
+              // URL의 ID와 일치하는 문서 찾기
+              const matchingPayroll = allPayrolls.docs.find(doc => 
+                doc.id === employeeId || doc.data().employeeId === employeeId
+              );
+              
+              if (matchingPayroll) {
+                const payrollData = matchingPayroll.data();
+                actualEmployeeId = payrollData.employeeId || employeeId;
+                console.log('✅ 급여 데이터에서 employeeId 찾음:', actualEmployeeId);
+                
+                employeeDoc = await getDoc(doc(db, 'employees', actualEmployeeId));
+              }
+            } catch (e) {
+              console.error('❌ 급여 데이터 검색 실패:', e);
+            }
+          }
+        }
         
         if (!employeeDoc.exists()) {
-          console.error('❌ 직원 문서가 존재하지 않음:', employeeId);
-          
-          // 디버깅: employees 컬렉션의 일부 ID 확인
-          const allEmployees = await getDocs(collection(db, 'employees'));
-          console.log('📋 전체 직원 수:', allEmployees.size);
-          console.log('📋 처음 5개 직원 ID:', allEmployees.docs.slice(0, 5).map(d => d.id));
-          
+          console.error('❌ 모든 방법으로 직원을 찾지 못함:', employeeId);
           setError('직원 정보를 찾을 수 없습니다.');
           return;
         }
         
-        console.log('✅ 직원 정보 찾음:', employeeDoc.id, employeeDoc.data().name);
+        console.log('✅ 직원 찾음:', actualEmployeeId, employeeDoc.data().name);
         setEmployee({
           id: employeeDoc.id,
           ...employeeDoc.data()

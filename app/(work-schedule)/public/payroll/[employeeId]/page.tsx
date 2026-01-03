@@ -7,6 +7,11 @@ import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { useSearchParams } from 'next/navigation';
 
+// 클라이언트 사이드에서만 실행되는지 확인
+if (typeof window !== 'undefined') {
+  console.log('✅ 페이지 컴포넌트 로드됨 (클라이언트)');
+}
+
 interface Employee {
   id: string;
   name: string;
@@ -54,6 +59,14 @@ export default function PublicPayrollPage({ params }: PublicPayrollPageProps) {
   const [branches, setBranches] = useState<{id: string; name: string}[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // 컴포넌트 마운트 확인
+  useEffect(() => {
+    console.log('🚀 PublicPayrollPage 컴포넌트 마운트됨');
+    return () => {
+      console.log('🔴 PublicPayrollPage 컴포넌트 언마운트됨');
+    };
+  }, []);
 
   // 토큰에서 월 정보 추출 (간단한 base64 디코딩)
   const getMonthFromToken = (token: string): string | null => {

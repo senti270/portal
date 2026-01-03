@@ -1,13 +1,14 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import SystemCard from '@/components/SystemCard'
 import SearchBar from '@/components/SearchBar'
 import ThemeToggle from '@/components/ThemeToggle'
 import AdminLogin from '@/components/AdminLogin'
 import AdminPanel from '@/components/AdminPanel'
 import PortalAuth from '@/components/PortalAuth'
 import { System, systems } from '@/data/systems'
+import { SystemId } from '@/lib/permissions'
+import { usePermissions } from '@/contexts/PermissionContext'
 import { getSystems } from '@/lib/firestore'
 import { searchManuals } from '@/lib/manual-firestore'
 import { getPurchaseItems } from '@/lib/purchase-firestore'
@@ -17,6 +18,7 @@ import { auth } from '@/lib/firebase'
 import { signOut } from 'firebase/auth'
 
 function PortalContent() {
+  const { hasSystemPermission } = usePermissions()
   const [searchTerm, setSearchTerm] = useState('')
   const [allSystems, setAllSystems] = useState<System[]>(systems)
   const [filteredSystems, setFilteredSystems] = useState<System[]>(systems)
@@ -282,14 +284,97 @@ function PortalContent() {
           </div>
         )}
 
-        {/* 시스템 카드 그리드 */}
-        {(!searchResults || !searchTerm.trim()) && filteredSystems.length > 0 && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 animate-slide-up">
-            {filteredSystems.map((system, index) => (
-              <SystemCard key={system.id} system={system} index={index} />
-            ))}
-          </div>
-        )}
+        {/* 시스템 카테고리별 리스트 */}
+        {(!searchResults || !searchTerm.trim()) && filteredSystems.length > 0 && (() => {
+          // 카테고리별로 그룹화
+          const groupedSystems = filteredSystems.reduce((acc, system) => {
+            const category = system.category || '기타'
+            if (!acc[category]) {
+              acc[category] = []
+            }
+            acc[category].push(system)
+            return acc
+          }, {} as Record<string, System[]>)
+
+          // 카테고리 순서 정의 (원하는 순서대로)
+          const categoryOrder = ['업무관리', '구매관리', '고객서비스', '마케팅', '운영', '기타']
+          const sortedCategories = Object.keys(groupedSystems).sort((a, b) => {
+            const aIndex = categoryOrder.indexOf(a)
+            const bIndex = categoryOrder.indexOf(b)
+            if (aIndex === -1 && bIndex === -1) return a.localeCompare(b)
+            if (aIndex === -1) return 1
+            if (bIndex === -1) return -1
+            return aIndex - bIndex
+          })
+
+          return (
+            <div className="space-y-8 animate-slide-up">
+              {sortedCategories.map((category) => (
+                <div key={category} className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+                  <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4 pb-2 border-b border-gray-200 dark:border-gray-700">
+                    {category}
+                  </h2>
+                  <ul className="space-y-2">
+                    {groupedSystems[category].map((system) => {
+                      const handleClick = () => {
+                        // 클릭 시에만 권한 체크
+                        const systemId = system.id as SystemId
+                        if (systemId && !hasSystemPermission(systemId, 'read')) {
+                          alert('접근 권한이 없습니다. 관리자에게 문의하세요.')
+                          return
+                        }
+                        if (system.url) {
+                          if (system.url.startsWith('/')) {
+                            window.location.href = system.url
+                          } else {
+                            window.open(system.url, '_blank')
+                          }
+                        }
+                      }
+
+                      const optimizationText = system.optimization && system.optimization.length > 0
+                        ? ` (${system.optimization.join(')(')})`
+                        : ''
+
+                      return (
+                        <li key={system.id}>
+                          <button
+                            onClick={handleClick}
+                            className={`
+                              w-full text-left px-4 py-3 rounded-lg
+                              transition-all duration-200
+                              ${system.url 
+                                ? 'hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer' 
+                                : 'opacity-60 cursor-not-allowed'
+                              }
+                            `}
+                          >
+                            <div className="flex items-center gap-3">
+                              <span className="text-lg">{system.icon}</span>
+                              <span className="font-medium text-gray-900 dark:text-white flex-1">
+                                {system.title}
+                                {optimizationText && (
+                                  <span className="text-sm text-gray-500 dark:text-gray-400 font-normal">
+                                    {optimizationText}
+                                  </span>
+                                )}
+                              </span>
+                              {system.url && (
+                                <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                                </svg>
+                              )}
+                            </div>
+                          </button>
+                        </li>
+                      )
+                    })}
+                  </ul>
+                </div>
+              ))}
+            </div>
+          )
+        })()}
       </div>
 
       {/* 푸터 */}

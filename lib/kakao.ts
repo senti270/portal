@@ -9,12 +9,14 @@ declare global {
 export const initKakao = () => {
   if (typeof window !== 'undefined' && window.Kakao) {
     if (!window.Kakao.isInitialized()) {
-      const kakaoAppKey = process.env.NEXT_PUBLIC_KAKAO_APP_KEY;
-      if (kakaoAppKey) {
-        window.Kakao.init(kakaoAppKey);
+      // JavaScript SDK는 JavaScript 키를 사용해야 합니다
+      // 환경 변수가 없으면 기존 REST API 키 변수도 확인 (하위 호환성)
+      const kakaoJsKey = process.env.NEXT_PUBLIC_KAKAO_JS_KEY || process.env.NEXT_PUBLIC_KAKAO_APP_KEY;
+      if (kakaoJsKey) {
+        window.Kakao.init(kakaoJsKey);
         console.log('✅ 카카오 SDK 초기화 완료');
       } else {
-        console.warn('⚠️ NEXT_PUBLIC_KAKAO_APP_KEY가 설정되지 않았습니다.');
+        console.warn('⚠️ NEXT_PUBLIC_KAKAO_JS_KEY 또는 NEXT_PUBLIC_KAKAO_APP_KEY가 설정되지 않았습니다.');
       }
     }
   }

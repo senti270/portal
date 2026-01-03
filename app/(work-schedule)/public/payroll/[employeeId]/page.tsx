@@ -404,17 +404,17 @@ export default function PublicPayrollPage({ params }: PublicPayrollPageProps) {
 
   return (
     <div className="min-h-screen bg-white">
-      <div className="max-w-4xl mx-auto px-4 py-8">
+      <div className="max-w-4xl mx-auto px-2 sm:px-4 py-4 sm:py-8">
         {/* 헤더 */}
-        <div className="bg-white shadow rounded-lg p-6 mb-4">
-          <div className="flex justify-between items-center">
+        <div className="bg-white shadow rounded-lg p-3 sm:p-6 mb-3 sm:mb-4">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-0">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">{employee.name}님의 급여명세서</h1>
-              <p className="text-gray-600 mt-1">{payroll.month} 급여</p>
+              <h1 className="text-xl sm:text-2xl font-bold text-gray-900">{employee.name}님의 급여명세서</h1>
+              <p className="text-sm sm:text-base text-gray-600 mt-1">{payroll.month} 급여</p>
             </div>
             <button
               onClick={handleDownloadPDF}
-              className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full sm:w-auto bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm sm:text-base"
             >
               📄 PDF 다운로드
             </button>
@@ -422,46 +422,72 @@ export default function PublicPayrollPage({ params }: PublicPayrollPageProps) {
         </div>
 
         {/* 급여명세서 내용 */}
-        <div id="payroll-statement-content" className="border border-gray-300 p-6 bg-white">
-          <div className="text-center mb-6">
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">급여명세서</h1>
-            <p className="text-gray-600">{payroll.month} 급여</p>
+        <div id="payroll-statement-content" className="border border-gray-300 p-3 sm:p-6 bg-white">
+          <div className="text-center mb-4 sm:mb-6">
+            <h1 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">급여명세서</h1>
+            <p className="text-sm sm:text-base text-gray-600">{payroll.month} 급여</p>
           </div>
 
-          {/* 기본 정보 테이블 */}
-          <table className="w-full border-collapse border border-gray-400 mb-6">
-            <tbody>
-              <tr>
-                <td className="border border-gray-400 p-2 bg-gray-100 font-semibold w-1/4">성명</td>
-                <td className="border border-gray-400 p-2 w-1/4">{employee.name}</td>
-                <td className="border border-gray-400 p-2 bg-gray-100 font-semibold w-1/4">주민번호</td>
-                <td className="border border-gray-400 p-2 w-1/4">{employee.residentNumber || '-'}</td>
-              </tr>
-              <tr>
-                <td className="border border-gray-400 p-2 bg-gray-100 font-semibold">총 지급액</td>
-                <td className="border border-gray-400 p-2">{(payroll.totalGrossPay || 0).toLocaleString()}원</td>
-                <td className="border border-gray-400 p-2 bg-gray-100 font-semibold">총 공제액</td>
-                <td className="border border-gray-400 p-2 text-red-600">-{(payroll.totalDeductions || 0).toLocaleString()}원</td>
-              </tr>
-              <tr>
-                <td className="border border-gray-400 p-2 bg-gray-100 font-semibold">실수령액</td>
-                <td className="border border-gray-400 p-2 font-bold text-blue-600" colSpan={3}>{(payroll.totalNetPay || 0).toLocaleString()}원</td>
-              </tr>
-            </tbody>
-          </table>
+          {/* 기본 정보 테이블 - 모바일에서는 세로 레이아웃 */}
+          <div className="hidden sm:block mb-4 sm:mb-6">
+            <table className="w-full border-collapse border border-gray-400">
+              <tbody>
+                <tr>
+                  <td className="border border-gray-400 p-2 bg-gray-100 font-semibold w-1/4 text-sm">성명</td>
+                  <td className="border border-gray-400 p-2 w-1/4 text-sm">{employee.name}</td>
+                  <td className="border border-gray-400 p-2 bg-gray-100 font-semibold w-1/4 text-sm">주민번호</td>
+                  <td className="border border-gray-400 p-2 w-1/4 text-sm">{employee.residentNumber || '-'}</td>
+                </tr>
+                <tr>
+                  <td className="border border-gray-400 p-2 bg-gray-100 font-semibold text-sm">총 지급액</td>
+                  <td className="border border-gray-400 p-2 text-sm">{(payroll.totalGrossPay || 0).toLocaleString()}원</td>
+                  <td className="border border-gray-400 p-2 bg-gray-100 font-semibold text-sm">총 공제액</td>
+                  <td className="border border-gray-400 p-2 text-red-600 text-sm">-{(payroll.totalDeductions || 0).toLocaleString()}원</td>
+                </tr>
+                <tr>
+                  <td className="border border-gray-400 p-2 bg-gray-100 font-semibold text-sm">실수령액</td>
+                  <td className="border border-gray-400 p-2 font-bold text-blue-600 text-sm" colSpan={3}>{(payroll.totalNetPay || 0).toLocaleString()}원</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          
+          {/* 모바일용 기본 정보 */}
+          <div className="sm:hidden mb-4 space-y-2">
+            <div className="flex justify-between border-b pb-2">
+              <span className="font-semibold text-sm">성명</span>
+              <span className="text-sm">{employee.name}</span>
+            </div>
+            <div className="flex justify-between border-b pb-2">
+              <span className="font-semibold text-sm">주민번호</span>
+              <span className="text-sm">{employee.residentNumber || '-'}</span>
+            </div>
+            <div className="flex justify-between border-b pb-2">
+              <span className="font-semibold text-sm">총 지급액</span>
+              <span className="text-sm">{(payroll.totalGrossPay || 0).toLocaleString()}원</span>
+            </div>
+            <div className="flex justify-between border-b pb-2">
+              <span className="font-semibold text-sm">총 공제액</span>
+              <span className="text-red-600 text-sm">-{(payroll.totalDeductions || 0).toLocaleString()}원</span>
+            </div>
+            <div className="flex justify-between pt-2">
+              <span className="font-bold text-base">실수령액</span>
+              <span className="font-bold text-blue-600 text-base">{(payroll.totalNetPay || 0).toLocaleString()}원</span>
+            </div>
+          </div>
 
           {/* 지점별 상세 */}
           {workTimeComparisons.length > 0 && (
-            <div className="mb-6">
-              <h4 className="text-md font-semibold text-gray-900 mb-2">지점별 상세</h4>
-              <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
-                <div className="text-blue-900 font-semibold mb-2">실 근무시간</div>
-                <div className="text-2xl font-bold text-blue-900 mb-4">
+            <div className="mb-4 sm:mb-6">
+              <h4 className="text-sm sm:text-base font-semibold text-gray-900 mb-2">지점별 상세</h4>
+              <div className="bg-blue-50 rounded-lg p-3 sm:p-4 border border-blue-200">
+                <div className="text-blue-900 font-semibold mb-2 text-sm sm:text-base">실 근무시간</div>
+                <div className="text-xl sm:text-2xl font-bold text-blue-900 mb-3 sm:mb-4">
                   {totalHours.toFixed(1)}h
                 </div>
                 <div className="space-y-1">
                   {Array.from(branchHoursMap.entries()).map(([branchName, hours], idx) => (
-                    <div key={idx} className="flex justify-between text-blue-900">
+                    <div key={idx} className="flex justify-between text-blue-900 text-sm">
                       <span>{branchName}:</span>
                       <span className="font-medium">{hours.toFixed(1)}h</span>
                     </div>
@@ -472,16 +498,16 @@ export default function PublicPayrollPage({ params }: PublicPayrollPageProps) {
           )}
 
           {/* 지급/공제 항목 */}
-          <div className="mb-6">
-            <div className="grid grid-cols-2 gap-4">
+          <div className="mb-4 sm:mb-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {/* 좌측: 지급항목 */}
               <div>
-                <h4 className="text-md font-semibold text-gray-900 mb-2">지급항목</h4>
-                <table className="w-full border-collapse border border-gray-400">
+                <h4 className="text-sm sm:text-base font-semibold text-gray-900 mb-2">지급항목</h4>
+                <table className="w-full border-collapse border border-gray-400 text-sm">
                   <thead>
                     <tr>
-                      <th className="border border-gray-400 p-2 bg-gray-100 font-semibold">항목</th>
-                      <th className="border border-gray-400 p-2 bg-gray-100 font-semibold text-right">금액</th>
+                      <th className="border border-gray-400 p-1.5 sm:p-2 bg-gray-100 font-semibold text-xs sm:text-sm">항목</th>
+                      <th className="border border-gray-400 p-1.5 sm:p-2 bg-gray-100 font-semibold text-right text-xs sm:text-sm">금액</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -489,12 +515,12 @@ export default function PublicPayrollPage({ params }: PublicPayrollPageProps) {
                       earningItems.map((item, idx) => (
                         <React.Fragment key={idx}>
                           <tr>
-                            <td className="border border-gray-400 p-2 text-gray-900">{item.label}</td>
-                            <td className="border border-gray-400 p-2 text-right text-gray-900">{item.amount.toLocaleString()}원</td>
+                            <td className="border border-gray-400 p-1.5 sm:p-2 text-gray-900 text-xs sm:text-sm">{item.label}</td>
+                            <td className="border border-gray-400 p-1.5 sm:p-2 text-right text-gray-900 text-xs sm:text-sm">{item.amount.toLocaleString()}원</td>
                           </tr>
                           {item.note && (
                             <tr>
-                              <td colSpan={2} className="border border-gray-400 p-1 pl-4">
+                              <td colSpan={2} className="border border-gray-400 p-1 pl-2 sm:pl-4">
                                 <div className="text-xs text-gray-500 whitespace-pre-line">{item.note}</div>
                               </td>
                             </tr>
@@ -503,12 +529,12 @@ export default function PublicPayrollPage({ params }: PublicPayrollPageProps) {
                       ))
                     ) : (
                       <tr>
-                        <td colSpan={2} className="border border-gray-400 p-2 text-center text-gray-500">지급항목 없음</td>
+                        <td colSpan={2} className="border border-gray-400 p-1.5 sm:p-2 text-center text-gray-500 text-xs sm:text-sm">지급항목 없음</td>
                       </tr>
                     )}
                     <tr className="bg-gray-50 font-bold">
-                      <td className="border border-gray-400 p-2 text-gray-900">합계</td>
-                      <td className="border border-gray-400 p-2 text-right text-blue-600">{totalEarnings.toLocaleString()}원</td>
+                      <td className="border border-gray-400 p-1.5 sm:p-2 text-gray-900 text-xs sm:text-sm">합계</td>
+                      <td className="border border-gray-400 p-1.5 sm:p-2 text-right text-blue-600 text-xs sm:text-sm">{totalEarnings.toLocaleString()}원</td>
                     </tr>
                   </tbody>
                 </table>
@@ -516,12 +542,12 @@ export default function PublicPayrollPage({ params }: PublicPayrollPageProps) {
               
               {/* 우측: 공제항목 */}
               <div>
-                <h4 className="text-md font-semibold text-gray-900 mb-2">공제항목</h4>
-                <table className="w-full border-collapse border border-gray-400">
+                <h4 className="text-sm sm:text-base font-semibold text-gray-900 mb-2">공제항목</h4>
+                <table className="w-full border-collapse border border-gray-400 text-sm">
                   <thead>
                     <tr>
-                      <th className="border border-gray-400 p-2 bg-gray-100 font-semibold">항목</th>
-                      <th className="border border-gray-400 p-2 bg-gray-100 font-semibold text-right">금액</th>
+                      <th className="border border-gray-400 p-1.5 sm:p-2 bg-gray-100 font-semibold text-xs sm:text-sm">항목</th>
+                      <th className="border border-gray-400 p-1.5 sm:p-2 bg-gray-100 font-semibold text-right text-xs sm:text-sm">금액</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -529,12 +555,12 @@ export default function PublicPayrollPage({ params }: PublicPayrollPageProps) {
                       deductionItems.map((item, idx) => (
                         <React.Fragment key={idx}>
                           <tr>
-                            <td className="border border-gray-400 p-2 text-gray-900">{item.label}</td>
-                            <td className="border border-gray-400 p-2 text-right text-gray-900">-{item.amount.toLocaleString()}원</td>
+                            <td className="border border-gray-400 p-1.5 sm:p-2 text-gray-900 text-xs sm:text-sm">{item.label}</td>
+                            <td className="border border-gray-400 p-1.5 sm:p-2 text-right text-gray-900 text-xs sm:text-sm">-{item.amount.toLocaleString()}원</td>
                           </tr>
                           {item.note && (
                             <tr>
-                              <td colSpan={2} className="border border-gray-400 p-1 pl-4">
+                              <td colSpan={2} className="border border-gray-400 p-1 pl-2 sm:pl-4">
                                 <div className="text-xs text-gray-500 whitespace-pre-line">{item.note}</div>
                               </td>
                             </tr>
@@ -543,12 +569,12 @@ export default function PublicPayrollPage({ params }: PublicPayrollPageProps) {
                       ))
                     ) : (
                       <tr>
-                        <td colSpan={2} className="border border-gray-400 p-2 text-center text-gray-500">공제항목 없음</td>
+                        <td colSpan={2} className="border border-gray-400 p-1.5 sm:p-2 text-center text-gray-500 text-xs sm:text-sm">공제항목 없음</td>
                       </tr>
                     )}
                     <tr className="bg-gray-50 font-bold">
-                      <td className="border border-gray-400 p-2 text-gray-900">합계</td>
-                      <td className="border border-gray-400 p-2 text-right text-gray-900">-{totalDeductions.toLocaleString()}원</td>
+                      <td className="border border-gray-400 p-1.5 sm:p-2 text-gray-900 text-xs sm:text-sm">합계</td>
+                      <td className="border border-gray-400 p-1.5 sm:p-2 text-right text-gray-900 text-xs sm:text-sm">-{totalDeductions.toLocaleString()}원</td>
                     </tr>
                   </tbody>
                 </table>
@@ -556,12 +582,12 @@ export default function PublicPayrollPage({ params }: PublicPayrollPageProps) {
             </div>
             
             {/* 실수령액 */}
-            <div className="mt-4">
+            <div className="mt-3 sm:mt-4">
               <table className="w-full border-collapse border border-gray-400">
                 <tbody>
                   <tr className="bg-blue-50 font-bold">
-                    <td className="border border-gray-400 p-2 w-1/2">실수령액</td>
-                    <td className="border border-gray-400 p-2 text-right text-blue-600">{(totalEarnings - totalDeductions).toLocaleString()}원</td>
+                    <td className="border border-gray-400 p-2 sm:p-2 w-1/2 text-sm sm:text-base">실수령액</td>
+                    <td className="border border-gray-400 p-2 text-right text-blue-600 text-sm sm:text-base">{(totalEarnings - totalDeductions).toLocaleString()}원</td>
                   </tr>
                 </tbody>
               </table>
@@ -570,9 +596,9 @@ export default function PublicPayrollPage({ params }: PublicPayrollPageProps) {
 
           {/* 기타사항 */}
           {Array.isArray(payroll.calculations) && (
-            <div className="mt-4 mb-6">
-              <h4 className="text-md font-semibold text-gray-900 mb-2">기타사항</h4>
-              <div className="text-sm text-gray-700 space-y-2">
+            <div className="mt-3 sm:mt-4 mb-4 sm:mb-6">
+              <h4 className="text-sm sm:text-base font-semibold text-gray-900 mb-2">기타사항</h4>
+              <div className="text-xs sm:text-sm text-gray-700 space-y-2">
                 {payroll.calculations.map((calc: any, idx) => {
                   const branchName = calc.branchName || (calc.branches && calc.branches[0]?.branchName) || '-';
                   const probationHours = calc.probationHours || 0;
@@ -630,11 +656,11 @@ export default function PublicPayrollPage({ params }: PublicPayrollPageProps) {
           )}
 
           {/* 서명란 */}
-          <div className="mt-8">
-            <div className="border border-gray-400 p-4">
+          <div className="mt-4 sm:mt-8">
+            <div className="border border-gray-400 p-3 sm:p-4">
               <div className="text-right">
-                <div className="mb-2">청담장어마켓 동탄점</div>
-                <div className="relative">
+                <div className="mb-2 text-sm sm:text-base">청담장어마켓 동탄점</div>
+                <div className="relative text-sm sm:text-base">
                   대표자: 이진영
                   <span className="relative inline-block ml-2">(인)</span>
                 </div>
@@ -642,11 +668,11 @@ export default function PublicPayrollPage({ params }: PublicPayrollPageProps) {
             </div>
           </div>
 
-          <div className="mt-6 text-center">
-            <p className="text-sm text-gray-700 mb-2">
+          <div className="mt-4 sm:mt-6 text-center">
+            <p className="text-xs sm:text-sm text-gray-700 mb-2">
               위 내역과 같이 급여가 지급되었음을 증명합니다.
             </p>
-            <p className="text-sm text-gray-600">
+            <p className="text-xs sm:text-sm text-gray-600">
               발급일: {new Date().toLocaleDateString('ko-KR', { 
                 year: 'numeric', 
                 month: 'long', 
@@ -658,16 +684,17 @@ export default function PublicPayrollPage({ params }: PublicPayrollPageProps) {
 
         {/* 근무내역 */}
         {workTimeComparisons.length > 0 && (
-          <div className="mt-6 bg-white shadow rounded-lg p-6">
-            <h3 className="text-lg font-medium text-gray-900 mb-4">근무내역</h3>
-            <div className="border border-gray-300 p-6 bg-white">
-              <div className="text-center mb-6">
-                <h1 className="text-2xl font-bold text-gray-900 mb-2">근무내역</h1>
-                <p className="text-gray-600">{employee.name} - {payroll.month}</p>
+          <div className="mt-4 sm:mt-6 bg-white shadow rounded-lg p-3 sm:p-6">
+            <h3 className="text-base sm:text-lg font-medium text-gray-900 mb-3 sm:mb-4">근무내역</h3>
+            <div className="border border-gray-300 p-3 sm:p-6 bg-white">
+              <div className="text-center mb-4 sm:mb-6">
+                <h1 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">근무내역</h1>
+                <p className="text-sm sm:text-base text-gray-600">{employee.name} - {payroll.month}</p>
               </div>
 
-              {/* 직원 정보 테이블 */}
-              <table className="w-full border-collapse border border-gray-400 mb-6">
+              {/* 직원 정보 테이블 - 모바일에서는 세로 레이아웃 */}
+              <div className="hidden sm:block mb-4 sm:mb-6">
+                <table className="w-full border-collapse border border-gray-400 text-sm">
                 <tbody>
                   <tr>
                     <td className="border border-gray-400 p-2 bg-gray-100 font-semibold w-1/4">직원명</td>
@@ -684,7 +711,28 @@ export default function PublicPayrollPage({ params }: PublicPayrollPageProps) {
                     </td>
                   </tr>
                 </tbody>
-              </table>
+                </table>
+              </div>
+              
+              {/* 모바일용 직원 정보 */}
+              <div className="sm:hidden mb-4 space-y-2">
+                <div className="flex justify-between border-b pb-2">
+                  <span className="font-semibold text-sm">직원명</span>
+                  <span className="text-sm">{employee.name}</span>
+                </div>
+                <div className="flex justify-between border-b pb-2">
+                  <span className="font-semibold text-sm">주민번호</span>
+                  <span className="text-sm">{employee.residentNumber || '-'}</span>
+                </div>
+                <div className="flex justify-between border-b pb-2">
+                  <span className="font-semibold text-sm">근무기간</span>
+                  <span className="text-sm">{payroll.month}</span>
+                </div>
+                <div className="flex justify-between pt-2">
+                  <span className="font-semibold text-sm">총 실근무시간</span>
+                  <span className="font-bold text-blue-600 text-sm">{formatTime(overallTotalActual || 0)}</span>
+                </div>
+              </div>
 
               {/* 지점별 근무내역 */}
               {Object.entries(branchGroups).map(([branchName, comparisons]) => {
@@ -711,61 +759,103 @@ export default function PublicPayrollPage({ params }: PublicPayrollPageProps) {
                 
                 rows.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
                 
-                const branchTotalHours = rows.reduce((sum, r) => sum + (Number(r.actualWorkHours) || 0), 0);
+                const branchTotalHours = rows.filter(r => (Number(r.actualWorkHours) || 0) > 0).reduce((sum, r) => sum + (Number(r.actualWorkHours) || 0), 0);
                 
                 return (
-                  <div key={branchName} className="mb-8">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-4">{branchName}</h3>
+                  <div key={branchName} className="mb-6 sm:mb-8">
+                    <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4">{branchName}</h3>
                     
-                    <table className="w-full border-collapse border border-gray-400 mb-4">
-                      <thead>
-                        <tr>
-                          <th className="border border-gray-400 p-2 bg-gray-100 font-semibold" rowSpan={2}>날짜</th>
-                          <th className="border border-gray-400 p-2 bg-gray-100 font-semibold" colSpan={2}>POS</th>
-                          <th className="border border-gray-400 p-2 bg-gray-100 font-semibold" colSpan={2}>실근무</th>
-                          <th className="border border-gray-400 p-2 bg-gray-100 font-semibold" rowSpan={2}>휴게시간</th>
-                          <th className="border border-gray-400 p-2 bg-gray-100 font-semibold" rowSpan={2}>근무시간</th>
-                        </tr>
-                        <tr>
-                          <th className="border border-gray-400 p-2 bg-gray-100 font-semibold">출근</th>
-                          <th className="border border-gray-400 p-2 bg-gray-100 font-semibold">퇴근</th>
-                          <th className="border border-gray-400 p-2 bg-gray-100 font-semibold">출근</th>
-                          <th className="border border-gray-400 p-2 bg-gray-100 font-semibold">퇴근</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {rows.filter(result => (Number(result.actualWorkHours) || 0) > 0).map((result, index) => (
-                          <tr key={index}>
-                            <td className="border border-gray-400 p-2 text-center">{formatDate(result.date)}</td>
-                            <td className="border border-gray-400 p-2 text-center">{result.posStartTime || '-'}</td>
-                            <td className="border border-gray-400 p-2 text-center">{result.posEndTime || '-'}</td>
-                            <td className="border border-gray-400 p-2 text-center">{result.actualStartTime || '-'}</td>
-                            <td className="border border-gray-400 p-2 text-center">{result.actualEndTime || '-'}</td>
-                            <td className="border border-gray-400 p-2 text-center">
-                              {formatTime(result.actualBreakTime || 0)}
-                            </td>
-                            <td className="border border-gray-400 p-2 text-center font-semibold">
-                              {formatTime(result.actualWorkHours || 0)}
+                    {/* 데스크톱용 테이블 */}
+                    <div className="hidden sm:block overflow-x-auto mb-4">
+                      <table className="w-full border-collapse border border-gray-400 text-sm">
+                        <thead>
+                          <tr>
+                            <th className="border border-gray-400 p-2 bg-gray-100 font-semibold" rowSpan={2}>날짜</th>
+                            <th className="border border-gray-400 p-2 bg-gray-100 font-semibold" colSpan={2}>POS</th>
+                            <th className="border border-gray-400 p-2 bg-gray-100 font-semibold" colSpan={2}>실근무</th>
+                            <th className="border border-gray-400 p-2 bg-gray-100 font-semibold" rowSpan={2}>휴게시간</th>
+                            <th className="border border-gray-400 p-2 bg-gray-100 font-semibold" rowSpan={2}>근무시간</th>
+                          </tr>
+                          <tr>
+                            <th className="border border-gray-400 p-2 bg-gray-100 font-semibold">출근</th>
+                            <th className="border border-gray-400 p-2 bg-gray-100 font-semibold">퇴근</th>
+                            <th className="border border-gray-400 p-2 bg-gray-100 font-semibold">출근</th>
+                            <th className="border border-gray-400 p-2 bg-gray-100 font-semibold">퇴근</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {rows.filter(result => (Number(result.actualWorkHours) || 0) > 0).map((result, index) => (
+                            <tr key={index}>
+                              <td className="border border-gray-400 p-2 text-center">{formatDate(result.date)}</td>
+                              <td className="border border-gray-400 p-2 text-center">{result.posStartTime || '-'}</td>
+                              <td className="border border-gray-400 p-2 text-center">{result.posEndTime || '-'}</td>
+                              <td className="border border-gray-400 p-2 text-center">{result.actualStartTime || '-'}</td>
+                              <td className="border border-gray-400 p-2 text-center">{result.actualEndTime || '-'}</td>
+                              <td className="border border-gray-400 p-2 text-center">
+                                {formatTime(result.actualBreakTime || 0)}
+                              </td>
+                              <td className="border border-gray-400 p-2 text-center font-semibold">
+                                {formatTime(result.actualWorkHours || 0)}
+                              </td>
+                            </tr>
+                          ))}
+                          <tr className="bg-gray-50 font-bold">
+                            <td className="border border-gray-400 p-2 text-center" colSpan={6}>합계</td>
+                            <td className="border border-gray-400 p-2 text-center text-blue-600">
+                              {formatTime(branchTotalHours)}
                             </td>
                           </tr>
-                        ))}
-                        <tr className="bg-gray-50 font-bold">
-                          <td className="border border-gray-400 p-2 text-center" colSpan={6}>합계</td>
-                          <td className="border border-gray-400 p-2 text-center text-blue-600">
-                            {formatTime(rows.filter(r => (Number(r.actualWorkHours) || 0) > 0).reduce((sum, r) => sum + (Number(r.actualWorkHours) || 0), 0))}
-                          </td>
-                        </tr>
-                      </tbody>
-                    </table>
+                        </tbody>
+                      </table>
+                    </div>
+                    
+                    {/* 모바일용 카드 레이아웃 */}
+                    <div className="sm:hidden space-y-3">
+                      {rows.filter(result => (Number(result.actualWorkHours) || 0) > 0).map((result, index) => (
+                        <div key={index} className="border border-gray-300 rounded-lg p-3 bg-gray-50">
+                          <div className="font-semibold text-sm mb-2">{formatDate(result.date)}</div>
+                          <div className="space-y-1.5 text-xs">
+                            <div className="flex justify-between">
+                              <span className="text-gray-600">POS 출근:</span>
+                              <span>{result.posStartTime || '-'}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-gray-600">POS 퇴근:</span>
+                              <span>{result.posEndTime || '-'}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-gray-600">실 출근:</span>
+                              <span className="font-medium">{result.actualStartTime || '-'}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-gray-600">실 퇴근:</span>
+                              <span className="font-medium">{result.actualEndTime || '-'}</span>
+                            </div>
+                            <div className="flex justify-between pt-1 border-t border-gray-200">
+                              <span className="text-gray-600">휴게시간:</span>
+                              <span>{formatTime(result.actualBreakTime || 0)}</span>
+                            </div>
+                            <div className="flex justify-between pt-1">
+                              <span className="font-semibold">근무시간:</span>
+                              <span className="font-bold text-blue-600">{formatTime(result.actualWorkHours || 0)}</span>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                      <div className="border border-gray-400 rounded-lg p-3 bg-blue-50 font-bold text-center">
+                        <div className="text-xs text-gray-600 mb-1">지점 합계</div>
+                        <div className="text-lg text-blue-600">{formatTime(branchTotalHours)}</div>
+                      </div>
+                    </div>
                   </div>
                 );
               })}
 
               {/* 총합계 */}
-              <div className="mt-6 p-4 bg-blue-50 border border-blue-300">
+              <div className="mt-4 sm:mt-6 p-3 sm:p-4 bg-blue-50 border border-blue-300">
                 <div className="text-center">
-                  <div className="text-lg font-semibold text-gray-900 mb-2">총합계</div>
-                  <div className="text-2xl font-bold text-blue-600">
+                  <div className="text-base sm:text-lg font-semibold text-gray-900 mb-2">총합계</div>
+                  <div className="text-xl sm:text-2xl font-bold text-blue-600">
                     {formatTime(overallTotalActual || 0)}
                   </div>
                 </div>

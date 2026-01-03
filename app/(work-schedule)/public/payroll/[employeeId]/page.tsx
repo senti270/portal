@@ -195,25 +195,28 @@ export default function PublicPayrollPage({ params }: PublicPayrollPageProps) {
         }
         
         if (!employeeDoc.exists()) {
-          console.error('❌❌❌ 모든 방법으로 직원을 찾지 못함 ❌❌❌');
-          console.error('❌ employeeId:', employeeId);
-          console.error('❌ actualEmployeeId:', actualEmployeeId);
-          console.error('❌ month:', month);
+          // 디버깅 정보 수집
+          let debugInfo = [
+            `❌ 모든 방법으로 직원을 찾지 못함`,
+            `조회한 employeeId: ${employeeId}`,
+            `시도한 actualEmployeeId: ${actualEmployeeId}`,
+            `월: ${month}`
+          ];
           
           // 디버깅: employees 컬렉션의 실제 ID들 확인
           try {
             const allEmployees = await getDocs(collection(db, 'employees'));
-            console.error('📋 전체 직원 수:', allEmployees.size);
-            console.error('📋 처음 10개 직원 ID:');
+            debugInfo.push(`\n📋 전체 직원 수: ${allEmployees.size}개`);
+            debugInfo.push(`📋 처음 10개 직원 ID 목록:`);
             allEmployees.docs.slice(0, 10).forEach((doc, idx) => {
               const data = doc.data();
-              console.error(`  ${idx + 1}. ID: ${doc.id}, 이름: ${data.name || '이름 없음'}`);
+              debugInfo.push(`  ${idx + 1}. ID: "${doc.id}", 이름: ${data.name || '이름 없음'}`);
             });
           } catch (debugErr) {
-            console.error('❌ 디버깅 조회 실패:', debugErr);
+            debugInfo.push(`❌ 직원 목록 조회 오류: ${debugErr instanceof Error ? debugErr.message : String(debugErr)}`);
           }
           
-          setError('직원 정보를 찾을 수 없습니다.');
+          setError(`직원 정보를 찾을 수 없습니다.\n\n${debugInfo.join('\n')}`);
           return;
         }
         

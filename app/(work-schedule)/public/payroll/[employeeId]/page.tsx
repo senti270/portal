@@ -88,9 +88,34 @@ export default function PublicPayrollPage({ params }: PublicPayrollPageProps) {
         }
 
         // 직원 정보 로드
-        const employeeDoc = await getDoc(doc(db, 'employees', employeeId));
+        // 먼저 confirmedPayrolls에서 employeeId 확인 (만약 URL의 ID가 payroll ID일 경우 대비)
+        let actualEmployeeId = employeeId;
+        
+        // 1차 시도: employeeId로 employees에서 찾기
+        let employeeDoc = await getDoc(doc(db, 'employees', employeeId));
+        
+        // 2차 시도: employeeId가 없으면 confirmedPayrolls에서 찾기
         if (!employeeDoc.exists()) {
-          setError('직원 정보를 찾을 수 없습니다.');
+          const payrollQuery = query(
+            collection(db, 'confirmedPayrolls'),
+            where('employeeId', '==', employeeId),
+            where('month', '==', month)
+          );
+          const payrollSnapshot = await getDocs(payrollQuery);
+          
+          if (!payrollSnapshot.empty) {
+            // payroll 문서의 ID가 employeeId와 일치하는 경우
+            const payrollData = payrollSnapshot.docs[0].data();
+            actualEmployeeId = payrollData.employeeId || employeeId;
+            
+            // 실제 employeeId로 다시 조회
+            employeeDoc = await getDoc(doc(db, 'employees', actualEmployeeId));
+          }
+        }
+        
+        if (!employeeDoc.exists()) {
+          console.error('직원 정보를 찾을 수 없습니다. employeeId:', employeeId);
+          setError(`직원 정보를 찾을 수 없습니다. (ID: ${employeeId})`);
           return;
         }
         setEmployee({
@@ -101,7 +126,7 @@ export default function PublicPayrollPage({ params }: PublicPayrollPageProps) {
         // 급여 데이터 로드 - 토큰에서 추출한 월로만 조회
         const payrollQuery = query(
           collection(db, 'confirmedPayrolls'),
-          where('employeeId', '==', employeeId),
+          where('employeeId', '==', actualEmployeeId),
           where('month', '==', month)
         );
         const payrollSnapshot = await getDocs(payrollQuery);
@@ -142,7 +167,7 @@ export default function PublicPayrollPage({ params }: PublicPayrollPageProps) {
         // 근무시간 비교 데이터 로드
         const comparisonsQuery = query(
           collection(db, 'workTimeComparisonResults'),
-          where('employeeId', '==', employeeId),
+          where('employeeId', '==', actualEmployeeId),
           where('month', '==', month)
         );
         const comparisonsSnapshot = await getDocs(comparisonsQuery);

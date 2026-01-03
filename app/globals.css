@@ -6,8 +6,37 @@
 .dark,
 .dark *,
 html.dark,
-html.dark * {
+html.dark *,
+[class*="dark"] {
   color-scheme: light !important;
+  background-color: inherit !important;
+  color: inherit !important;
+  border-color: inherit !important;
+}
+
+/* Tailwind dark: 유틸리티 완전 무시 */
+[class*="dark:"] {
+  /* dark: 접두사를 가진 모든 클래스를 무시 */
+}
+
+/* 다크모드 관련 모든 배경색 무시 */
+.dark\:bg-gray-800,
+.dark\:bg-gray-900,
+.dark\:bg-gray-700,
+.dark\:bg-white,
+.dark\:from-gray-900,
+.dark\:to-gray-800 {
+  background-color: transparent !important;
+}
+
+/* 다크모드 관련 모든 텍스트 색상 무시 */
+.dark\:text-white,
+.dark\:text-gray-200,
+.dark\:text-gray-300,
+.dark\:text-gray-400,
+.dark\:text-blue-400,
+.dark\:text-green-300 {
+  color: inherit !important;
 }
 
 /* 매뉴얼 내용 줄바꿈 스타일 */
@@ -167,8 +196,36 @@ html.dark,
 body,
 body.light,
 body.dark {
+  background-color: #f9fafb !important; /* gray-50 */
+  color: #111827 !important; /* gray-900 */
+}
+
+/* 모든 주요 컨테이너 강제 라이트모드 */
+main,
+div,
+section,
+article,
+header,
+footer,
+aside,
+nav {
+  background-color: inherit !important;
+}
+
+/* 배경이 어두운 클래스들 강제로 밝게 */
+.bg-gray-800,
+.bg-gray-900,
+.bg-gray-700,
+.from-gray-900,
+.to-gray-800 {
   background-color: #ffffff !important;
-  color: #000000 !important;
+}
+
+/* 텍스트가 흰색인 클래스들 강제로 검정 */
+.text-white,
+.text-gray-200,
+.text-gray-300 {
+  color: #111827 !important;
 }
 
 @layer utilities {

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { loadKakaoSDK, loginWithKakao, getKakaoUserInfo } from '@/lib/kakao';
 import { collection, addDoc, getDocs, query, where, doc, updateDoc } from 'firebase/firestore';
@@ -18,7 +18,7 @@ interface InviteData {
   createdAt: string;
 }
 
-export default function SignupPage() {
+function SignupContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const token = searchParams.get('token');
@@ -283,3 +283,14 @@ export default function SignupPage() {
   return null;
 }
 
+export default function SignupPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-lg">로딩중...</div>
+      </div>
+    }>
+      <SignupContent />
+    </Suspense>
+  );
+}

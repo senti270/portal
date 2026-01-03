@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { collection, getDocs, doc, getDoc } from 'firebase/firestore';
+import { collection, getDocs, doc, getDoc, query, where, onSnapshot, updateDoc } from 'firebase/firestore';
 import { db, auth } from '@/lib/firebase';
 import { SystemId, PermissionLevel, systemPermissions, UserRole, getRoleText, getRoleDescription } from '@/lib/permissions';
 import { usePermissions } from '@/contexts/PermissionContext';
@@ -17,6 +17,21 @@ interface Branch {
   name: string;
 }
 
+interface UserApproval {
+  id: string;
+  firebaseUid: string;
+  kakaoId: string;
+  kakaoNickname: string;
+  realName: string;
+  employeeId?: string;
+  employeeName?: string;
+  status: 'pending' | 'approved' | 'rejected';
+  createdAt: string;
+  approvedAt?: string;
+  rejectedAt?: string;
+  rejectionReason?: string;
+}
+
 export default function PermissionManagement() {
   const { isSuperAdmin, isMaster, isAdmin } = usePermissions();
   const [users, setUsers] = useState<User[]>([]);
@@ -28,6 +43,12 @@ export default function PermissionManagement() {
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  
+  // 사용자 승인 관련 상태
+  const [activeTab, setActiveTab] = useState<'permissions' | 'approvals'>('permissions');
+  const [approvals, setApprovals] = useState<UserApproval[]>([]);
+  const [approvalFilter, setApprovalFilter] = useState<'all' | 'pending' | 'approved' | 'rejected'>('pending');
+  const [loadingApprovals, setLoadingApprovals] = useState(true);
 
   useEffect(() => {
     if (!isSuperAdmin && !isMaster && !isAdmin) {
@@ -35,7 +56,10 @@ export default function PermissionManagement() {
     }
     loadUsers();
     loadBranches();
-  }, [isSuperAdmin, isMaster, isAdmin]);
+    if (activeTab === 'approvals') {
+      loadApprovals();
+    }
+  }, [isSuperAdmin, isMaster, isAdmin, activeTab, approvalFilter]);
 
   const loadUsers = async () => {
     try {
@@ -126,6 +150,109 @@ export default function PermissionManagement() {
     setAllowedBranches(branches.map((b) => b.id));
   };
 
+  // 사용자 승인 관련 함수
+  const loadApprovals = async () => {
+    try {
+      setLoadingApprovals(true);
+      let q = query(collection(db, 'userApprovals'));
+      
+      if (approvalFilter !== 'all') {
+        q = query(collection(db, 'userApprovals'), where('status', '==', approvalFilter));
+      }
+
+      const unsubscribe = onSnapshot(q, (snapshot) => {
+        const data = snapshot.docs.map((doc) => {
+          const docData = doc.data();
+          return {
+            id: doc.id,
+            ...docData,
+            createdAt: docData.createdAt?.toDate().toISOString() || '',
+            approvedAt: docData.approvedAt?.toDate().toISOString(),
+            rejectedAt: docData.rejectedAt?.toDate().toISOString(),
+          } as UserApproval;
+        });
+        
+        data.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+        setApprovals(data);
+        setLoadingApprovals(false);
+      }, (error) => {
+        console.error('승인 목록 조회 오류:', error);
+        setLoadingApprovals(false);
+      });
+
+      return () => unsubscribe();
+    } catch (error) {
+      console.error('승인 목록 로드 오류:', error);
+      setLoadingApprovals(false);
+    }
+  };
+
+  const handleApprove = async (approvalId: string, firebaseUid: string) => {
+    if (!confirm('이 사용자를 승인하시겠습니까? 승인 시 권한 설정 페이지로 이동합니다.')) {
+      return;
+    }
+
+    try {
+      const response = await fetch('/api/work-schedule/user-approvals', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          approvalId,
+          action: 'approve',
+          employeeId: approvals.find(a => a.id === approvalId)?.employeeId || '',
+          approvedBy: auth.currentUser?.uid || 'admin',
+        }),
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        alert('승인되었습니다. 이제 권한을 설정할 수 있습니다.');
+        // 승인된 사용자로 전환하고 권한 설정 탭으로 이동
+        setSelectedUserId(firebaseUid);
+        setActiveTab('permissions');
+      } else {
+        alert(`승인 실패: ${data.error}`);
+      }
+    } catch (error) {
+      console.error('승인 처리 오류:', error);
+      alert('승인 처리에 실패했습니다.');
+    }
+  };
+
+  const handleReject = async (approvalId: string) => {
+    const reason = prompt('거부 사유를 입력해주세요:');
+    if (!reason) {
+      return;
+    }
+
+    try {
+      const response = await fetch('/api/work-schedule/user-approvals', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          approvalId,
+          action: 'reject',
+          rejectedBy: auth.currentUser?.uid || 'admin',
+          rejectionReason: reason,
+        }),
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        alert('거부되었습니다.');
+      } else {
+        alert(`거부 실패: ${data.error}`);
+      }
+    } catch (error) {
+      console.error('거부 처리 오류:', error);
+      alert('거부 처리에 실패했습니다.');
+    }
+  };
+
   const handleSave = async () => {
     if (!selectedUserId) return;
     
@@ -178,6 +305,8 @@ export default function PermissionManagement() {
   // 마스터/부마스터/지점매니저는 지점 제한 없음
   const showBranchSettings = role !== 'master' && role !== 'deputy_master' && role !== 'super_admin';
 
+  const pendingApprovals = approvals.filter((a) => a.status === 'pending');
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -186,6 +315,199 @@ export default function PermissionManagement() {
           <p className="text-sm text-gray-600 mt-1">사용자별 시스템 접근 권한 및 지점 접근 권한을 관리합니다.</p>
         </div>
       </div>
+
+      {/* 탭 메뉴 */}
+      <div className="border-b border-gray-200">
+        <nav className="-mb-px flex space-x-8">
+          <button
+            onClick={() => setActiveTab('permissions')}
+            className={`py-4 px-1 border-b-2 font-medium text-sm ${
+              activeTab === 'permissions'
+                ? 'border-blue-500 text-blue-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+            }`}
+          >
+            권한 설정
+          </button>
+          <button
+            onClick={() => {
+              setActiveTab('approvals');
+              loadApprovals();
+            }}
+            className={`py-4 px-1 border-b-2 font-medium text-sm flex items-center gap-2 ${
+              activeTab === 'approvals'
+                ? 'border-blue-500 text-blue-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+            }`}
+          >
+            사용자 승인
+            {pendingApprovals.length > 0 && (
+              <span className="bg-red-500 text-white text-xs rounded-full px-2 py-0.5">
+                {pendingApprovals.length}
+              </span>
+            )}
+          </button>
+        </nav>
+      </div>
+
+      {/* 사용자 승인 탭 */}
+      {activeTab === 'approvals' && (
+        <div className="space-y-6">
+          <div className="flex items-center justify-between">
+            <h3 className="text-xl font-semibold">사용자 승인 관리</h3>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setApprovalFilter('all')}
+                className={`px-4 py-2 rounded-lg text-sm ${
+                  approvalFilter === 'all' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700'
+                }`}
+              >
+                전체
+              </button>
+              <button
+                onClick={() => setApprovalFilter('pending')}
+                className={`px-4 py-2 rounded-lg text-sm flex items-center gap-2 ${
+                  approvalFilter === 'pending' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700'
+                }`}
+              >
+                대기 중
+                {approvalFilter === 'pending' && pendingApprovals.length > 0 && (
+                  <span className="bg-red-500 text-white text-xs rounded-full px-2 py-0.5">
+                    {pendingApprovals.length}
+                  </span>
+                )}
+              </button>
+              <button
+                onClick={() => setApprovalFilter('approved')}
+                className={`px-4 py-2 rounded-lg text-sm ${
+                  approvalFilter === 'approved' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700'
+                }`}
+              >
+                승인됨
+              </button>
+              <button
+                onClick={() => setApprovalFilter('rejected')}
+                className={`px-4 py-2 rounded-lg text-sm ${
+                  approvalFilter === 'rejected' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700'
+                }`}
+              >
+                거부됨
+              </button>
+            </div>
+          </div>
+
+          {loadingApprovals ? (
+            <div className="bg-white rounded-lg shadow p-6 text-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+              <p className="mt-2 text-gray-600">승인 목록을 불러오는 중...</p>
+            </div>
+          ) : approvals.length === 0 ? (
+            <div className="bg-white rounded-lg shadow p-6 text-center text-gray-500">
+              승인 요청이 없습니다.
+            </div>
+          ) : (
+            <div className="bg-white rounded-lg shadow overflow-hidden">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      직원명
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      실명
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      카카오톡 닉네임
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      상태
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      신청일
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      작업
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {approvals.map((approval) => (
+                    <tr key={approval.id}>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                        {approval.employeeName || '-'}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {approval.realName}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {approval.kakaoNickname}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span
+                          className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                            approval.status === 'pending'
+                              ? 'bg-yellow-100 text-yellow-800'
+                              : approval.status === 'approved'
+                              ? 'bg-green-100 text-green-800'
+                              : 'bg-red-100 text-red-800'
+                          }`}
+                        >
+                          {approval.status === 'pending'
+                            ? '대기 중'
+                            : approval.status === 'approved'
+                            ? '승인됨'
+                            : '거부됨'}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {new Date(approval.createdAt).toLocaleDateString('ko-KR')}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        {approval.status === 'pending' && (
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => handleApprove(approval.id, approval.firebaseUid)}
+                              className="text-green-600 hover:text-green-900 font-medium"
+                            >
+                              승인
+                            </button>
+                            <button
+                              onClick={() => handleReject(approval.id)}
+                              className="text-red-600 hover:text-red-900 font-medium"
+                            >
+                              거부
+                            </button>
+                          </div>
+                        )}
+                        {approval.status === 'rejected' && approval.rejectionReason && (
+                          <span className="text-xs text-gray-500">
+                            사유: {approval.rejectionReason}
+                          </span>
+                        )}
+                        {approval.status === 'approved' && (
+                          <button
+                            onClick={() => {
+                              setSelectedUserId(approval.firebaseUid);
+                              setActiveTab('permissions');
+                            }}
+                            className="text-blue-600 hover:text-blue-900 font-medium"
+                          >
+                            권한 설정
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* 권한 설정 탭 */}
+      {activeTab === 'permissions' && (
+        <>
 
       {/* 사용자 선택 */}
       <div className="bg-white rounded-lg shadow p-6">
@@ -360,6 +682,8 @@ export default function PermissionManagement() {
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
           <p className="mt-2 text-gray-600">권한 정보를 불러오는 중...</p>
         </div>
+      )}
+        </>
       )}
     </div>
   );

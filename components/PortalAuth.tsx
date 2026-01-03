@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { onAuthStateChanged, User, signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
 import { collection, getDocs, query, where } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase';
+import { useRouter } from 'next/navigation';
 import { loadKakaoSDK, loginWithKakao, getKakaoUserInfo } from '@/lib/kakao';
 import { PermissionProvider } from '@/contexts/PermissionContext';
 
@@ -12,6 +13,7 @@ interface PortalAuthProps {
 }
 
 export default function PortalAuth({ children }: PortalAuthProps) {
+  const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [showLogin, setShowLogin] = useState(false);
@@ -120,30 +122,61 @@ export default function PortalAuth({ children }: PortalAuthProps) {
       const kakaoUser = await getKakaoUserInfo();
       const kakaoId = kakaoUser.id.toString();
       
-      // Firestore에서 승인된 사용자 찾기
+      // Firestore에서 사용자 승인 정보 찾기
       const approvalsSnapshot = await getDocs(
-        query(collection(db, 'userApprovals'), where('kakaoId', '==', kakaoId), where('status', '==', 'approved'))
+        query(collection(db, 'userApprovals'), where('kakaoId', '==', kakaoId))
       );
       
-      if (approvalsSnapshot.empty) {
-        alert('승인되지 않은 계정입니다. 관리자에게 문의하세요.');
+      // 승인된 사용자가 있으면 로그인
+      const approvedApproval = approvalsSnapshot.docs.find(
+        (doc) => doc.data().status === 'approved'
+      );
+      
+      if (approvedApproval) {
+        const approvalData = approvedApproval.data();
+        const kakaoEmail = `kakao_${kakaoId}@kakao.workschedule.local`;
+        
+        try {
+          // Firebase Auth로 로그인 시도
+          const firebasePassword = `kakao_${kakaoId}_temp`;
+          
+          try {
+            await signInWithEmailAndPassword(auth, kakaoEmail, firebasePassword);
+          } catch (err: any) {
+            if (err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password') {
+              // 계정이 없거나 비밀번호가 다르면 계정 생성
+              await createUserWithEmailAndPassword(auth, kakaoEmail, firebasePassword);
+            } else {
+              throw err;
+            }
+          }
+          return; // 로그인 성공
+        } catch (error: any) {
+          console.error('카카오 로그인 오류:', error);
+          alert('카카오톡 로그인에 실패했습니다. 관리자에게 문의하세요.');
+          return;
+        }
+      }
+      
+      // 승인되지 않은 사용자 처리
+      const pendingApproval = approvalsSnapshot.docs.find(
+        (doc) => doc.data().status === 'pending'
+      );
+      
+      if (pendingApproval) {
+        // 가입 신청이 대기 중인 경우
+        alert('가입 신청이 대기 중입니다. 관리자 승인 후 로그인할 수 있습니다.');
         return;
       }
       
-      const approvalData = approvalsSnapshot.docs[0].data();
-      
-      // Firebase Auth로 로그인 (카카오 ID를 이메일로 사용)
-      const kakaoEmail = `kakao_${kakaoId}@kakao.workschedule.local`;
-      
-      try {
-        // 이미 생성된 계정으로 로그인 시도
-        // 실제로는 서버에서 Custom Token을 생성해야 하지만, 
-        // 간단하게 하기 위해 승인된 사용자의 Firebase UID로 직접 인증
-        // TODO: 서버 사이드 Custom Token 생성 API 구현 필요
-        alert('카카오톡 로그인은 현재 개발 중입니다. 관리자에게 문의하세요.');
-      } catch (error: any) {
-        console.error('카카오 로그인 오류:', error);
-        alert('카카오톡 로그인에 실패했습니다. 관리자에게 문의하세요.');
+      // 아직 가입 신청을 하지 않은 경우 - 가입 페이지로 리다이렉트
+      // 카카오 사용자 정보를 세션 스토리지에 저장하고 가입 페이지로 이동
+      if (typeof window !== 'undefined') {
+        sessionStorage.setItem('kakaoSignupData', JSON.stringify({
+          kakaoId: kakaoId,
+          kakaoNickname: kakaoUser.kakao_account?.profile?.nickname || '',
+        }));
+        router.push('/signup');
       }
     } catch (error: any) {
       console.error('카카오 로그인 오류:', error);

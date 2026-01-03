@@ -31,31 +31,53 @@ function SignupContent() {
   const [step, setStep] = useState<'verify' | 'kakao' | 'name' | 'complete'>('verify');
 
   useEffect(() => {
-    if (!token) {
-      setError('초대링크가 유효하지 않습니다.');
-      return;
-    }
-
-    // 초대링크 정보 조회
-    fetch(`/api/work-schedule/invitations?token=${token}`)
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.success && data.invite) {
-          setInviteData(data.invite);
-          setStep('kakao');
-        } else {
-          setError(data.error || '초대링크를 찾을 수 없습니다.');
-        }
-      })
-      .catch((err) => {
-        console.error('초대링크 조회 오류:', err);
-        setError('초대링크 조회에 실패했습니다.');
-      });
-
     // 카카오 SDK 로드
     loadKakaoSDK().catch((err) => {
       console.error('카카오 SDK 로드 실패:', err);
     });
+
+    // 초대링크가 있으면 초대링크 방식, 없으면 일반 가입 방식
+    if (token) {
+      // 초대링크 정보 조회
+      fetch(`/api/work-schedule/invitations?token=${token}`)
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.success && data.invite) {
+            setInviteData(data.invite);
+            setStep('kakao');
+          } else {
+            setError(data.error || '초대링크를 찾을 수 없습니다.');
+          }
+        })
+        .catch((err) => {
+          console.error('초대링크 조회 오류:', err);
+          setError('초대링크 조회에 실패했습니다.');
+        });
+    } else {
+      // 초대링크가 없으면 세션 스토리지에서 카카오 정보 확인 (로그인 페이지에서 온 경우)
+      const kakaoSignupData = sessionStorage.getItem('kakaoSignupData');
+      if (kakaoSignupData) {
+        try {
+          const data = JSON.parse(kakaoSignupData);
+          // 카카오 정보가 있으면 바로 실명 입력 단계로
+          setKakaoUser({
+            id: data.kakaoId,
+            kakao_account: {
+              profile: {
+                nickname: data.kakaoNickname,
+              },
+            },
+          });
+          setStep('name');
+          sessionStorage.removeItem('kakaoSignupData');
+        } catch (err) {
+          console.error('카카오 정보 파싱 오류:', err);
+        }
+      } else {
+        // 아무 정보도 없으면 카카오 로그인부터 시작
+        setStep('kakao');
+      }
+    }
   }, [token]);
 
   const handleKakaoLogin = async () => {
@@ -86,7 +108,7 @@ function SignupContent() {
       return;
     }
 
-    if (!inviteData || !kakaoUser) {
+    if (!kakaoUser) {
       setError('필수 정보가 누락되었습니다.');
       return;
     }
@@ -111,27 +133,31 @@ function SignupContent() {
       }
 
       // 2. 사용자 승인 대기 데이터 생성
-      const approvalData = {
+      const approvalData: any = {
         firebaseUid: firebaseUser.user.uid,
         kakaoId: kakaoUser.id.toString(),
         kakaoNickname: kakaoUser.kakao_account?.profile?.nickname || '',
         kakaoEmail: kakaoUser.kakao_account?.email || '',
         realName: realName.trim(),
-        employeeId: inviteData.employeeId,
-        employeeName: inviteData.employeeName,
-        inviteToken: inviteData.token,
         status: 'pending', // pending, approved, rejected
         createdAt: new Date(),
       };
 
-      await addDoc(collection(db, 'userApprovals'), approvalData);
+      // 초대링크가 있는 경우에만 직원 정보 추가
+      if (inviteData) {
+        approvalData.employeeId = inviteData.employeeId;
+        approvalData.employeeName = inviteData.employeeName;
+        approvalData.inviteToken = inviteData.token;
 
-      // 3. 초대링크 상태를 'used'로 변경
-      const inviteDoc = doc(db, 'invitations', inviteData.id);
-      await updateDoc(inviteDoc, {
-        status: 'used',
-        usedAt: new Date(),
-      });
+        // 초대링크 상태를 'used'로 변경
+        const inviteDoc = doc(db, 'invitations', inviteData.id);
+        await updateDoc(inviteDoc, {
+          status: 'used',
+          usedAt: new Date(),
+        });
+      }
+
+      await addDoc(collection(db, 'userApprovals'), approvalData);
 
       // 4. 직원 데이터에 Firebase UID 연결 (나중에 승인되면 업데이트)
       const employeeDoc = doc(db, 'employees', inviteData.employeeId);
@@ -194,7 +220,10 @@ function SignupContent() {
           <div className="text-center">
             <h2 className="text-3xl font-bold text-gray-900 mb-2">카카오톡 가입</h2>
             <p className="text-sm text-gray-600 mb-4">
-              {inviteData?.employeeName}님을 위한 초대링크입니다.
+              {inviteData 
+                ? `${inviteData.employeeName}님을 위한 초대링크입니다.`
+                : '카카오톡으로 로그인하여 가입을 진행해주세요.'
+              }
             </p>
           </div>
 

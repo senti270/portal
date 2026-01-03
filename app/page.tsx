@@ -332,10 +332,6 @@ function PortalContent() {
                         }
                       }
 
-                      const optimizationText = system.optimization && system.optimization.length > 0
-                        ? ` (${system.optimization.join(')(')})`
-                        : ''
-
                       return (
                         <li key={system.id}>
                           <button
@@ -351,14 +347,25 @@ function PortalContent() {
                           >
                             <div className="flex items-center gap-3">
                               <span className="text-lg">{system.icon}</span>
-                              <span className="font-medium text-gray-900 dark:text-white flex-1">
-                                {system.title}
-                                {optimizationText && (
-                                  <span className="text-sm text-gray-500 dark:text-gray-400 font-normal">
-                                    {optimizationText}
+                              <div className="flex-1">
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  <span className="font-medium text-gray-900 dark:text-white">
+                                    {system.title}
                                   </span>
-                                )}
-                              </span>
+                                  {system.optimization && system.optimization.length > 0 && (
+                                    <div className="flex flex-wrap gap-1">
+                                      {system.optimization.map((opt, idx) => (
+                                        <span
+                                          key={idx}
+                                          className="text-xs px-2 py-0.5 rounded-md bg-green-50 dark:bg-green-900/30 text-green-600 dark:text-green-300"
+                                        >
+                                          💻 {opt}
+                                        </span>
+                                      ))}
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
                               {system.url && (
                                 <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />

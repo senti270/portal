@@ -62,14 +62,11 @@ function PortalContent() {
       
       if (firestoreSystems.length > 0) {
         console.log('✅ Firebase 데이터 사용')
-        // Firebase에 없는 기본 시스템들을 병합
-        const firestoreSystemIds = new Set(firestoreSystems.map(s => s.id))
-        const missingSystems = systems.filter(s => !firestoreSystemIds.has(s.id))
-        const mergedSystems = [...firestoreSystems, ...missingSystems]
-        // order 기준으로 정렬
-        mergedSystems.sort((a, b) => (a.order || 999) - (b.order || 999))
-        setAllSystems(mergedSystems)
-        setFilteredSystems(mergedSystems)
+        // Firebase에 저장된 시스템만 사용 (기본 시스템 병합 제거)
+        // 사용자가 삭제한 시스템이 다시 나타나지 않도록
+        const sortedSystems = firestoreSystems.sort((a, b) => (a.order || 999) - (b.order || 999))
+        setAllSystems(sortedSystems)
+        setFilteredSystems(sortedSystems)
       } else {
         console.log('⚠️ Firebase가 비어있음, 기본 데이터 사용')
         // Firestore가 비어있으면 기본 데이터 사용
@@ -83,13 +80,10 @@ function PortalContent() {
       if (savedSystems) {
         console.log('💾 로컬 스토리지에서 로드')
         const parsedSystems = JSON.parse(savedSystems)
-        // 로컬 스토리지에도 없는 기본 시스템들을 병합
-        const savedSystemIds = new Set(parsedSystems.map((s: System) => s.id))
-        const missingSystems = systems.filter(s => !savedSystemIds.has(s.id))
-        const mergedSystems = [...parsedSystems, ...missingSystems]
-        mergedSystems.sort((a: System, b: System) => (a.order || 999) - (b.order || 999))
-        setAllSystems(mergedSystems)
-        setFilteredSystems(mergedSystems)
+        // 로컬 스토리지 데이터만 사용 (기본 시스템 병합 제거)
+        parsedSystems.sort((a: System, b: System) => (a.order || 999) - (b.order || 999))
+        setAllSystems(parsedSystems)
+        setFilteredSystems(parsedSystems)
       } else {
         console.log('🔄 기본 시스템 데이터 사용')
         setAllSystems(systems)

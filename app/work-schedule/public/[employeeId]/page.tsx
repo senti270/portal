@@ -87,10 +87,52 @@ export default function PublicPayrollPage({ params }: PublicPayrollPageProps) {
           return;
         }
 
-        // 직원 정보 로드
-        const employeeDoc = await getDoc(doc(db, 'employees', employeeId));
+        // 직원 정보 로드 - 여러 방법으로 시도
+        let employeeDoc = await getDoc(doc(db, 'employees', employeeId));
+        let actualEmployeeId = employeeId;
+        let debugInfo = [`조회 시작: employeeId=${employeeId}, month=${month}`];
+        
+        // 방법 1: URL의 ID가 employee ID인 경우
         if (!employeeDoc.exists()) {
-          setError('직원 정보를 찾을 수 없습니다.');
+          debugInfo.push(`❌ employees 컬렉션에서 ID "${employeeId}" 찾지 못함`);
+          
+          // 방법 2: URL의 ID가 confirmedPayrolls 문서 ID인 경우
+          try {
+            const payrollDoc = await getDoc(doc(db, 'confirmedPayrolls', employeeId));
+            if (payrollDoc.exists()) {
+              const payrollData = payrollDoc.data();
+              actualEmployeeId = payrollData.employeeId;
+              debugInfo.push(`✅ confirmedPayrolls 문서 ID로 찾음 → 실제 employeeId: ${actualEmployeeId}`);
+              
+              employeeDoc = await getDoc(doc(db, 'employees', actualEmployeeId));
+              if (employeeDoc.exists()) {
+                debugInfo.push(`✅ employees에서 직원 찾음: ${actualEmployeeId}`);
+              } else {
+                debugInfo.push(`❌ employees에서도 "${actualEmployeeId}" 찾지 못함`);
+              }
+            }
+          } catch (e) {
+            debugInfo.push(`❌ confirmedPayrolls 조회 오류: ${e instanceof Error ? e.message : String(e)}`);
+          }
+        } else {
+          debugInfo.push(`✅ employees에서 직원 찾음: ${employeeId}`);
+        }
+        
+        if (!employeeDoc.exists()) {
+          // 디버깅: employees 컬렉션의 실제 ID들 확인
+          try {
+            const allEmployees = await getDocs(collection(db, 'employees'));
+            debugInfo.push(`\n📋 전체 직원 수: ${allEmployees.size}개`);
+            debugInfo.push(`📋 처음 10개 직원 ID 목록:`);
+            allEmployees.docs.slice(0, 10).forEach((doc, idx) => {
+              const data = doc.data();
+              debugInfo.push(`  ${idx + 1}. ID: "${doc.id}", 이름: ${data.name || '이름 없음'}`);
+            });
+          } catch (debugErr) {
+            debugInfo.push(`❌ 직원 목록 조회 오류: ${debugErr instanceof Error ? debugErr.message : String(debugErr)}`);
+          }
+          
+          setError(`직원 정보를 찾을 수 없습니다.\n\n${debugInfo.join('\n')}`);
           return;
         }
         setEmployee({
@@ -98,10 +140,10 @@ export default function PublicPayrollPage({ params }: PublicPayrollPageProps) {
           ...employeeDoc.data()
         } as Employee);
 
-        // 급여 데이터 로드 - 토큰에서 추출한 월로만 조회
+        // 급여 데이터 로드 - 실제 employeeId로 조회
         const payrollQuery = query(
           collection(db, 'confirmedPayrolls'),
-          where('employeeId', '==', employeeId),
+          where('employeeId', '==', actualEmployeeId),
           where('month', '==', month)
         );
         const payrollSnapshot = await getDocs(payrollQuery);
@@ -257,8 +299,10 @@ export default function PublicPayrollPage({ params }: PublicPayrollPageProps) {
 
   if (error || !employee || !payroll) {
     return (
-      <div className="flex justify-center items-center min-h-screen">
-        <div className="text-red-600">{error || '데이터를 불러올 수 없습니다.'}</div>
+      <div className="flex justify-center items-center min-h-screen p-4">
+        <div className="text-red-600 whitespace-pre-line font-mono text-sm max-w-4xl bg-red-50 p-4 rounded border border-red-200">
+          {error || '데이터를 불러올 수 없습니다.'}
+        </div>
       </div>
     );
   }

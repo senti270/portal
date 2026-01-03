@@ -6,15 +6,16 @@ import { db, auth } from '@/lib/firebase';
 import { SystemId, PermissionLevel, systemPermissions, UserRole, getRoleText, getRoleDescription } from '@/lib/permissions';
 import { usePermissions } from '@/contexts/PermissionContext';
 
-interface User {
-  uid: string;
-  email: string | null;
-  displayName: string | null;
-}
-
 interface Branch {
   id: string;
   name: string;
+}
+
+interface Employee {
+  id: string;
+  name: string;
+  firebaseUid?: string;
+  email?: string;
 }
 
 interface UserApproval {
@@ -32,9 +33,32 @@ interface UserApproval {
   rejectionReason?: string;
 }
 
+interface UserPermission {
+  userId: string;
+  email?: string;
+  name?: string;
+  role?: UserRole | 'super_admin' | 'admin' | 'user';
+  permissions: Record<SystemId, PermissionLevel>;
+  allowedBranches?: string[];
+}
+
+interface UnifiedUser {
+  employeeId?: string;
+  employeeName: string;
+  firebaseUid?: string;
+  email?: string;
+  realName?: string;
+  kakaoNickname?: string;
+  kakaoId?: string;
+  approvalStatus?: 'pending' | 'approved' | 'rejected' | 'not_applied';
+  approvalId?: string;
+  permission?: UserPermission;
+  canCreateInvite: boolean;
+}
+
 export default function PermissionManagement() {
   const { isSuperAdmin, isMaster, isAdmin } = usePermissions();
-  const [users, setUsers] = useState<User[]>([]);
+  const [unifiedUsers, setUnifiedUsers] = useState<UnifiedUser[]>([]);
   const [branches, setBranches] = useState<Branch[]>([]);
   const [selectedUserId, setSelectedUserId] = useState<string>('');
   const [permissions, setPermissions] = useState<Record<SystemId, PermissionLevel>>({} as Record<SystemId, PermissionLevel>);
@@ -43,48 +67,16 @@ export default function PermissionManagement() {
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-  
-  // 사용자 승인 관련 상태
-  const [activeTab, setActiveTab] = useState<'permissions' | 'approvals' | 'invitations'>('permissions');
-  const [approvals, setApprovals] = useState<UserApproval[]>([]);
-  const [approvalFilter, setApprovalFilter] = useState<'all' | 'pending' | 'approved' | 'rejected'>('pending');
-  const [loadingApprovals, setLoadingApprovals] = useState(true);
-  
-  // 초대링크 관련 상태
-  const [employees, setEmployees] = useState<Array<{id: string; name: string; firebaseUid?: string}>>([]);
-  const [loadingEmployees, setLoadingEmployees] = useState(false);
-  const [inviteEmployeeSearch, setInviteEmployeeSearch] = useState('');
+  const [filterStatus, setFilterStatus] = useState<'all' | 'pending' | 'approved' | 'not_registered'>('all');
+  const [showPermissionModal, setShowPermissionModal] = useState(false);
 
   useEffect(() => {
     if (!isSuperAdmin && !isMaster && !isAdmin) {
       return;
     }
-    loadUsers();
     loadBranches();
-    if (activeTab === 'approvals') {
-      loadApprovals();
-    }
-  }, [isSuperAdmin, isMaster, isAdmin, activeTab, approvalFilter]);
-
-  const loadUsers = async () => {
-    try {
-      const permissionsSnapshot = await getDocs(collection(db, 'userPermissions'));
-      const usersList: User[] = [];
-      
-      permissionsSnapshot.docs.forEach((doc) => {
-        const data = doc.data();
-        usersList.push({
-          uid: doc.id,
-          email: data.email || null,
-          displayName: data.name || null,
-        });
-      });
-      
-      setUsers(usersList);
-    } catch (error) {
-      console.error('사용자 목록 로드 오류:', error);
-    }
-  };
+    loadUnifiedUsers();
+  }, [isSuperAdmin, isMaster, isAdmin]);
 
   const loadBranches = async () => {
     try {
@@ -96,6 +88,114 @@ export default function PermissionManagement() {
       setBranches(branchesList.sort((a, b) => a.name.localeCompare(b.name)));
     } catch (error) {
       console.error('지점 목록 로드 오류:', error);
+    }
+  };
+
+  const loadUnifiedUsers = async () => {
+    try {
+      setLoading(true);
+      
+      // 1. 직원 목록 로드
+      const employeesSnapshot = await getDocs(collection(db, 'employees'));
+      const employeesMap = new Map<string, Employee>();
+      employeesSnapshot.docs.forEach((doc) => {
+        const data = doc.data();
+        employeesMap.set(doc.id, {
+          id: doc.id,
+          name: data.name || '이름 없음',
+          firebaseUid: data.firebaseUid,
+          email: data.email,
+        });
+      });
+
+      // 2. 승인 요청 로드
+      const approvalsSnapshot = await getDocs(collection(db, 'userApprovals'));
+      const approvalsMap = new Map<string, UserApproval>();
+      approvalsSnapshot.docs.forEach((doc) => {
+        const data = doc.data();
+        approvalsMap.set(data.firebaseUid || data.kakaoId, {
+          id: doc.id,
+          firebaseUid: data.firebaseUid || '',
+          kakaoId: data.kakaoId || '',
+          kakaoNickname: data.kakaoNickname || '',
+          realName: data.realName || '',
+          employeeId: data.employeeId,
+          employeeName: data.employeeName,
+          status: data.status || 'pending',
+          createdAt: data.createdAt?.toDate().toISOString() || new Date().toISOString(),
+          approvedAt: data.approvedAt?.toDate().toISOString(),
+          rejectedAt: data.rejectedAt?.toDate().toISOString(),
+          rejectionReason: data.rejectionReason,
+        });
+      });
+
+      // 3. 권한 정보 로드
+      const permissionsSnapshot = await getDocs(collection(db, 'userPermissions'));
+      const permissionsMap = new Map<string, UserPermission>();
+      permissionsSnapshot.docs.forEach((doc) => {
+        const data = doc.data();
+        permissionsMap.set(doc.id, {
+          userId: doc.id,
+          email: data.email,
+          name: data.name,
+          role: data.role || 'employee',
+          permissions: data.permissions || {},
+          allowedBranches: data.allowedBranches || [],
+        });
+      });
+
+      // 4. 통합 데이터 생성
+      const unified: UnifiedUser[] = [];
+      
+      // 직원 기준으로 통합 (직원이 없는 승인 요청도 포함)
+      employeesMap.forEach((employee) => {
+        const approval = employee.firebaseUid 
+          ? approvalsMap.get(employee.firebaseUid) 
+          : undefined;
+        
+        unified.push({
+          employeeId: employee.id,
+          employeeName: employee.name,
+          firebaseUid: employee.firebaseUid,
+          email: employee.email,
+          realName: approval?.realName,
+          kakaoNickname: approval?.kakaoNickname,
+          kakaoId: approval?.kakaoId,
+          approvalStatus: approval?.status || (employee.firebaseUid ? 'approved' : 'not_applied'),
+          approvalId: approval?.id,
+          permission: employee.firebaseUid ? permissionsMap.get(employee.firebaseUid) : undefined,
+          canCreateInvite: !employee.firebaseUid,
+        });
+      });
+
+      // 승인 요청 중 직원이 없는 것들도 추가
+      approvalsMap.forEach((approval) => {
+        if (!approval.employeeId || !employeesMap.has(approval.employeeId)) {
+          const existing = unified.find(u => u.firebaseUid === approval.firebaseUid || u.kakaoId === approval.kakaoId);
+          if (!existing) {
+            unified.push({
+              employeeName: approval.employeeName || approval.realName || '이름 없음',
+              firebaseUid: approval.firebaseUid,
+              realName: approval.realName,
+              kakaoNickname: approval.kakaoNickname,
+              kakaoId: approval.kakaoId,
+              approvalStatus: approval.status,
+              approvalId: approval.id,
+              permission: approval.firebaseUid ? permissionsMap.get(approval.firebaseUid) : undefined,
+              canCreateInvite: false,
+            });
+          }
+        }
+      });
+
+      // 이름순 정렬
+      unified.sort((a, b) => a.employeeName.localeCompare(b.employeeName));
+      
+      setUnifiedUsers(unified);
+    } catch (error) {
+      console.error('통합 사용자 목록 로드 오류:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -125,11 +225,6 @@ export default function PermissionManagement() {
     }
   };
 
-  const handleUserSelect = (userId: string) => {
-    setSelectedUserId(userId);
-    loadUserPermissions(userId);
-  };
-
   const handlePermissionChange = (systemId: SystemId, level: PermissionLevel) => {
     setPermissions((prev) => ({
       ...prev,
@@ -155,49 +250,13 @@ export default function PermissionManagement() {
     setAllowedBranches(branches.map((b) => b.id));
   };
 
-  // 사용자 승인 관련 함수
-  const loadApprovals = async () => {
-    try {
-      setLoadingApprovals(true);
-      let q = query(collection(db, 'userApprovals'));
-      
-      if (approvalFilter !== 'all') {
-        q = query(collection(db, 'userApprovals'), where('status', '==', approvalFilter));
-      }
-
-      const unsubscribe = onSnapshot(q, (snapshot) => {
-        const data = snapshot.docs.map((doc) => {
-          const docData = doc.data();
-          return {
-            id: doc.id,
-            ...docData,
-            createdAt: docData.createdAt?.toDate().toISOString() || '',
-            approvedAt: docData.approvedAt?.toDate().toISOString(),
-            rejectedAt: docData.rejectedAt?.toDate().toISOString(),
-          } as UserApproval;
-        });
-        
-        data.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-        setApprovals(data);
-        setLoadingApprovals(false);
-      }, (error) => {
-        console.error('승인 목록 조회 오류:', error);
-        setLoadingApprovals(false);
-      });
-
-      return () => unsubscribe();
-    } catch (error) {
-      console.error('승인 목록 로드 오류:', error);
-      setLoadingApprovals(false);
-    }
-  };
-
   const handleApprove = async (approvalId: string, firebaseUid: string) => {
-    if (!confirm('이 사용자를 승인하시겠습니까? 승인 시 권한 설정 페이지로 이동합니다.')) {
+    if (!confirm('이 사용자를 승인하시겠습니까?')) {
       return;
     }
 
     try {
+      const approval = unifiedUsers.find(u => u.approvalId === approvalId);
       const response = await fetch('/api/work-schedule/user-approvals', {
         method: 'POST',
         headers: {
@@ -206,17 +265,15 @@ export default function PermissionManagement() {
         body: JSON.stringify({
           approvalId,
           action: 'approve',
-          employeeId: approvals.find(a => a.id === approvalId)?.employeeId || '',
+          employeeId: approval?.employeeId || '',
           approvedBy: auth.currentUser?.uid || 'admin',
         }),
       });
 
       const data = await response.json();
       if (data.success) {
-        alert('승인되었습니다. 이제 권한을 설정할 수 있습니다.');
-        // 승인된 사용자로 전환하고 권한 설정 탭으로 이동
-        setSelectedUserId(firebaseUid);
-        setActiveTab('permissions');
+        alert('승인되었습니다.');
+        await loadUnifiedUsers();
       } else {
         alert(`승인 실패: ${data.error}`);
       }
@@ -249,30 +306,13 @@ export default function PermissionManagement() {
       const data = await response.json();
       if (data.success) {
         alert('거부되었습니다.');
+        await loadUnifiedUsers();
       } else {
         alert(`거부 실패: ${data.error}`);
       }
     } catch (error) {
       console.error('거부 처리 오류:', error);
       alert('거부 처리에 실패했습니다.');
-    }
-  };
-
-  // 초대링크 관련 함수
-  const loadEmployees = async () => {
-    try {
-      setLoadingEmployees(true);
-      const employeesSnapshot = await getDocs(collection(db, 'employees'));
-      const employeesList = employeesSnapshot.docs.map((doc) => ({
-        id: doc.id,
-        name: doc.data().name || '이름 없음',
-        firebaseUid: doc.data().firebaseUid,
-      }));
-      setEmployees(employeesList.sort((a, b) => a.name.localeCompare(b.name)));
-    } catch (error) {
-      console.error('직원 목록 로드 오류:', error);
-    } finally {
-      setLoadingEmployees(false);
     }
   };
 
@@ -292,7 +332,6 @@ export default function PermissionManagement() {
 
       const data = await response.json();
       if (data.success) {
-        // 초대링크를 클립보드에 복사
         if (navigator.clipboard) {
           await navigator.clipboard.writeText(data.inviteUrl);
           alert(`초대링크가 생성되었습니다!\n\n링크: ${data.inviteUrl}\n\n링크가 클립보드에 복사되었습니다.`);
@@ -329,6 +368,8 @@ export default function PermissionManagement() {
       if (data.success) {
         alert('권한이 저장되었습니다.');
         await loadUserPermissions(selectedUserId);
+        await loadUnifiedUsers();
+        setShowPermissionModal(false);
       } else {
         alert(`권한 저장 실패: ${data.error}`);
       }
@@ -340,6 +381,16 @@ export default function PermissionManagement() {
     }
   };
 
+  const openPermissionModal = async (user: UnifiedUser) => {
+    if (!user.firebaseUid) {
+      alert('Firebase UID가 없어 권한을 설정할 수 없습니다. 먼저 가입을 승인해주세요.');
+      return;
+    }
+    setSelectedUserId(user.firebaseUid);
+    await loadUserPermissions(user.firebaseUid);
+    setShowPermissionModal(true);
+  };
+
   if (!isSuperAdmin && !isMaster && !isAdmin) {
     return (
       <div className="bg-red-50 border border-red-200 rounded-lg p-4">
@@ -348,483 +399,367 @@ export default function PermissionManagement() {
     );
   }
 
-  const filteredUsers = users.filter((user) => {
-    const searchLower = searchTerm.toLowerCase();
-    return (
-      (user.email?.toLowerCase().includes(searchLower) || false) ||
-      (user.displayName?.toLowerCase().includes(searchLower) || false) ||
-      user.uid.toLowerCase().includes(searchLower)
-    );
+  const filteredUsers = unifiedUsers.filter((user) => {
+    const matchesSearch = 
+      user.employeeName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.realName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.kakaoNickname?.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    const matchesFilter = 
+      filterStatus === 'all' ||
+      (filterStatus === 'pending' && user.approvalStatus === 'pending') ||
+      (filterStatus === 'approved' && user.approvalStatus === 'approved') ||
+      (filterStatus === 'not_registered' && !user.firebaseUid);
+    
+    return matchesSearch && matchesFilter;
   });
 
-  // 마스터/부마스터/지점매니저는 지점 제한 없음
+  const pendingCount = unifiedUsers.filter(u => u.approvalStatus === 'pending').length;
   const showBranchSettings = role !== 'master' && role !== 'deputy_master' && role !== 'super_admin';
-
-  const pendingApprovals = approvals.filter((a) => a.status === 'pending');
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold">권한 관리</h2>
-          <p className="text-sm text-gray-600 mt-1">사용자별 시스템 접근 권한 및 지점 접근 권한을 관리합니다.</p>
+          <h2 className="text-2xl font-bold">통합 권한 관리</h2>
+          <p className="text-sm text-gray-600 mt-1">사용자 승인, 권한 설정, 초대링크 생성을 한 곳에서 관리합니다.</p>
         </div>
       </div>
 
-      {/* 탭 메뉴 */}
-      <div className="border-b border-gray-200">
-        <nav className="-mb-px flex space-x-8">
-          <button
-            onClick={() => setActiveTab('permissions')}
-            className={`py-4 px-1 border-b-2 font-medium text-sm ${
-              activeTab === 'permissions'
-                ? 'border-blue-500 text-blue-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-            }`}
-          >
-            권한 설정
-          </button>
-          <button
-            onClick={() => {
-              setActiveTab('approvals');
-              loadApprovals();
-            }}
-            className={`py-4 px-1 border-b-2 font-medium text-sm flex items-center gap-2 ${
-              activeTab === 'approvals'
-                ? 'border-blue-500 text-blue-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-            }`}
-          >
-            사용자 승인
-            {pendingApprovals.length > 0 && (
-              <span className="bg-red-500 text-white text-xs rounded-full px-2 py-0.5">
-                {pendingApprovals.length}
-              </span>
-            )}
-          </button>
-          <button
-            onClick={() => {
-              setActiveTab('invitations');
-              loadEmployees();
-            }}
-            className={`py-4 px-1 border-b-2 font-medium text-sm ${
-              activeTab === 'invitations'
-                ? 'border-blue-500 text-blue-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-            }`}
-          >
-            초대링크 생성
-          </button>
-        </nav>
-      </div>
-
-      {/* 사용자 승인 탭 */}
-      {activeTab === 'approvals' && (
-        <div className="space-y-6">
-          <div className="flex items-center justify-between">
-            <h3 className="text-xl font-semibold">사용자 승인 관리</h3>
-            <div className="flex gap-2">
-              <button
-                onClick={() => setApprovalFilter('all')}
-                className={`px-4 py-2 rounded-lg text-sm ${
-                  approvalFilter === 'all' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700'
-                }`}
-              >
-                전체
-              </button>
-              <button
-                onClick={() => setApprovalFilter('pending')}
-                className={`px-4 py-2 rounded-lg text-sm flex items-center gap-2 ${
-                  approvalFilter === 'pending' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700'
-                }`}
-              >
-                대기 중
-                {approvalFilter === 'pending' && pendingApprovals.length > 0 && (
-                  <span className="bg-red-500 text-white text-xs rounded-full px-2 py-0.5">
-                    {pendingApprovals.length}
-                  </span>
-                )}
-              </button>
-              <button
-                onClick={() => setApprovalFilter('approved')}
-                className={`px-4 py-2 rounded-lg text-sm ${
-                  approvalFilter === 'approved' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700'
-                }`}
-              >
-                승인됨
-              </button>
-              <button
-                onClick={() => setApprovalFilter('rejected')}
-                className={`px-4 py-2 rounded-lg text-sm ${
-                  approvalFilter === 'rejected' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700'
-                }`}
-              >
-                거부됨
-              </button>
-            </div>
-          </div>
-
-          {loadingApprovals ? (
-            <div className="bg-white rounded-lg shadow p-6 text-center">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-              <p className="mt-2 text-gray-600">승인 목록을 불러오는 중...</p>
-            </div>
-          ) : approvals.length === 0 ? (
-            <div className="bg-white rounded-lg shadow p-6 text-center text-gray-500">
-              승인 요청이 없습니다.
-            </div>
-          ) : (
-            <div className="bg-white rounded-lg shadow overflow-hidden">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      직원명
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      실명
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      카카오톡 닉네임
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      상태
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      신청일
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      작업
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {approvals.map((approval) => (
-                    <tr key={approval.id}>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                        {approval.employeeName || '-'}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {approval.realName}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {approval.kakaoNickname}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span
-                          className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                            approval.status === 'pending'
-                              ? 'bg-yellow-100 text-yellow-800'
-                              : approval.status === 'approved'
-                              ? 'bg-green-100 text-green-800'
-                              : 'bg-red-100 text-red-800'
-                          }`}
-                        >
-                          {approval.status === 'pending'
-                            ? '대기 중'
-                            : approval.status === 'approved'
-                            ? '승인됨'
-                            : '거부됨'}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {new Date(approval.createdAt).toLocaleDateString('ko-KR')}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                        {approval.status === 'pending' && (
-                          <div className="flex gap-2">
-                            <button
-                              onClick={() => handleApprove(approval.id, approval.firebaseUid)}
-                              className="text-green-600 hover:text-green-900 font-medium"
-                            >
-                              승인
-                            </button>
-                            <button
-                              onClick={() => handleReject(approval.id)}
-                              className="text-red-600 hover:text-red-900 font-medium"
-                            >
-                              거부
-                            </button>
-                          </div>
-                        )}
-                        {approval.status === 'rejected' && approval.rejectionReason && (
-                          <span className="text-xs text-gray-500">
-                            사유: {approval.rejectionReason}
-                          </span>
-                        )}
-                        {approval.status === 'approved' && (
-                          <button
-                            onClick={() => {
-                              setSelectedUserId(approval.firebaseUid);
-                              setActiveTab('permissions');
-                            }}
-                            className="text-blue-600 hover:text-blue-900 font-medium"
-                          >
-                            권한 설정
-                          </button>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* 초대링크 생성 탭 */}
-      {activeTab === 'invitations' && (
-        <div className="space-y-6">
-          <div>
-            <h3 className="text-xl font-semibold mb-2">초대링크 생성</h3>
-            <p className="text-sm text-gray-600">
-              직원에게 카카오톡 가입을 위한 초대링크를 생성하고 전송할 수 있습니다.
-            </p>
-          </div>
-
-          <div className="bg-white rounded-lg shadow p-6">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              직원 검색
-            </label>
+      {/* 검색 및 필터 */}
+      <div className="bg-white rounded-lg shadow p-6">
+        <div className="flex gap-4 items-center">
+          <div className="flex-1">
             <input
               type="text"
-              placeholder="직원 이름으로 검색..."
-              value={inviteEmployeeSearch}
-              onChange={(e) => setInviteEmployeeSearch(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 mb-4"
+              placeholder="이름, 이메일, 카카오톡 닉네임으로 검색..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
             />
-
-            {loadingEmployees ? (
-              <div className="text-center py-8">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-                <p className="mt-2 text-gray-600">직원 목록을 불러오는 중...</p>
-              </div>
-            ) : (
-              <div className="space-y-2 max-h-96 overflow-y-auto">
-                {employees
-                  .filter((emp) =>
-                    emp.name.toLowerCase().includes(inviteEmployeeSearch.toLowerCase())
-                  )
-                  .map((employee) => (
-                    <div
-                      key={employee.id}
-                      className="flex items-center justify-between p-3 border border-gray-200 rounded-lg hover:bg-gray-50"
-                    >
-                      <div className="flex items-center gap-3">
-                        <span className="font-medium text-gray-900">{employee.name}</span>
-                        {employee.firebaseUid ? (
-                          <span className="text-xs text-green-600 bg-green-50 px-2 py-1 rounded">
-                            ✅ 가입 완료
-                          </span>
-                        ) : (
-                          <span className="text-xs text-orange-600 bg-orange-50 px-2 py-1 rounded">
-                            ⏳ 미가입
-                          </span>
-                        )}
-                      </div>
-                      {!employee.firebaseUid && (
-                        <button
-                          onClick={() => sendInviteLink(employee.id, employee.name)}
-                          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium"
-                        >
-                          📱 초대링크 생성
-                        </button>
-                      )}
-                    </div>
-                  ))}
-                {employees.filter((emp) =>
-                  emp.name.toLowerCase().includes(inviteEmployeeSearch.toLowerCase())
-                ).length === 0 && (
-                  <div className="text-center py-8 text-gray-500">
-                    검색 결과가 없습니다.
-                  </div>
-                )}
-              </div>
-            )}
           </div>
-        </div>
-      )}
-
-      {/* 권한 설정 탭 */}
-      {activeTab === 'permissions' && (
-        <>
-
-      {/* 사용자 선택 */}
-      <div className="bg-white rounded-lg shadow p-6">
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          사용자 검색 및 선택
-        </label>
-        <input
-          type="text"
-          placeholder="이메일, 이름, UID로 검색..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 mb-3"
-        />
-        <select
-          value={selectedUserId}
-          onChange={(e) => handleUserSelect(e.target.value)}
-          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-        >
-          <option value="">사용자를 선택하세요</option>
-          {filteredUsers.map((user) => (
-            <option key={user.uid} value={user.uid}>
-              {user.displayName || user.email || user.uid}
-            </option>
-          ))}
-        </select>
-        {selectedUserId && (
-          <p className="mt-2 text-sm text-gray-500">선택된 사용자: {users.find(u => u.uid === selectedUserId)?.displayName || users.find(u => u.uid === selectedUserId)?.email || selectedUserId}</p>
-        )}
-      </div>
-
-      {selectedUserId && !loading && (
-        <div className="space-y-6">
-          {/* 회원 등급 설정 */}
-          <div className="bg-white rounded-lg shadow p-6">
-            <h3 className="text-lg font-semibold mb-4">회원 등급</h3>
-            <div className="space-y-3">
-              <select
-                value={role}
-                onChange={(e) => setRole(e.target.value as UserRole | 'super_admin' | 'admin' | 'user')}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="master">마스터</option>
-                <option value="deputy_master">부마스터</option>
-                <option value="branch_manager">지점매니저</option>
-                <option value="employee">일반직원</option>
-                <option value="super_admin">최고 관리자 (레거시)</option>
-                <option value="admin">관리자 (레거시)</option>
-                <option value="user">일반 사용자 (레거시)</option>
-              </select>
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                <p className="text-sm text-blue-900 font-medium">{getRoleText(role)}</p>
-                <p className="text-xs text-blue-700 mt-1">{getRoleDescription(role)}</p>
-              </div>
-            </div>
-          </div>
-
-          {/* 시스템별 권한 설정 */}
-          {role !== 'master' && role !== 'super_admin' && (
-            <div className="bg-white rounded-lg shadow p-6">
-              <h3 className="text-lg font-semibold mb-4">시스템별 접근 권한</h3>
-              <div className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {Object.entries(systemPermissions).map(([systemId, system]) => (
-                    <div key={systemId} className="border border-gray-200 rounded-lg p-4 hover:border-blue-300 transition-colors">
-                      <div className="flex items-center justify-between mb-3">
-                        <span className="font-medium text-gray-900">{systemId}</span>
-                        <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
-                          기본: {system.defaultPermission}
-                        </span>
-                      </div>
-                      <select
-                        value={permissions[systemId as SystemId] || 'none'}
-                        onChange={(e) =>
-                          handlePermissionChange(
-                            systemId as SystemId,
-                            e.target.value as PermissionLevel
-                          )
-                        }
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      >
-                        <option value="none">❌ 접근 불가</option>
-                        <option value="read">👁️ 조회만 가능</option>
-                        <option value="write">✏️ 조회 및 수정</option>
-                        <option value="admin">⚙️ 관리 (모든 권한)</option>
-                      </select>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* 지점별 접근 권한 설정 */}
-          {showBranchSettings && (
-            <div className="bg-white rounded-lg shadow p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold">지점별 접근 권한</h3>
-                <div className="flex gap-2">
-                  <button
-                    onClick={handleSelectAllBranches}
-                    className="text-xs px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded text-gray-700"
-                  >
-                    전체 선택
-                  </button>
-                  <button
-                    onClick={handleDeselectAllBranches}
-                    className="text-xs px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded text-gray-700"
-                  >
-                    전체 해제
-                  </button>
-                </div>
-              </div>
-              <div className="mb-3 p-3 bg-gray-50 rounded-lg">
-                <p className="text-sm text-gray-700">
-                  {allowedBranches.length === 0 ? (
-                    <span className="text-green-600 font-medium">✅ 모든 지점 접근 가능</span>
-                  ) : (
-                    <span className="text-orange-600 font-medium">
-                      ⚠️ 선택된 {allowedBranches.length}개 지점만 접근 가능
-                    </span>
-                  )}
-                </p>
-                <p className="text-xs text-gray-500 mt-1">
-                  {allowedBranches.length === 0
-                    ? '모든 지점에 접근할 수 있습니다. 특정 지점만 제한하려면 아래에서 선택하세요.'
-                    : '선택되지 않은 지점에는 접근할 수 없습니다.'}
-                </p>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 max-h-96 overflow-y-auto">
-                {branches.map((branch) => (
-                  <label
-                    key={branch.id}
-                    className={`flex items-center space-x-2 p-3 border rounded-lg cursor-pointer hover:bg-gray-50 transition-colors ${
-                      allowedBranches.includes(branch.id)
-                        ? 'border-blue-500 bg-blue-50'
-                        : 'border-gray-200'
-                    }`}
-                  >
-                    <input
-                      type="checkbox"
-                      checked={allowedBranches.includes(branch.id)}
-                      onChange={() => handleBranchToggle(branch.id)}
-                      className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                    />
-                    <span className="text-sm text-gray-900">{branch.name}</span>
-                  </label>
-                ))}
-              </div>
-              {branches.length === 0 && (
-                <p className="text-sm text-gray-500 text-center py-4">
-                  등록된 지점이 없습니다. 지점을 먼저 등록해주세요.
-                </p>
-              )}
-            </div>
-          )}
-
-          {/* 저장 버튼 */}
-          <div className="bg-white rounded-lg shadow p-6">
+          <div className="flex gap-2">
             <button
-              onClick={handleSave}
-              disabled={saving}
-              className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              onClick={() => setFilterStatus('all')}
+              className={`px-4 py-2 rounded-lg text-sm ${
+                filterStatus === 'all' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700'
+              }`}
             >
-              {saving ? '저장 중...' : '✅ 권한 저장'}
+              전체
+            </button>
+            <button
+              onClick={() => setFilterStatus('pending')}
+              className={`px-4 py-2 rounded-lg text-sm flex items-center gap-2 ${
+                filterStatus === 'pending' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700'
+              }`}
+            >
+              대기 중
+              {pendingCount > 0 && (
+                <span className="bg-red-500 text-white text-xs rounded-full px-2 py-0.5">
+                  {pendingCount}
+                </span>
+              )}
+            </button>
+            <button
+              onClick={() => setFilterStatus('approved')}
+              className={`px-4 py-2 rounded-lg text-sm ${
+                filterStatus === 'approved' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700'
+              }`}
+            >
+              승인됨
+            </button>
+            <button
+              onClick={() => setFilterStatus('not_registered')}
+              className={`px-4 py-2 rounded-lg text-sm ${
+                filterStatus === 'not_registered' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700'
+              }`}
+            >
+              미가입
             </button>
           </div>
         </div>
-      )}
+      </div>
 
-      {loading && (
+      {/* 통합 사용자 목록 */}
+      {loading ? (
         <div className="bg-white rounded-lg shadow p-6 text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-2 text-gray-600">권한 정보를 불러오는 중...</p>
+          <p className="mt-2 text-gray-600">사용자 목록을 불러오는 중...</p>
+        </div>
+      ) : (
+        <div className="bg-white rounded-lg shadow overflow-hidden">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  직원명
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  실명/닉네임
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  상태
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  권한
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  작업
+                </th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {filteredUsers.map((user) => (
+                <tr key={user.employeeId || user.firebaseUid || user.kakaoId} className="hover:bg-gray-50">
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="text-sm font-medium text-gray-900">{user.employeeName}</div>
+                    {user.email && (
+                      <div className="text-xs text-gray-500">{user.email}</div>
+                    )}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="text-sm text-gray-900">{user.realName || '-'}</div>
+                    {user.kakaoNickname && (
+                      <div className="text-xs text-gray-500">카카오: {user.kakaoNickname}</div>
+                    )}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    {user.approvalStatus === 'pending' && (
+                      <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
+                        대기 중
+                      </span>
+                    )}
+                    {user.approvalStatus === 'approved' && (
+                      <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                        승인됨
+                      </span>
+                    )}
+                    {user.approvalStatus === 'rejected' && (
+                      <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
+                        거부됨
+                      </span>
+                    )}
+                    {user.approvalStatus === 'not_applied' && !user.firebaseUid && (
+                      <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-orange-100 text-orange-800">
+                        미가입
+                      </span>
+                    )}
+                    {user.firebaseUid && !user.approvalStatus && (
+                      <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
+                        등록됨
+                      </span>
+                    )}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    {user.permission ? (
+                      <div>
+                        <div className="text-sm font-medium text-gray-900">
+                          {getRoleText(user.permission.role || 'employee')}
+                        </div>
+                        <div className="text-xs text-gray-500">
+                          {Object.keys(user.permission.permissions || {}).filter(
+                            (key) => user.permission?.permissions[key as SystemId] !== 'none'
+                          ).length}개 시스템
+                        </div>
+                      </div>
+                    ) : user.firebaseUid ? (
+                      <span className="text-xs text-gray-500">권한 미설정</span>
+                    ) : (
+                      <span className="text-xs text-gray-400">-</span>
+                    )}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                    <div className="flex gap-2 flex-wrap">
+                      {user.approvalStatus === 'pending' && (
+                        <>
+                          <button
+                            onClick={() => handleApprove(user.approvalId!, user.firebaseUid!)}
+                            className="text-green-600 hover:text-green-900 font-medium"
+                          >
+                            승인
+                          </button>
+                          <button
+                            onClick={() => handleReject(user.approvalId!)}
+                            className="text-red-600 hover:text-red-900 font-medium"
+                          >
+                            거부
+                          </button>
+                        </>
+                      )}
+                      {user.firebaseUid && (
+                        <button
+                          onClick={() => openPermissionModal(user)}
+                          className="text-blue-600 hover:text-blue-900 font-medium"
+                        >
+                          권한 설정
+                        </button>
+                      )}
+                      {user.canCreateInvite && user.employeeId && (
+                        <button
+                          onClick={() => sendInviteLink(user.employeeId!, user.employeeName)}
+                          className="text-purple-600 hover:text-purple-900 font-medium"
+                        >
+                          초대링크
+                        </button>
+                      )}
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          {filteredUsers.length === 0 && (
+            <div className="text-center py-8 text-gray-500">
+              검색 결과가 없습니다.
+            </div>
+          )}
         </div>
       )}
-        </>
+
+      {/* 권한 설정 모달 */}
+      {showPermissionModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6 border-b border-gray-200">
+              <div className="flex items-center justify-between">
+                <h3 className="text-xl font-semibold">권한 설정</h3>
+                <button
+                  onClick={() => setShowPermissionModal(false)}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
+
+            <div className="p-6 space-y-6">
+              {/* 회원 등급 설정 */}
+              <div>
+                <h4 className="text-lg font-semibold mb-4">회원 등급</h4>
+                <select
+                  value={role}
+                  onChange={(e) => setRole(e.target.value as UserRole | 'super_admin' | 'admin' | 'user')}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="master">마스터</option>
+                  <option value="deputy_master">부마스터</option>
+                  <option value="branch_manager">지점매니저</option>
+                  <option value="employee">일반직원</option>
+                  <option value="super_admin">최고 관리자 (레거시)</option>
+                  <option value="admin">관리자 (레거시)</option>
+                  <option value="user">일반 사용자 (레거시)</option>
+                </select>
+                <div className="mt-2 bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <p className="text-sm text-blue-900 font-medium">{getRoleText(role)}</p>
+                  <p className="text-xs text-blue-700 mt-1">{getRoleDescription(role)}</p>
+                </div>
+              </div>
+
+              {/* 시스템별 권한 설정 */}
+              {role !== 'master' && role !== 'super_admin' && (
+                <div>
+                  <h4 className="text-lg font-semibold mb-4">시스템별 접근 권한</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {Object.entries(systemPermissions).map(([systemId, system]) => (
+                      <div key={systemId} className="border border-gray-200 rounded-lg p-4">
+                        <div className="flex items-center justify-between mb-3">
+                          <span className="font-medium text-gray-900">{systemId}</span>
+                        </div>
+                        <select
+                          value={permissions[systemId as SystemId] || 'none'}
+                          onChange={(e) =>
+                            handlePermissionChange(
+                              systemId as SystemId,
+                              e.target.value as PermissionLevel
+                            )
+                          }
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500"
+                        >
+                          <option value="none">❌ 접근 불가</option>
+                          <option value="read">👁️ 조회만 가능</option>
+                          <option value="write">✏️ 조회 및 수정</option>
+                          <option value="admin">⚙️ 관리 (모든 권한)</option>
+                        </select>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* 지점별 접근 권한 설정 */}
+              {showBranchSettings && (
+                <div>
+                  <div className="flex items-center justify-between mb-4">
+                    <h4 className="text-lg font-semibold">지점별 접근 권한</h4>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={handleSelectAllBranches}
+                        className="text-xs px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded text-gray-700"
+                      >
+                        전체 선택
+                      </button>
+                      <button
+                        onClick={handleDeselectAllBranches}
+                        className="text-xs px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded text-gray-700"
+                      >
+                        전체 해제
+                      </button>
+                    </div>
+                  </div>
+                  <div className="mb-3 p-3 bg-gray-50 rounded-lg">
+                    <p className="text-sm text-gray-700">
+                      {allowedBranches.length === 0 ? (
+                        <span className="text-green-600 font-medium">✅ 모든 지점 접근 가능</span>
+                      ) : (
+                        <span className="text-orange-600 font-medium">
+                          ⚠️ 선택된 {allowedBranches.length}개 지점만 접근 가능
+                        </span>
+                      )}
+                    </p>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 max-h-96 overflow-y-auto">
+                    {branches.map((branch) => (
+                      <label
+                        key={branch.id}
+                        className={`flex items-center space-x-2 p-3 border rounded-lg cursor-pointer hover:bg-gray-50 ${
+                          allowedBranches.includes(branch.id)
+                            ? 'border-blue-500 bg-blue-50'
+                            : 'border-gray-200'
+                        }`}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={allowedBranches.includes(branch.id)}
+                          onChange={() => handleBranchToggle(branch.id)}
+                          className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                        />
+                        <span className="text-sm text-gray-900">{branch.name}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* 저장 버튼 */}
+              <div className="flex gap-2">
+                <button
+                  onClick={handleSave}
+                  disabled={saving}
+                  className="flex-1 bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {saving ? '저장 중...' : '✅ 권한 저장'}
+                </button>
+                <button
+                  onClick={() => setShowPermissionModal(false)}
+                  className="px-4 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 font-medium"
+                >
+                  취소
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

@@ -18,7 +18,7 @@ import { auth } from '@/lib/firebase'
 import { signOut } from 'firebase/auth'
 
 function PortalContent() {
-  const { hasSystemPermission } = usePermissions()
+  const { hasSystemPermission, isMaster } = usePermissions()
   const [searchTerm, setSearchTerm] = useState('')
   const [allSystems, setAllSystems] = useState<System[]>(systems)
   const [filteredSystems, setFilteredSystems] = useState<System[]>(systems)

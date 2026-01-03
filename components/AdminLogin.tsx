@@ -2,12 +2,14 @@
 
 import { useState } from 'react'
 import { useAdmin } from '@/contexts/AdminContext'
+import { usePermissions } from '@/contexts/PermissionContext'
 
 export default function AdminLogin() {
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [showModal, setShowModal] = useState(false)
   const { isAdmin, login } = useAdmin()
+  const { isMaster } = usePermissions()
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -20,8 +22,8 @@ export default function AdminLogin() {
     }
   }
 
-  // 관리자 로그인 상태면 버튼 숨기기
-  if (isAdmin) {
+  // 마스터 권한이 있거나 관리자 로그인 상태면 버튼 숨기기
+  if (isMaster || isAdmin) {
     return null
   }
 

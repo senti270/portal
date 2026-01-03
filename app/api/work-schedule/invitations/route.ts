@@ -18,7 +18,7 @@ export async function POST(request: NextRequest) {
 
     // 고유한 초대 토큰 생성
     const inviteToken = randomUUID();
-    const inviteUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/work-schedule/signup?token=${inviteToken}`;
+    const inviteUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/signup?token=${inviteToken}`;
 
     // 초대 정보를 Firestore에 저장
     const inviteData = {

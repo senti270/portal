@@ -176,7 +176,7 @@ export default function SignupPage() {
               관리자 승인 후 로그인할 수 있습니다.
             </p>
             <button
-              onClick={() => router.push('/work-schedule')}
+              onClick={() => router.push('/')}
               className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 font-medium"
             >
               로그인 페이지로 이동

@@ -6,6 +6,7 @@ import SearchBar from '@/components/SearchBar'
 import ThemeToggle from '@/components/ThemeToggle'
 import AdminLogin from '@/components/AdminLogin'
 import AdminPanel from '@/components/AdminPanel'
+import PortalAuth from '@/components/PortalAuth'
 import { System, systems } from '@/data/systems'
 import { getSystems } from '@/lib/firestore'
 import { searchManuals } from '@/lib/manual-firestore'
@@ -13,7 +14,7 @@ import { getPurchaseItems } from '@/lib/purchase-firestore'
 import { getKeywords } from '@/lib/keyword-firestore'
 import { getStores } from '@/lib/store-firestore'
 
-export default function Home() {
+function PortalContent() {
   const [searchTerm, setSearchTerm] = useState('')
   const [allSystems, setAllSystems] = useState<System[]>(systems)
   const [filteredSystems, setFilteredSystems] = useState<System[]>(systems)
@@ -294,6 +295,14 @@ export default function Home() {
         }}
       />
     </main>
+  )
+}
+
+export default function Home() {
+  return (
+    <PortalAuth>
+      <PortalContent />
+    </PortalAuth>
   )
 }
 

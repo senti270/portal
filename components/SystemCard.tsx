@@ -1,4 +1,6 @@
 import { System } from '@/data/systems'
+import { usePermissions } from '@/contexts/PermissionContext'
+import { SystemId } from '@/lib/permissions'
 
 interface SystemCardProps {
   system: System
@@ -6,6 +8,16 @@ interface SystemCardProps {
 }
 
 export default function SystemCard({ system, index }: SystemCardProps) {
+  const { hasSystemPermission } = usePermissions()
+  
+  // 권한 체크: 시스템 ID가 있고 권한이 없으면 숨김
+  const systemId = system.id as SystemId
+  const hasAccess = systemId ? hasSystemPermission(systemId, 'read') : true
+  
+  // 권한이 없으면 카드 숨김
+  if (!hasAccess) {
+    return null
+  }
   const handleClick = () => {
     if (system.url) {
       // 내부 라우트인 경우 (/)로 시작하면 같은 창에서 이동

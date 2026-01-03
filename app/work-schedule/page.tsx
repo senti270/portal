@@ -4,9 +4,10 @@ import { useEffect, useState } from 'react';
 import { onAuthStateChanged, User } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import Dashboard from '@/components/work-schedule/Dashboard';
-import AuthForm from '@/components/work-schedule/AuthForm';
+import PortalAuth from '@/components/PortalAuth';
 
-export default function WorkSchedulePage() {
+// work-schedule은 portal의 서브 시스템이므로 PortalAuth를 통해 인증됨
+function WorkScheduleContent() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -27,10 +28,19 @@ export default function WorkSchedulePage() {
     );
   }
 
+  // PortalAuth가 이미 인증을 처리하므로 user는 항상 존재함
   if (!user) {
-    return <AuthForm />;
+    return null;
   }
 
   return <Dashboard user={user} />;
+}
+
+export default function WorkSchedulePage() {
+  return (
+    <PortalAuth>
+      <WorkScheduleContent />
+    </PortalAuth>
+  );
 }
 

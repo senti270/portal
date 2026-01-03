@@ -36,6 +36,10 @@ interface Employee {
   memo?: string; // 직원 메모
   // 스케줄 노출 여부
   hideFromSchedule?: boolean; // 스케줄 관리 화면에서 숨김 여부
+  // 인증 정보 (카카오톡 로그인용)
+  firebaseUid?: string; // Firebase Auth UID
+  kakaoId?: string; // 카카오톡 ID
+  realName?: string; // 실명 (카카오톡 가입 시 입력)
   createdAt: Date;
   updatedAt: Date;
 }
@@ -416,6 +420,10 @@ export default function EmployeeManagement({ userBranch, isManager }: EmployeeMa
           // 대표지점 정보
           primaryBranchId: data.primaryBranchId || null,
           primaryBranchName: data.primaryBranchName || null,
+          // 인증 정보 (카카오톡 로그인용)
+          firebaseUid: data.firebaseUid || undefined,
+          kakaoId: data.kakaoId || undefined,
+          realName: data.realName || undefined,
           createdAt: data.createdAt?.toDate ? data.createdAt.toDate() : new Date(),
           updatedAt: data.updatedAt?.toDate ? data.updatedAt.toDate() : new Date()
         };

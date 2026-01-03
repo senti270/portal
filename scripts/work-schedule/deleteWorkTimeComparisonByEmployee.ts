@@ -6,7 +6,7 @@
  */
 
 import { collection, deleteDoc, getDocs, limit, query, where } from 'firebase/firestore';
-import { db } from '../lib/firebase';
+import { db } from '@/lib/firebase';
 
 async function sleep(ms: number) {
   return new Promise(resolve => setTimeout(resolve, ms));

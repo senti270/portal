@@ -619,37 +619,31 @@ export default function PublicPayrollPage({ params }: PublicPayrollPageProps) {
                       
                       {/* 주휴수당 주별 상세 */}
                       {(calc.salaryType === 'hourly' || calc.salaryType === '시급') && weeklyHolidayDetails && weeklyHolidayDetails.length > 0 && (
-                        <div className="mb-3">
-                          <div className="font-medium text-gray-800 mb-2">주휴수당 계산식 (주별):</div>
-                          <div className="ml-2 space-y-2">
+                        <div className="mb-3 p-3 sm:p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                          <div className="text-sm sm:text-base font-medium text-blue-800 mb-2">주휴수당 상세</div>
+                          <ul className="list-disc list-inside text-xs sm:text-sm text-blue-700 space-y-1">
                             {[...weeklyHolidayDetails].sort((a: any, b: any) => {
                               const dateA = new Date(a.weekStart);
                               const dateB = new Date(b.weekStart);
                               return dateA.getTime() - dateB.getTime();
                             }).map((detail: any, detailIdx: number) => {
-                              if (!detail.eligible) return null;
-                              // 주휴수당 계산식: 시급 × 주휴시간 (수습기간이면 90% 적용)
-                              const isProbationWeek = detail.reason && String(detail.reason).includes('수습기간');
-                              
-                              return (
-                                <div key={detailIdx} className="text-gray-600 border-l-2 border-blue-300 pl-2 text-xs sm:text-sm">
-                                  <div className="font-medium text-gray-700 mb-1">
-                                    {detail.weekStart} ~ {detail.weekEnd}
-                                  </div>
-                                  <div className="text-gray-600">
-                                    주휴수당 = 시급 × 주휴시간{isProbationWeek ? ' × 90%' : ''}<br/>
-                                    = {hourlyWage.toLocaleString()}원 × {detail.hours.toFixed(1)}h{isProbationWeek ? ' × 0.9' : ''}<br/>
-                                    = {detail.pay.toLocaleString()}원 {isProbationWeek ? '(수습기간 90%)' : ''}
-                                  </div>
-                                </div>
-                              );
+                              if (detail.eligible) {
+                                return (
+                                  <li key={detailIdx}>
+                                    {detail.weekStart} ~ {detail.weekEnd}: {detail.hours.toFixed(1)}시간, {detail.pay.toLocaleString()}원 (지급)
+                                  </li>
+                                );
+                              } else {
+                                // 미지급인 경우 (예: 다음달로 이월)
+                                const reason = detail.reason || '미지급';
+                                return (
+                                  <li key={detailIdx}>
+                                    {detail.weekStart} ~ {detail.weekEnd}: ({reason})
+                                  </li>
+                                );
+                              }
                             })}
-                            {weeklyHolidayPay > 0 && (
-                              <div className="mt-2 pt-2 border-t border-gray-300 font-semibold text-gray-800">
-                                주휴수당 합계: {weeklyHolidayPay.toLocaleString()}원
-                              </div>
-                            )}
-                          </div>
+                          </ul>
                         </div>
                       )}
                       

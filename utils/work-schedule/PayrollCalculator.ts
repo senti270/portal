@@ -132,6 +132,9 @@ export class PayrollCalculator {
     switch (employmentType) {
       case '근로소득':
       case '근로소득자': // 호환성을 위해 추가
+        if (salaryType === 'daily' || salaryType === '일급') {
+          return this.calculateLaborIncomeDaily();
+        }
         return salaryType === 'hourly' || salaryType === '시급' 
           ? this.calculateLaborIncomeHourly()
           : this.calculateLaborIncomeMonthly();
@@ -246,7 +249,79 @@ export class PayrollCalculator {
     };
   }
 
-  // 🔥 2. 근로소득자 월급제 계산
+  // 🔥 2-1. 근로소득자 일급제 계산
+  private calculateLaborIncomeDaily(): PayrollResult {
+    console.log('🔥 근로소득자 일급제 계산 시작');
+    
+    // 1. 근무시간 계산
+    const { totalWorkHours, totalBreakTime, actualWorkHours } = this.calculateWorkHours();
+    
+    // 2. 일급 계산: 실제 나온 날 수 × 일급 금액
+    const dailyWage = this.contract.salaryAmount || 0;
+    const workDays = this.calculateWorkDays();
+    
+    // 3. 수습기간 구분
+    const { probationDays, regularDays } = this.separateProbationDays();
+    
+    console.log('🔥 근로소득 일급 계산:', {
+      employeeName: this.employee.name,
+      dailyWage,
+      totalWorkDays: workDays,
+      probationDays,
+      regularDays
+    });
+    
+    // 4. 기본급 계산 (수습기간 90% 적용)
+    const probationPay = probationDays > 0 ? Math.round(probationDays * dailyWage * 0.9) : 0;
+    const regularPay = regularDays > 0 ? Math.round(regularDays * dailyWage) : 0;
+    const basePay = probationPay + regularPay;
+    
+    // 5. 4대보험 및 소득세 공제
+    const deductions = this.calculateLaborIncomeDeductions(basePay);
+    
+    // 편집 가능한 공제항목 초기화
+    deductions.editableDeductions = {
+      nationalPension: deductions.insuranceDetails?.nationalPension || 0,
+      healthInsurance: deductions.insuranceDetails?.healthInsurance || 0,
+      longTermCare: deductions.insuranceDetails?.longTermCare || 0,
+      employmentInsurance: deductions.insuranceDetails?.employmentInsurance || 0,
+      incomeTax: deductions.taxDetails?.incomeTax || 0,
+      localIncomeTax: deductions.taxDetails?.localIncomeTax || 0
+    };
+    
+    // 6. 실수령액
+    const netPay = basePay - deductions.total;
+    
+    // 7. 지점별 근무시간
+    const branches = this.calculateBranchHours();
+    
+    return {
+      employeeId: this.employee.id,
+      employeeName: this.employee.name,
+      employmentType: this.contract.employmentType,
+      salaryType: this.contract.salaryType,
+      salaryAmount: dailyWage,
+      totalWorkHours,
+      totalBreakTime,
+      actualWorkHours,
+      grossPay: basePay,
+      deductions,
+      netPay,
+      branches,
+      probationHours: 0, // 일급제는 시간이 아니라 일수로 계산
+      regularHours: 0,
+      probationPay,
+      regularPay,
+      weeklyHolidayPay: 0,
+      weeklyHolidayHours: 0,
+      includesWeeklyHolidayInWage: this.employee.includesWeeklyHolidayInWage,
+      weeklyHolidayDetails: [],
+      unpaidLeaveDays: 0,
+      unpaidLeaveDeduction: 0
+    };
+  }
+
+  // 🔥 2-2. 근로소득자 월급제 계산
   private calculateLaborIncomeMonthly(): PayrollResult {
     console.log('🔥 근로소득자 월급제 계산 시작');
     
@@ -347,7 +422,26 @@ export class PayrollCalculator {
     let probationPay = 0;
     let regularPay = 0;
     
-    if (this.contract.salaryType === 'hourly' || this.contract.salaryType === '시급') {
+    if (this.contract.salaryType === 'daily' || this.contract.salaryType === '일급') {
+      // 일급 계산: 실제 나온 날 수 × 일급 금액
+      const dailyWage = this.contract.salaryAmount;
+      const workDays = this.calculateWorkDays();
+      
+      // 수습기간 구분
+      const { probationDays, regularDays } = this.separateProbationDays();
+      
+      console.log('🔥 사업소득 일급 계산:', {
+        employeeName: this.employee.name,
+        dailyWage,
+        totalWorkDays: workDays,
+        probationDays,
+        regularDays
+      });
+      
+      probationPay = probationDays > 0 ? Math.round(probationDays * dailyWage * 0.9) : 0;
+      regularPay = regularDays > 0 ? Math.round(regularDays * dailyWage) : 0;
+      basePay = probationPay + regularPay;
+    } else if (this.contract.salaryType === 'hourly' || this.contract.salaryType === '시급') {
       const salaryAmount = this.contract.salaryAmount;
       
       // 🔥 정확한 계산을 위해 부동소수점 오차 방지
@@ -577,6 +671,43 @@ export class PayrollCalculator {
     });
 
     return { probationHours, regularHours };
+  }
+
+  // 🔥 실제 근무 일수 계산 (일급 계산용)
+  private calculateWorkDays(): number {
+    // actualWorkHours > 0인 날짜의 개수
+    return this.schedules.filter(schedule => schedule.actualWorkHours > 0).length;
+  }
+
+  // 🔥 수습기간별 일수 구분 (일급 계산용)
+  private separateProbationDays(): { probationDays: number; regularDays: number } {
+    let probationDays = 0;
+    let regularDays = 0;
+
+    if (!this.employee.probationStartDate || !this.employee.probationEndDate) {
+      // 수습기간이 없으면 모든 일수가 정규 일수
+      regularDays = this.calculateWorkDays();
+      return { probationDays, regularDays };
+    }
+
+    // 수습기간 판단 (actualWorkHours > 0인 날짜만)
+    this.schedules.forEach(schedule => {
+      if (schedule.actualWorkHours <= 0) return; // 근무하지 않은 날은 제외
+      
+      const scheduleDateOnly = new Date(schedule.date.toISOString().split('T')[0]);
+      const probationStartOnly = new Date(this.employee.probationStartDate!.toISOString().split('T')[0]);
+      const probationEndOnly = new Date(this.employee.probationEndDate!.toISOString().split('T')[0]);
+      
+      const isInProbation = scheduleDateOnly >= probationStartOnly && scheduleDateOnly <= probationEndOnly;
+      
+      if (isInProbation) {
+        probationDays += 1;
+      } else {
+        regularDays += 1;
+      }
+    });
+
+    return { probationDays, regularDays };
   }
 
   // 🔥 근로소득자 4대보험 및 소득세 계산

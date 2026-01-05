@@ -12,7 +12,7 @@ interface EmployeeDoc {
   name: string;
   employmentType?: EmploymentType;
   contractType?: EmploymentType; // 폴백
-  salaryType?: 'hourly' | 'monthly' | '시급' | '월급' | string;
+  salaryType?: 'hourly' | 'monthly' | 'daily' | '시급' | '월급' | '일급' | string;
   salaryAmount?: number;
   salary?: number; // 폴백
   weeklyWorkHours?: number;
@@ -39,7 +39,7 @@ interface EmploymentContractDoc {
   employeeId: string;
   startDate?: any; // Firestore Timestamp | string
   employmentType?: EmploymentType;
-  salaryType?: 'hourly' | 'monthly' | '시급' | '월급' | string;
+  salaryType?: 'hourly' | 'monthly' | 'daily' | '시급' | '월급' | '일급' | string;
   salaryAmount?: number;
   weeklyWorkHours?: number;
   includeHolidayAllowance?: boolean;
@@ -199,7 +199,12 @@ const CurrentExpectedPayroll: React.FC = () => {
       const employmentType = displayEmploymentType;
       // 시급/월급 표기 혼용 대응 (계약서 값만 사용)
       const rawSalaryType = eff?.salaryType;
-      const salaryType = ((rawSalaryType === '월급' ? 'monthly' : rawSalaryType === '시급' ? 'hourly' : rawSalaryType) || 'hourly') as any;
+      const salaryType = (
+        rawSalaryType === '월급' ? 'monthly' : 
+        rawSalaryType === '시급' ? 'hourly' : 
+        rawSalaryType === '일급' ? 'daily' : 
+        rawSalaryType
+      ) || 'hourly' as any;
       const salaryAmount = Number(eff?.salaryAmount || 0);
 
       // 지점별로 그룹화
@@ -270,7 +275,11 @@ const CurrentExpectedPayroll: React.FC = () => {
           calcResult = calculator.calculate();
         }
 
-        const salaryLabel = salaryType === 'hourly' ? `${salaryAmount.toLocaleString()}원/시` : `${salaryAmount.toLocaleString()}원/월`;
+        const salaryLabel = 
+          salaryType === 'hourly' || salaryType === '시급' ? `${salaryAmount.toLocaleString()}원/시` : 
+          salaryType === 'monthly' || salaryType === '월급' ? `${salaryAmount.toLocaleString()}원/월` :
+          salaryType === 'daily' || salaryType === '일급' ? `${salaryAmount.toLocaleString()}원/일` :
+          `${salaryAmount.toLocaleString()}원`;
 
         result.push({
           employeeId: emp.id,
@@ -352,7 +361,7 @@ const CurrentExpectedPayroll: React.FC = () => {
     [rows]
   );
   const hourlyWageSum = useMemo(() => 
-    rows.filter(r => r.salaryLabel.includes('원/시')).reduce((s, r) => s + r.netPay, 0), 
+    rows.filter(r => r.salaryLabel.includes('원/시') || r.salaryLabel.includes('원/일')).reduce((s, r) => s + r.netPay, 0), 
     [rows]
   );
   
@@ -427,7 +436,7 @@ const CurrentExpectedPayroll: React.FC = () => {
               <th className="px-3 py-2 text-left text-sm font-semibold text-gray-700 border-b">직원이름</th>
               <th className="px-3 py-2 text-left text-sm font-semibold text-gray-700 border-b">고용형태</th>
               <th className="px-3 py-2 text-right text-sm font-semibold text-gray-700 border-b">총 근무시간</th>
-              <th className="px-3 py-2 text-right text-sm font-semibold text-gray-700 border-b">시급/월급</th>
+              <th className="px-3 py-2 text-right text-sm font-semibold text-gray-700 border-b">시급/월급/일급</th>
               <th className="px-3 py-2 text-right text-sm font-semibold text-gray-700 border-b">총금액</th>
               <th className="px-3 py-2 text-right text-sm font-semibold text-gray-700 border-b">총공제액</th>
               <th className="px-3 py-2 text-right text-sm font-semibold text-gray-700 border-b">총지급액</th>

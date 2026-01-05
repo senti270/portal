@@ -77,7 +77,7 @@ interface EmploymentContract {
   employeeId: string;
   startDate: Date; // 기준일
   employmentType: string; // 고용형태 ('근로소득', '사업소득', '일용직', '외국인')
-  salaryType: 'hourly' | 'monthly'; // 시급/월급 선택
+  salaryType: 'hourly' | 'monthly' | 'daily'; // 시급/월급/일급 선택
   salaryAmount: number; // 금액
   weeklyWorkHours?: number; // 주간근무시간
   includeHolidayAllowance?: boolean; // 주휴수당 포함 여부 (시급인 경우만)
@@ -175,7 +175,7 @@ export default function EmployeeManagement({ userBranch, isManager }: EmployeeMa
   const [contractFormData, setContractFormData] = useState({
     startDate: '',
     employmentType: '',
-    salaryType: 'hourly' as 'hourly' | 'monthly',
+    salaryType: 'hourly' as 'hourly' | 'monthly' | 'daily',
     salaryAmount: '',
     weeklyWorkHours: '',
     includeHolidayAllowance: false,
@@ -1606,7 +1606,7 @@ export default function EmployeeManagement({ userBranch, isManager }: EmployeeMa
     setContractFormData({
       startDate: '',
       employmentType: '',
-      salaryType: 'hourly' as 'hourly' | 'monthly',
+      salaryType: 'hourly' as 'hourly' | 'monthly' | 'daily',
       salaryAmount: '',
       weeklyWorkHours: '',
       includeHolidayAllowance: false,
@@ -2156,7 +2156,10 @@ export default function EmployeeManagement({ userBranch, isManager }: EmployeeMa
                                 {latestContract.employmentType}
                               </div>
                               <div className="text-gray-500">
-                                {latestContract.salaryType === 'hourly' ? '시급' : '월급'}: {latestContract.salaryAmount?.toLocaleString()}원
+                                {latestContract.salaryType === 'hourly' ? '시급' : 
+                                 latestContract.salaryType === 'monthly' ? '월급' : 
+                                 latestContract.salaryType === 'daily' ? '일급' : 
+                                 '급여'}: {latestContract.salaryAmount?.toLocaleString()}원
                               </div>
                             </div>
                           );
@@ -3275,33 +3278,35 @@ export default function EmployeeManagement({ userBranch, isManager }: EmployeeMa
                       </label>
                       <select
                         value={contractFormData.salaryType}
-                        onChange={(e) => setContractFormData({ ...contractFormData, salaryType: e.target.value as 'hourly' | 'monthly' })}
+                        onChange={(e) => setContractFormData({ ...contractFormData, salaryType: e.target.value as 'hourly' | 'monthly' | 'daily' })}
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                         required
                       >
-                        {/* 근로소득, 사업소득은 시급/월급 선택 가능 */}
+                        {/* 근로소득, 사업소득은 시급/월급/일급 선택 가능 */}
                         {(contractFormData.employmentType === '근로소득' || contractFormData.employmentType === '사업소득') && (
                           <>
                             <option value="hourly">시급</option>
                             <option value="monthly">월급</option>
+                            <option value="daily">일급</option>
                           </>
                         )}
                         {/* 일용직, 외국인은 시급만 */}
                         {(['일용직', '외국인'].includes(contractFormData.employmentType)) && (
                           <option value="hourly">시급</option>
                         )}
-                        {/* 고용형태가 선택되지 않은 경우 둘 다 표시 */}
+                        {/* 고용형태가 선택되지 않은 경우 모두 표시 */}
                         {!contractFormData.employmentType && (
                           <>
                             <option value="hourly">시급</option>
                             <option value="monthly">월급</option>
+                            <option value="daily">일급</option>
                           </>
                         )}
                       </select>
                       {contractFormData.employmentType && (
                         <p className="text-xs text-gray-500 mt-1">
-                          {contractFormData.employmentType === '근로소득' && '4대보험, 시급/월급 선택'}
-                          {contractFormData.employmentType === '사업소득' && '3.3% 세금, 시급/월급 선택'}
+                          {contractFormData.employmentType === '근로소득' && '4대보험, 시급/월급/일급 선택'}
+                          {contractFormData.employmentType === '사업소득' && '3.3% 세금, 시급/월급/일급 선택'}
                           {contractFormData.employmentType === '일용직' && '세금 없음, 시급만'}
                           {contractFormData.employmentType === '외국인' && '3.3% 세금, 시급만'}
                         </p>
@@ -3320,7 +3325,11 @@ export default function EmployeeManagement({ userBranch, isManager }: EmployeeMa
                           setContractFormData({ ...contractFormData, salaryAmount: unformattedValue });
                         }}
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        placeholder={contractFormData.salaryType === 'hourly' ? '시급을 입력하세요' : '월급을 입력하세요'}
+                        placeholder={
+                          contractFormData.salaryType === 'hourly' ? '시급을 입력하세요' : 
+                          contractFormData.salaryType === 'monthly' ? '월급을 입력하세요' : 
+                          '일급을 입력하세요'
+                        }
                         required
                       />
                     </div>
@@ -3493,7 +3502,10 @@ export default function EmployeeManagement({ userBranch, isManager }: EmployeeMa
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                               <div className="space-y-1">
                                 <div className="font-medium">
-                                  {contract.salaryType === 'hourly' ? '시급' : '월급'}
+                                  {contract.salaryType === 'hourly' ? '시급' : 
+                                   contract.salaryType === 'monthly' ? '월급' : 
+                                   contract.salaryType === 'daily' ? '일급' : 
+                                   contract.salaryType}
                                 </div>
                                 <div className="text-xs">
                                   {contract.salaryAmount ? `${contract.salaryAmount.toLocaleString()}원` : '-'}
@@ -3644,7 +3656,10 @@ export default function EmployeeManagement({ userBranch, isManager }: EmployeeMa
                               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                 <div className="space-y-1">
                                   <div className="font-medium">
-                                    {contract.salaryType === 'hourly' ? '시급' : '월급'}
+                                    {contract.salaryType === 'hourly' ? '시급' : 
+                                   contract.salaryType === 'monthly' ? '월급' : 
+                                   contract.salaryType === 'daily' ? '일급' : 
+                                   contract.salaryType}
                                   </div>
                                   <div className="text-xs">
                                     {contract.salaryAmount ? `${contract.salaryAmount.toLocaleString()}원` : '-'}
@@ -3732,33 +3747,35 @@ export default function EmployeeManagement({ userBranch, isManager }: EmployeeMa
                       </label>
                       <select
                         value={contractFormData.salaryType}
-                        onChange={(e) => setContractFormData({ ...contractFormData, salaryType: e.target.value as 'hourly' | 'monthly' })}
+                        onChange={(e) => setContractFormData({ ...contractFormData, salaryType: e.target.value as 'hourly' | 'monthly' | 'daily' })}
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                         required
                       >
-                        {/* 근로소득, 사업소득은 시급/월급 선택 가능 */}
+                        {/* 근로소득, 사업소득은 시급/월급/일급 선택 가능 */}
                         {(contractFormData.employmentType === '근로소득' || contractFormData.employmentType === '사업소득') && (
                           <>
                             <option value="hourly">시급</option>
                             <option value="monthly">월급</option>
+                            <option value="daily">일급</option>
                           </>
                         )}
                         {/* 일용직, 외국인은 시급만 */}
                         {(['일용직', '외국인'].includes(contractFormData.employmentType)) && (
                           <option value="hourly">시급</option>
                         )}
-                        {/* 고용형태가 선택되지 않은 경우 둘 다 표시 */}
+                        {/* 고용형태가 선택되지 않은 경우 모두 표시 */}
                         {!contractFormData.employmentType && (
                           <>
                             <option value="hourly">시급</option>
                             <option value="monthly">월급</option>
+                            <option value="daily">일급</option>
                           </>
                         )}
                       </select>
                       {contractFormData.employmentType && (
                         <p className="text-xs text-gray-500 mt-1">
-                          {contractFormData.employmentType === '근로소득' && '4대보험, 시급/월급 선택'}
-                          {contractFormData.employmentType === '사업소득' && '3.3% 세금, 시급/월급 선택'}
+                          {contractFormData.employmentType === '근로소득' && '4대보험, 시급/월급/일급 선택'}
+                          {contractFormData.employmentType === '사업소득' && '3.3% 세금, 시급/월급/일급 선택'}
                           {contractFormData.employmentType === '일용직' && '세금 없음, 시급만'}
                           {contractFormData.employmentType === '외국인' && '3.3% 세금, 시급만'}
                         </p>
@@ -3777,7 +3794,11 @@ export default function EmployeeManagement({ userBranch, isManager }: EmployeeMa
                           setContractFormData({ ...contractFormData, salaryAmount: unformattedValue });
                         }}
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        placeholder={contractFormData.salaryType === 'hourly' ? '시급을 입력하세요' : '월급을 입력하세요'}
+                        placeholder={
+                          contractFormData.salaryType === 'hourly' ? '시급을 입력하세요' : 
+                          contractFormData.salaryType === 'monthly' ? '월급을 입력하세요' : 
+                          '일급을 입력하세요'
+                        }
                         required
                       />
                     </div>

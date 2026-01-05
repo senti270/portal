@@ -1549,7 +1549,10 @@ const PayrollCalculation: React.FC<PayrollCalculationProps> = ({
               <div>
                 <span className="text-gray-600">급여타입:</span>
                 <span className="ml-2 font-medium text-gray-900">
-                  {calc.salaryType === 'hourly' ? '시급' : calc.salaryType === 'monthly' ? '월급' : calc.salaryType}
+                  {calc.salaryType === 'hourly' || calc.salaryType === '시급' ? '시급' : 
+                   calc.salaryType === 'monthly' || calc.salaryType === '월급' ? '월급' : 
+                   calc.salaryType === 'daily' || calc.salaryType === '일급' ? '일급' : 
+                   calc.salaryType}
                 </span>
               </div>
               <div>

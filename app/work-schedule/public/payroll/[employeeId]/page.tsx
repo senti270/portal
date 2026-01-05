@@ -594,8 +594,8 @@ export default function PublicPayrollPage({ params }: PublicPayrollPageProps) {
                         <div className="mb-2">
                           <div className="font-medium text-gray-800">주휴수당 계산식:</div>
                           <div className="text-gray-600 ml-2">
-                            주휴수당 = 시급 × 주휴시간 × 1.5<br/>
-                            = {hourlyWage.toLocaleString()}원 × {weeklyHolidayHours}h × 1.5<br/>
+                            주휴수당 = 시급 × 주휴시간<br/>
+                            = {hourlyWage.toLocaleString()}원 × {weeklyHolidayHours}h<br/>
                             = {weeklyHolidayPay.toLocaleString()}원
                           </div>
                         </div>

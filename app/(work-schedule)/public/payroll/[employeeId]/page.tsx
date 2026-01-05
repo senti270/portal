@@ -628,10 +628,8 @@ export default function PublicPayrollPage({ params }: PublicPayrollPageProps) {
                               return dateA.getTime() - dateB.getTime();
                             }).map((detail: any, detailIdx: number) => {
                               if (!detail.eligible) return null;
-                              // 주휴수당 계산식: 시급 × 주휴시간 × 1.5 (수습기간이면 90% 적용)
+                              // 주휴수당 계산식: 시급 × 주휴시간 (수습기간이면 90% 적용)
                               const isProbationWeek = detail.reason && String(detail.reason).includes('수습기간');
-                              const basePay = hourlyWage * detail.hours * 1.5;
-                              const actualPay = isProbationWeek ? basePay * 0.9 : basePay;
                               
                               return (
                                 <div key={detailIdx} className="text-gray-600 border-l-2 border-blue-300 pl-2 text-xs sm:text-sm">
@@ -639,8 +637,8 @@ export default function PublicPayrollPage({ params }: PublicPayrollPageProps) {
                                     {detail.weekStart} ~ {detail.weekEnd}
                                   </div>
                                   <div className="text-gray-600">
-                                    주휴수당 = 시급 × 주휴시간 × 1.5{isProbationWeek ? ' × 90%' : ''}<br/>
-                                    = {hourlyWage.toLocaleString()}원 × {detail.hours.toFixed(1)}h × 1.5{isProbationWeek ? ' × 0.9' : ''}<br/>
+                                    주휴수당 = 시급 × 주휴시간{isProbationWeek ? ' × 90%' : ''}<br/>
+                                    = {hourlyWage.toLocaleString()}원 × {detail.hours.toFixed(1)}h{isProbationWeek ? ' × 0.9' : ''}<br/>
                                     = {detail.pay.toLocaleString()}원 {isProbationWeek ? '(수습기간 90%)' : ''}
                                   </div>
                                 </div>
@@ -660,8 +658,8 @@ export default function PublicPayrollPage({ params }: PublicPayrollPageProps) {
                         <div className="mb-2">
                           <div className="font-medium text-gray-800">주휴수당 계산식:</div>
                           <div className="text-gray-600 ml-2">
-                            주휴수당 = 시급 × 주휴시간 × 1.5<br/>
-                            = {hourlyWage.toLocaleString()}원 × {weeklyHolidayHours}h × 1.5<br/>
+                            주휴수당 = 시급 × 주휴시간<br/>
+                            = {hourlyWage.toLocaleString()}원 × {weeklyHolidayHours}h<br/>
                             = {weeklyHolidayPay.toLocaleString()}원
                           </div>
                         </div>

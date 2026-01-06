@@ -1323,6 +1323,7 @@ ${selectedMonth} 급여명세서를 전달드립니다.
                       const regularPay = (calc as any).regularPay || 0;
                       const weeklyHolidayPay = (calc as any).weeklyHolidayPay || 0;
                       const weeklyHolidayHours = (calc as any).weeklyHolidayHours || 0;
+                      const weeklyHolidayDetails = (calc as any).weeklyHolidayDetails || [];
                       // 시급 계산: calc에 hourlyWage가 있으면 사용, 없으면 regularPay와 regularHours로 역산
                       let hourlyWage = (calc as any).hourlyWage || (calc as any).salaryAmount || 0;
                       if (!hourlyWage && regularHours > 0 && regularPay > 0) {
@@ -1333,15 +1334,33 @@ ${selectedMonth} 급여명세서를 전달드립니다.
                         <div key={idx} className="border border-gray-200 p-3 bg-gray-50">
                           <div className="font-medium text-gray-900 mb-2">{branchName} 기준</div>
                           
-                          {/* 주휴수당 계산식 (주휴수당이 있는 경우만) */}
-                          {weeklyHolidayPay > 0 && weeklyHolidayHours > 0 && (
-                            <div className="mb-2">
-                              <div className="font-medium text-gray-800">주휴수당 계산식:</div>
-                              <div className="text-gray-600 ml-2">
-                                주휴수당 = 시급 × 주휴시간 × 1.5<br/>
-                                = {hourlyWage.toLocaleString()}원 × {weeklyHolidayHours}h × 1.5<br/>
-                                = {weeklyHolidayPay.toLocaleString()}원
-                              </div>
+                          {/* 주휴수당 주별 상세 */}
+                          {((calc as any).salaryType === 'hourly' || (calc as any).salaryType === '시급') && weeklyHolidayDetails && weeklyHolidayDetails.length > 0 && (
+                            <div className="mb-3 p-3 sm:p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                              <div className="text-sm sm:text-base font-medium text-blue-800 mb-2">주휴수당 상세</div>
+                              <ul className="list-disc list-inside text-xs sm:text-sm text-blue-700 space-y-1">
+                                {[...weeklyHolidayDetails].sort((a: any, b: any) => {
+                                  const dateA = new Date(a.weekStart);
+                                  const dateB = new Date(b.weekStart);
+                                  return dateA.getTime() - dateB.getTime();
+                                }).map((detail: any, detailIdx: number) => {
+                                  if (detail.eligible) {
+                                    return (
+                                      <li key={detailIdx}>
+                                        {detail.weekStart} ~ {detail.weekEnd}: {detail.hours.toFixed(1)}시간, {detail.pay.toLocaleString()}원 (지급)
+                                      </li>
+                                    );
+                                  } else {
+                                    // 미지급인 경우 (예: 다음달로 이월)
+                                    const reason = detail.reason || '미지급';
+                                    return (
+                                      <li key={detailIdx}>
+                                        {detail.weekStart} ~ {detail.weekEnd}: ({reason})
+                                      </li>
+                                    );
+                                  }
+                                })}
+                              </ul>
                             </div>
                           )}
                           

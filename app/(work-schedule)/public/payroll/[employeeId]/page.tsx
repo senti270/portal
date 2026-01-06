@@ -647,18 +647,6 @@ export default function PublicPayrollPage({ params }: PublicPayrollPageProps) {
                         </div>
                       )}
                       
-                      {/* 주휴수당 (기존 전체 합계 - weeklyHolidayDetails가 없을 때만) */}
-                      {(!weeklyHolidayDetails || weeklyHolidayDetails.length === 0) && weeklyHolidayPay > 0 && weeklyHolidayHours > 0 && (
-                        <div className="mb-2">
-                          <div className="font-medium text-gray-800">주휴수당 계산식:</div>
-                          <div className="text-gray-600 ml-2">
-                            주휴수당 = 시급 × 주휴시간<br/>
-                            = {hourlyWage.toLocaleString()}원 × {weeklyHolidayHours}h<br/>
-                            = {weeklyHolidayPay.toLocaleString()}원
-                          </div>
-                        </div>
-                      )}
-                      
                       {probationHours > 0 && (
                         <div className="mb-2">
                           <div className="font-medium text-gray-800">수습 계산식:</div>

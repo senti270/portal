@@ -949,6 +949,12 @@ const PayrollCalculation: React.FC<PayrollCalculationProps> = ({
         
         const contractPeriods: Array<{contract: any; start: Date; end: Date; schedules: typeof scheduleData}> = [];
         
+        console.log('🔥 중도 계약 변경 처리 시작:', {
+          contractsCount: contracts.length,
+          scheduleDataCount: scheduleData.length,
+          scheduleDataTotalHours: scheduleData.reduce((sum, s) => sum + (s.actualWorkHours || 0), 0)
+        });
+        
         for (let i = 0; i < contracts.length; i++) {
           const contract = contracts[i];
           const contractStart = contract.startDate;
@@ -957,10 +963,28 @@ const PayrollCalculation: React.FC<PayrollCalculationProps> = ({
           const periodStart = contractStart > monthStart ? contractStart : monthStart;
           const periodEnd = contractEnd < monthEnd ? contractEnd : monthEnd;
           
+          console.log(`🔥 계약 구간 [${i}]:`, {
+            contractStart: contractStart.toISOString().split('T')[0],
+            contractEnd: contractEnd.toISOString().split('T')[0],
+            periodStart: periodStart.toISOString().split('T')[0],
+            periodEnd: periodEnd.toISOString().split('T')[0]
+          });
+          
           if (periodStart <= periodEnd) {
             const periodSchedules = scheduleData.filter(s => {
               const sDate = new Date(s.date);
-              return sDate >= periodStart && sDate <= periodEnd;
+              const sDateOnly = new Date(sDate.getFullYear(), sDate.getMonth(), sDate.getDate());
+              const periodStartOnly = new Date(periodStart.getFullYear(), periodStart.getMonth(), periodStart.getDate());
+              const periodEndOnly = new Date(periodEnd.getFullYear(), periodEnd.getMonth(), periodEnd.getDate());
+              return sDateOnly >= periodStartOnly && sDateOnly <= periodEndOnly;
+            });
+            
+            console.log(`🔥 계약 구간 [${i}] 스케줄 필터링:`, {
+              periodStart: periodStart.toISOString().split('T')[0],
+              periodEnd: periodEnd.toISOString().split('T')[0],
+              filteredCount: periodSchedules.length,
+              filteredHours: periodSchedules.reduce((sum, s) => sum + (s.actualWorkHours || 0), 0),
+              filteredDates: periodSchedules.map(s => s.date.toISOString().split('T')[0])
             });
             
             contractPeriods.push({

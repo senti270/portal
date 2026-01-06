@@ -81,15 +81,29 @@ const generateDefaultLineItems = (calc: PayrollResult): PayrollLineItem[] => {
 
   const totalBasePay = Math.round((calc.grossPay || 0) - (calc.weeklyHolidayPay || 0));
   const noteParts: string[] = [];
+  const isDaily = calc.salaryType === 'daily' || calc.salaryType === '일급';
+  
   if ((calc.probationPay || 0) > 0) {
-    noteParts.push(
-      `수습급여: ${(calc.probationPay || 0).toLocaleString()}원 (${(calc.probationHours || 0).toFixed(1)}시간, 90%)`
-    );
+    if (isDaily && calc.probationDays !== undefined) {
+      noteParts.push(
+        `수습급여: ${(calc.probationPay || 0).toLocaleString()}원 (${calc.probationDays}일, 90%)`
+      );
+    } else {
+      noteParts.push(
+        `수습급여: ${(calc.probationPay || 0).toLocaleString()}원 (${(calc.probationHours || 0).toFixed(1)}시간, 90%)`
+      );
+    }
   }
   if ((calc.regularPay || 0) > 0) {
-    noteParts.push(
-      `정규급여: ${(calc.regularPay || 0).toLocaleString()}원 (${(calc.regularHours || 0).toFixed(1)}시간, 100%)`
-    );
+    if (isDaily && calc.regularDays !== undefined) {
+      noteParts.push(
+        `정규급여: ${(calc.regularPay || 0).toLocaleString()}원 (${calc.regularDays}일, 100%)`
+      );
+    } else {
+      noteParts.push(
+        `정규급여: ${(calc.regularPay || 0).toLocaleString()}원 (${(calc.regularHours || 0).toFixed(1)}시간, 100%)`
+      );
+    }
   }
   if (totalBasePay > 0) {
     items.push(

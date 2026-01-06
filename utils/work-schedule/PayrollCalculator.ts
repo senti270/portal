@@ -69,6 +69,8 @@ export interface PayrollResult {
   }[];
   probationHours?: number;
   regularHours?: number;
+  probationDays?: number; // 일급제용 수습 일수
+  regularDays?: number; // 일급제용 정규 일수
   probationPay?: number;
   regularPay?: number;
   weeklyHolidayPay?: number;
@@ -310,6 +312,8 @@ export class PayrollCalculator {
       branches,
       probationHours: 0, // 일급제는 시간이 아니라 일수로 계산
       regularHours: 0,
+      probationDays, // 일급제용 수습 일수
+      regularDays, // 일급제용 정규 일수
       probationPay,
       regularPay,
       weeklyHolidayPay: 0,
@@ -421,6 +425,8 @@ export class PayrollCalculator {
     let basePay = 0;
     let probationPay = 0;
     let regularPay = 0;
+    let probationDays: number | undefined = undefined;
+    let regularDays: number | undefined = undefined;
     
     if (this.contract.salaryType === 'daily' || this.contract.salaryType === '일급') {
       // 일급 계산: 실제 나온 날 수 × 일급 금액
@@ -428,7 +434,9 @@ export class PayrollCalculator {
       const workDays = this.calculateWorkDays();
       
       // 수습기간 구분
-      const { probationDays, regularDays } = this.separateProbationDays();
+      const daysResult = this.separateProbationDays();
+      probationDays = daysResult.probationDays;
+      regularDays = daysResult.regularDays;
       
       console.log('🔥 사업소득 일급 계산:', {
         employeeName: this.employee.name,
@@ -538,6 +546,8 @@ export class PayrollCalculator {
       branches,
       probationHours,
       regularHours,
+      probationDays,
+      regularDays,
       probationPay,
       regularPay,
       weeklyHolidayPay,

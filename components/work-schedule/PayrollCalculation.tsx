@@ -668,11 +668,11 @@ const PayrollCalculation: React.FC<PayrollCalculationProps> = ({
     // 월급직의 경우 스케줄 데이터가 없어도 계산 가능
     const isMonthlySalary = employee.salaryType === 'monthly';
     
-    // 스케줄 데이터 로드 (상태에 의존하지 않고 직접 로드)
-    let schedulesToUse = weeklySchedules;
+    // 스케줄 데이터 로드 (항상 Firestore에서 직접 로드하여 최신 데이터 보장)
+    let schedulesToUse: Schedule[] = [];
     
-    if (!schedulesToUse.length && !isMonthlySalary) {
-      console.log('🔥 weeklySchedules가 비어있음 - workTimeComparisonResults에서 직접 로드');
+    if (!isMonthlySalary) {
+      console.log('🔥 calculatePayroll - workTimeComparisonResults에서 직접 로드');
       
       try {
         // employeeId와 month로 필터링하여 actualWorkHours 합산
@@ -695,6 +695,7 @@ const PayrollCalculation: React.FC<PayrollCalculationProps> = ({
             실제날짜month: docMonth,
             date: docDate.toISOString().split('T')[0],
             actualWorkHours: data.actualWorkHours,
+            branchId: data.branchId,
             month일치: data.month === selectedMonth,
             날짜일치: docMonth === selectedMonth
           });
@@ -744,6 +745,13 @@ const PayrollCalculation: React.FC<PayrollCalculationProps> = ({
               return isInMonth;
             });
           
+          console.log('🔥 필터링 후 스케줄 데이터:', allSchedules.length, '건');
+          console.log('🔥 필터링 전 각 레코드:', allSchedules.map(s => ({
+            date: s.date.toISOString().split('T')[0],
+            branchId: s.branchId,
+            actualWorkHours: s.actualWorkHours
+          })));
+          
           // 🔧 같은 날짜/지점 기준으로 합산 (근무시간비교와 동일한 로직)
           // 날짜+지점을 키로 하여 같은 날짜/지점의 actualWorkHours를 합산
           const mergedByDateBranch = new Map<string, typeof allSchedules[number]>();
@@ -756,10 +764,13 @@ const PayrollCalculation: React.FC<PayrollCalculationProps> = ({
             if (!existing) {
               // 첫 레코드는 그대로 저장
               mergedByDateBranch.set(key, { ...row });
+              console.log(`🔥 첫 레코드 추가: ${dateStr}, ${row.branchId || '지점없음'}, ${row.actualWorkHours}시간`);
             } else {
               // 같은 날짜/지점의 데이터는 actualWorkHours 합산
+              const prevHours = existing.actualWorkHours;
               existing.actualWorkHours = (existing.actualWorkHours || 0) + (row.actualWorkHours || 0);
               existing.breakTime = (existing.breakTime || 0) + (row.breakTime || 0);
+              console.log(`🔥 합산: ${dateStr}, ${row.branchId || '지점없음'}, ${prevHours}시간 + ${row.actualWorkHours}시간 = ${existing.actualWorkHours}시간`);
               
               // 수동 입력이 하나라도 있으면 수동 입력으로 표시
               if (row.isManual) {
@@ -779,12 +790,13 @@ const PayrollCalculation: React.FC<PayrollCalculationProps> = ({
           schedulesToUse = Array.from(mergedByDateBranch.values()).map(({ docId, posTimeRange, isManual, ...rest }) => rest) as Schedule[];
           
           if (allSchedules.length !== schedulesToUse.length) {
-            console.log(`🔥 calculatePayroll - 중복 데이터 제거: ${allSchedules.length}건 → ${schedulesToUse.length}건`);
+            console.log(`🔥 calculatePayroll - 중복 데이터 합산: ${allSchedules.length}건 → ${schedulesToUse.length}건`);
           }
           
-          console.log('🔥 직접 로드된 스케줄 데이터:', schedulesToUse.length, '건');
+          console.log('🔥 최종 합산된 스케줄 데이터:', schedulesToUse.length, '건');
           console.log('🔥 각 레코드 상세:', schedulesToUse.map(s => ({
             date: s.date.toISOString().split('T')[0],
+            branchId: s.branchId,
             actualWorkHours: s.actualWorkHours,
             branchName: s.branchName,
             month: s.date.getMonth() + 1,

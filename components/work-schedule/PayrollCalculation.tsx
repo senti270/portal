@@ -498,32 +498,39 @@ const PayrollCalculation: React.FC<PayrollCalculationProps> = ({
           return isInMonth;
         });
       
-      // 🔧 같은 날짜/지점/POS 시각 기준 중복 제거 (지점별로 분리하여 처리)
-      const dedupMap = new Map<string, typeof allSchedules[number]>();
+      // 🔧 같은 날짜/지점 기준으로 합산 (근무시간비교와 동일한 로직)
+      // 날짜+지점을 키로 하여 같은 날짜/지점의 actualWorkHours를 합산
+      const aggregatedSchedules = new Map<string, typeof allSchedules[number]>();
+      
       for (const row of allSchedules) {
         const dateStr = row.date.toISOString().split('T')[0];
-        // 🔥 branchId를 키에 포함하여 같은 날짜에 다른 지점에서 일한 경우도 모두 포함
-        const key = `${dateStr}|${row.branchId || ''}|${row.posTimeRange || ''}`;
-        const prev = dedupMap.get(key);
-        if (!prev) {
-          dedupMap.set(key, row);
+        const key = `${dateStr}|${row.branchId || ''}`;
+        
+        const existing = aggregatedSchedules.get(key);
+        if (!existing) {
+          // 첫 레코드는 그대로 저장
+          aggregatedSchedules.set(key, { ...row });
         } else {
-          // 1순위: 수동 입력(isManual) 우선
-          if (row.isManual && !prev.isManual) {
-            dedupMap.set(key, row);
-            continue;
+          // 같은 날짜/지점의 데이터는 actualWorkHours 합산
+          existing.actualWorkHours = (existing.actualWorkHours || 0) + (row.actualWorkHours || 0);
+          existing.breakTime = (existing.breakTime || 0) + (row.breakTime || 0);
+          
+          // 수동 입력이 하나라도 있으면 수동 입력으로 표시
+          if (row.isManual) {
+            existing.isManual = true;
           }
-          if (!row.isManual && prev.isManual) {
-            continue;
-          }
-          // 2순위: actualWorkHours가 더 큰 쪽 우선
-          if (row.actualWorkHours > prev.actualWorkHours) {
-            dedupMap.set(key, row);
+          
+          // posTimeRange는 첫 번째 것으로 유지 (또는 합치기)
+          if (!existing.posTimeRange && row.posTimeRange) {
+            existing.posTimeRange = row.posTimeRange;
+          } else if (existing.posTimeRange && row.posTimeRange && existing.posTimeRange !== row.posTimeRange) {
+            // 여러 범위가 있으면 콤마로 연결 (선택사항)
+            // existing.posTimeRange = `${existing.posTimeRange}, ${row.posTimeRange}`;
           }
         }
       }
       
-      const schedulesData = Array.from(dedupMap.values()).map(({ docId, posTimeRange, isManual, ...rest }) => rest) as Schedule[];
+      const schedulesData = Array.from(aggregatedSchedules.values()).map(({ docId, posTimeRange, isManual, ...rest }) => rest) as Schedule[];
       
       if (allSchedules.length !== schedulesData.length) {
         console.log(`🔥 중복 데이터 제거: ${allSchedules.length}건 → ${schedulesData.length}건`);

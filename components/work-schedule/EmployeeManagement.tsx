@@ -1595,6 +1595,135 @@ export default function EmployeeManagement({ userBranch, isManager }: EmployeeMa
     return number.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
   };
 
+  // 최저시급 업데이트: 시급이 10320 미만인 직원들에게 2026.1.1 기준 새 계약 추가
+  const updateMinimumWageContracts = async () => {
+    if (!confirm('시급이 10,320원 미만인 직원들에게 2026.1.1 기준 새 계약을 추가하시겠습니까?')) {
+      return;
+    }
+
+    try {
+      const MINIMUM_WAGE = 10320;
+      const NEW_START_DATE = new Date(2026, 0, 1, 0, 0, 0, 0); // 2026.1.1
+      
+      // 모든 직원 로드
+      const employeesSnapshot = await getDocs(collection(db, 'employees'));
+      const allEmployees = employeesSnapshot.docs.map(doc => ({
+        id: doc.id,
+        name: doc.data().name || '',
+        ...doc.data()
+      } as { id: string; name: string; [key: string]: any }));
+
+      // 모든 계약 로드
+      const contractsSnapshot = await getDocs(collection(db, 'employmentContracts'));
+      const allContracts = contractsSnapshot.docs.map(doc => ({
+        id: doc.id,
+        employeeId: doc.data().employeeId,
+        startDate: doc.data().startDate?.toDate ? doc.data().startDate.toDate() : new Date(doc.data().startDate),
+        employmentType: doc.data().employmentType,
+        salaryType: doc.data().salaryType,
+        salaryAmount: doc.data().salaryAmount || 0,
+        weeklyWorkHours: doc.data().weeklyWorkHours,
+        includeHolidayAllowance: doc.data().includeHolidayAllowance || false,
+        ...doc.data()
+      }));
+
+      // 직원별로 최신 계약 찾기
+      const employeeLatestContracts = new Map<string, typeof allContracts[0]>();
+      allContracts.forEach(contract => {
+        const existing = employeeLatestContracts.get(contract.employeeId);
+        if (!existing || contract.startDate.getTime() > existing.startDate.getTime()) {
+          employeeLatestContracts.set(contract.employeeId, contract);
+        }
+      });
+
+      // 시급이 10320 미만이고 시급제인 직원 찾기
+      const employeesToUpdate: Array<{
+        employeeId: string;
+        employeeName: string;
+        currentContract: typeof allContracts[0];
+      }> = [];
+
+      allEmployees.forEach(employee => {
+        const latestContract = employeeLatestContracts.get(employee.id);
+        if (latestContract) {
+          const isHourly = latestContract.salaryType === 'hourly' || latestContract.salaryType === '시급';
+          const salaryAmount = latestContract.salaryAmount || 0;
+          
+          if (isHourly && salaryAmount > 0 && salaryAmount < MINIMUM_WAGE) {
+            // 이미 2026.1.1 기준일로 계약이 있는지 확인
+            const has2026Contract = allContracts.some(c => 
+              c.employeeId === employee.id &&
+              c.startDate.getFullYear() === 2026 &&
+              c.startDate.getMonth() === 0 &&
+              c.startDate.getDate() === 1
+            );
+
+            if (!has2026Contract) {
+              employeesToUpdate.push({
+                employeeId: employee.id,
+                employeeName: employee.name || '',
+                currentContract: latestContract
+              });
+            }
+          }
+        }
+      });
+
+      if (employeesToUpdate.length === 0) {
+        alert('시급이 10,320원 미만인 직원이 없거나 이미 2026.1.1 기준 계약이 추가되어 있습니다.');
+        return;
+      }
+
+      // 확인 메시지
+      const employeeNames = employeesToUpdate.map(e => e.employeeName).join(', ');
+      if (!confirm(`다음 ${employeesToUpdate.length}명의 직원에게 새 계약을 추가합니다:\n\n${employeeNames}\n\n계속하시겠습니까?`)) {
+        return;
+      }
+
+      // 새 계약 추가
+      let successCount = 0;
+      let failCount = 0;
+      const failedEmployees: string[] = [];
+
+      for (const { employeeId, employeeName, currentContract } of employeesToUpdate) {
+        try {
+          const newContractData = {
+            employeeId: employeeId,
+            startDate: NEW_START_DATE,
+            employmentType: currentContract.employmentType || '근로소득',
+            salaryType: currentContract.salaryType || 'hourly',
+            salaryAmount: MINIMUM_WAGE, // 시급만 10320으로 변경
+            weeklyWorkHours: currentContract.weeklyWorkHours || 40,
+            includeHolidayAllowance: currentContract.includeHolidayAllowance || false,
+            createdAt: new Date(),
+            updatedAt: new Date()
+          };
+
+          await addDoc(collection(db, 'employmentContracts'), newContractData);
+          successCount++;
+          console.log(`✅ ${employeeName}에게 새 계약 추가 완료`);
+        } catch (error) {
+          failCount++;
+          failedEmployees.push(employeeName);
+          console.error(`❌ ${employeeName} 계약 추가 실패:`, error);
+        }
+      }
+
+      // 결과 표시
+      let message = `작업 완료!\n\n성공: ${successCount}명`;
+      if (failCount > 0) {
+        message += `\n실패: ${failCount}명\n${failedEmployees.join(', ')}`;
+      }
+      alert(message);
+
+      // 데이터 새로고침
+      await loadEmployees();
+    } catch (error) {
+      console.error('최저시급 업데이트 중 오류:', error);
+      alert('최저시급 업데이트 중 오류가 발생했습니다.');
+    }
+  };
+
   // 숫자 포맷팅 해제 함수 (쉼표 제거)
   const unformatNumber = (value: string) => {
     return value.replace(/,/g, '');
@@ -1898,6 +2027,12 @@ export default function EmployeeManagement({ userBranch, isManager }: EmployeeMa
               은행코드 초기화
             </button>
           )}
+          <button
+            onClick={updateMinimumWageContracts}
+            className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 font-medium"
+          >
+            최저시급 업데이트 (2026.1.1)
+          </button>
           <button
             onClick={() => {
               console.log('직원 추가 버튼 클릭됨');

@@ -665,19 +665,35 @@ export class PayrollCalculator {
       return { probationHours, regularHours };
     }
 
+    const probationStartOnly = new Date(this.employee.probationStartDate!.toISOString().split('T')[0]);
+    const probationEndOnly = new Date(this.employee.probationEndDate!.toISOString().split('T')[0]);
+    
+    console.log('🔥 separateProbationHours 시작:', {
+      employeeName: this.employee.name,
+      probationStartDate: probationStartOnly.toISOString().split('T')[0],
+      probationEndDate: probationEndOnly.toISOString().split('T')[0],
+      schedulesCount: this.schedules.length
+    });
+
     // 수습기간 판단
-    this.schedules.forEach(schedule => {
+    this.schedules.forEach((schedule, index) => {
       const scheduleDateOnly = new Date(schedule.date.toISOString().split('T')[0]);
-      const probationStartOnly = new Date(this.employee.probationStartDate!.toISOString().split('T')[0]);
-      const probationEndOnly = new Date(this.employee.probationEndDate!.toISOString().split('T')[0]);
       
       const isInProbation = scheduleDateOnly >= probationStartOnly && scheduleDateOnly <= probationEndOnly;
       
       if (isInProbation) {
         probationHours += schedule.actualWorkHours;
+        console.log(`🔥 수습시간 추가 [${index}]: ${scheduleDateOnly.toISOString().split('T')[0]}, ${schedule.actualWorkHours}시간 (누적: ${probationHours}시간)`);
       } else {
         regularHours += schedule.actualWorkHours;
+        console.log(`🔥 정규시간 추가 [${index}]: ${scheduleDateOnly.toISOString().split('T')[0]}, ${schedule.actualWorkHours}시간 (누적: ${regularHours}시간)`);
       }
+    });
+
+    console.log('🔥 separateProbationHours 결과:', {
+      probationHours,
+      regularHours,
+      total: probationHours + regularHours
     });
 
     return { probationHours, regularHours };

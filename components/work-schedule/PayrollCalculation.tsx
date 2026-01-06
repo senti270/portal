@@ -891,6 +891,17 @@ const PayrollCalculation: React.FC<PayrollCalculationProps> = ({
       }
 
       // 스케줄 데이터 처리 (월급직의 경우 빈 배열)
+      console.log('🔥 schedulesToUse 상태:', {
+        length: schedulesToUse.length,
+        totalHours: schedulesToUse.reduce((sum, s) => sum + (s.actualWorkHours || 0), 0),
+        items: schedulesToUse.map(s => ({
+          date: s.date.toISOString().split('T')[0],
+          actualWorkHours: s.actualWorkHours,
+          branchId: s.branchId,
+          branchName: s.branchName
+        }))
+      });
+      
       const scheduleData = schedulesToUse.length > 0 ? 
         await Promise.all(schedulesToUse.map(async (schedule) => {
           let branchName = schedule.branchName;
@@ -918,6 +929,17 @@ const PayrollCalculation: React.FC<PayrollCalculationProps> = ({
             branchName: branchName || '지점명 없음'
           };
         })) : [];
+      
+      console.log('🔥 scheduleData 변환 후:', {
+        length: scheduleData.length,
+        totalHours: scheduleData.reduce((sum, s) => sum + (s.actualWorkHours || 0), 0),
+        items: scheduleData.map(s => ({
+          date: s.date.toISOString().split('T')[0],
+          actualWorkHours: s.actualWorkHours,
+          branchId: s.branchId,
+          branchName: s.branchName
+        }))
+      });
 
       // 🔥 중도 계약 변경이 있는 경우: 날짜별로 분할 계산
       if (contracts.length > 1 || (contracts.length === 1 && contracts[0].startDate)) {
@@ -1048,6 +1070,16 @@ const PayrollCalculation: React.FC<PayrollCalculationProps> = ({
         contractData,
         scheduleData: scheduleData.length
       });
+      
+      // 🔥 전달되는 스케줄 데이터 상세 로그
+      console.log('🔥 PayrollCalculator에 전달되는 scheduleData 상세:', scheduleData.map(s => ({
+        date: s.date.toISOString().split('T')[0],
+        branchId: s.branchId,
+        branchName: s.branchName,
+        actualWorkHours: s.actualWorkHours
+      })));
+      const totalScheduleHours = scheduleData.reduce((sum, s) => sum + (s.actualWorkHours || 0), 0);
+      console.log('🔥 PayrollCalculator에 전달되는 총 근무시간:', totalScheduleHours, '시간');
 
       // PayrollCalculator로 계산
       const calculator = new PayrollCalculator(employeeData, contractData, scheduleData);

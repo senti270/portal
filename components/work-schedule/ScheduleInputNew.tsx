@@ -834,29 +834,54 @@ export default function ScheduleInputNew({ selectedBranchId, onWeekChange }: Sch
       const workingEmployees = employeesData.filter(emp => {
         // 스케줄 미노출 직원 제외
         if (emp.hideFromSchedule) {
+          console.log(`🔥 직원 제외 (스케줄 미노출): ${emp.name}`);
           return false;
         }
         
         // 입사일 체크 (입사일이 없으면 제한 없음)
         if (emp.hireDate && emp.hireDate > weekEnd) {
+          console.log(`🔥 직원 제외 (입사일 이후): ${emp.name}, 입사일: ${emp.hireDate.toISOString().split('T')[0]}, 주간 종료: ${weekEnd.toISOString().split('T')[0]}`);
           return false; // 주간 종료일 이후 입사 -> 제외
         }
         
         // 퇴사일 체크 (퇴사일이 없으면 제한 없음)
         if (emp.resignationDate && emp.resignationDate < weekStart) {
+          console.log(`🔥 직원 제외 (퇴사일 이전): ${emp.name}, 퇴사일: ${emp.resignationDate.toISOString().split('T')[0]}, 주간 시작: ${weekStart.toISOString().split('T')[0]}`);
           return false; // 주간 시작일 이전 퇴사 -> 제외
         }
         
         return true; // 해당 주간에 근무 중
       });
       
+      console.log('🔥 해당 주간 근무 직원:', {
+        전체직원: employeesData.length,
+        근무중: workingEmployees.length,
+        근무중직원명단: workingEmployees.map(e => ({
+          name: e.name,
+          branchNames: e.branchNames,
+          hireDate: e.hireDate?.toISOString().split('T')[0],
+          resignationDate: e.resignationDate?.toISOString().split('T')[0],
+          hideFromSchedule: e.hideFromSchedule
+        }))
+      });
+      
       // 지점별 필터링
       const filteredEmployees = selectedBranchId 
         ? workingEmployees.filter(emp => {
             const selectedBranch = branches.find(b => b.id === selectedBranchId);
-            return selectedBranch && emp.branchNames?.includes(selectedBranch.name);
+            const isIncluded = selectedBranch && emp.branchNames?.includes(selectedBranch.name);
+            if (!isIncluded) {
+              console.log(`🔥 직원 제외 (지점 불일치): ${emp.name}, 선택된 지점: ${selectedBranch?.name}, 직원 지점: ${emp.branchNames}`);
+            }
+            return isIncluded;
           })
         : workingEmployees;
+      
+      console.log('🔥 최종 필터링된 직원:', {
+        선택된지점: selectedBranchId ? branches.find(b => b.id === selectedBranchId)?.name : '전체',
+        필터링후: filteredEmployees.length,
+        필터링된직원명단: filteredEmployees.map(e => e.name)
+      });
       
       setEmployees(filteredEmployees);
     } catch (error) {

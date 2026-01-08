@@ -415,11 +415,15 @@ export default function EmployeeManagement({ userBranch, isManager }: EmployeeMa
           probationEndDate: data.probationEndDate?.toDate ? data.probationEndDate.toDate() : undefined,
           probationPeriod: data.probationPeriod || 3,
           isOnProbation: data.isOnProbation || false,
+          // 스케줄 노출 여부
+          hideFromSchedule: data.hideFromSchedule || false,
           // 지점 정보 (표시용)
           branchNames: branchNames,
           // 대표지점 정보
           primaryBranchId: data.primaryBranchId || null,
           primaryBranchName: data.primaryBranchName || null,
+          // 메모
+          memo: data.memo || '',
           // 인증 정보 (카카오톡 로그인용)
           firebaseUid: data.firebaseUid || undefined,
           kakaoId: data.kakaoId || undefined,

@@ -1,7 +1,7 @@
 ﻿'use client';
 
 import React, { useState, useEffect } from 'react';
-import { collection, addDoc, getDocs, getDoc, updateDoc, deleteDoc, doc, query, where } from 'firebase/firestore';
+import { collection, addDoc, getDocs, getDoc, updateDoc, deleteDoc, doc, query, where, writeBatch } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
 import { db, storage } from '@/lib/firebase';
 import DateInput from '@/components/work-schedule/DateInput';
@@ -968,6 +968,11 @@ export default function EmployeeManagement({ userBranch, isManager }: EmployeeMa
         console.log('branches 배열:', branches);
         console.log('primaryBranchId로 찾은 지점:', primaryBranch);
         
+        // 이름 변경 여부 확인
+        const oldName = editingEmployee.name;
+        const newName = formData.name.trim();
+        const nameChanged = oldName !== newName;
+        
         const updateData: Record<string, unknown> = {
           ...formData,
           email: formData.email || '',
@@ -990,8 +995,16 @@ export default function EmployeeManagement({ userBranch, isManager }: EmployeeMa
         console.log('업데이트할 데이터:', updateData);
         console.log('대표지점 ID:', primaryBranchId);
         console.log('대표지점 이름:', primaryBranch?.name);
+        console.log('이름 변경 여부:', nameChanged, `"${oldName}" → "${newName}"`);
         
+        // employees 컬렉션 업데이트
         await updateDoc(employeeRef, updateData);
+        
+        // 이름이 변경된 경우 관련 컬렉션의 employeeName 필드도 업데이트
+        if (nameChanged) {
+          console.log('🔥 직원 이름이 변경되었습니다. 관련 컬렉션 업데이트 시작...');
+          await updateEmployeeNameInAllCollections(editingEmployee.id, newName);
+        }
         
         // 직원-지점 관계 업데이트
         await updateEmployeeBranches(editingEmployee.id, selectedBranches);

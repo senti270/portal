@@ -933,6 +933,81 @@ export default function EmployeeManagement({ userBranch, isManager }: EmployeeMa
     }
   };
 
+  // 직원 이름 변경 시 관련 컬렉션의 employeeName 필드 업데이트
+  const updateEmployeeNameInAllCollections = async (employeeId: string, newName: string) => {
+    try {
+      console.log(`🔥 직원명 변경 시작: employeeId=${employeeId}, newName=${newName}`);
+      
+      // employeeName을 저장하는 컬렉션 목록
+      const collectionsToUpdate = [
+        'schedules',
+        'workTimeComparisonResults',
+        'confirmedPayrolls',
+        'employeeReviewStatus',
+        'attendanceRecords',
+        'overtimeRecords',
+        'employeeMemos',
+        'actualWorkRecords'
+      ];
+      
+      let totalUpdated = 0;
+      
+      for (const collectionName of collectionsToUpdate) {
+        try {
+          console.log(`📁 ${collectionName} 컬렉션 처리 중...`);
+          
+          // employeeId로 해당 컬렉션의 모든 문서 조회
+          const q = query(
+            collection(db, collectionName),
+            where('employeeId', '==', employeeId)
+          );
+          
+          const snapshot = await getDocs(q);
+          const docs = snapshot.docs;
+          
+          if (docs.length === 0) {
+            console.log(`  ✅ ${collectionName}: 변경할 문서 없음`);
+            continue;
+          }
+          
+          console.log(`  📝 ${collectionName}: ${docs.length}개 문서 발견`);
+          
+          // 배치 업데이트 (최대 500개씩)
+          const batch = writeBatch(db);
+          let batchCount = 0;
+          
+          for (const docSnapshot of docs) {
+            batch.update(docSnapshot.ref, { employeeName: newName });
+            batchCount++;
+            
+            // Firestore 배치 제한 (500개)에 도달하면 커밋
+            if (batchCount >= 500) {
+              await batch.commit();
+              console.log(`    ✅ ${batchCount}개 문서 업데이트 완료`);
+              batchCount = 0;
+            }
+          }
+          
+          // 남은 문서들 커밋
+          if (batchCount > 0) {
+            await batch.commit();
+            console.log(`    ✅ ${batchCount}개 문서 업데이트 완료`);
+          }
+          
+          totalUpdated += docs.length;
+        } catch (collectionError) {
+          console.error(`  ❌ ${collectionName} 컬렉션 업데이트 실패:`, collectionError);
+          // 하나의 컬렉션 업데이트 실패해도 다른 컬렉션은 계속 업데이트
+        }
+      }
+      
+      console.log(`🎉 직원명 변경 완료! 총 ${totalUpdated}개 문서가 업데이트되었습니다.`);
+    } catch (error) {
+      console.error('직원명 변경 중 오류:', error);
+      throw error;
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     console.log('직원 폼 제출됨:', formData);

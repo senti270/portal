@@ -973,7 +973,7 @@ export default function EmployeeManagement({ userBranch, isManager }: EmployeeMa
           console.log(`  📝 ${collectionName}: ${docs.length}개 문서 발견`);
           
           // 배치 업데이트 (최대 500개씩)
-          const batch = writeBatch(db);
+          let batch = writeBatch(db);
           let batchCount = 0;
           
           for (const docSnapshot of docs) {
@@ -985,6 +985,7 @@ export default function EmployeeManagement({ userBranch, isManager }: EmployeeMa
               await batch.commit();
               console.log(`    ✅ ${batchCount}개 문서 업데이트 완료`);
               batchCount = 0;
+              batch = writeBatch(db); // 새로운 배치 생성
             }
           }
           

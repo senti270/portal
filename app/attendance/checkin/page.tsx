@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { collection, query, where, getDocs, addDoc, Timestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
@@ -8,7 +8,7 @@ import { EmployeeScheduleInfo, AttendanceRecord } from '@/types/attendance';
 import { checkAttendanceStatus, parseTimeString, formatDate } from '@/lib/attendance-utils';
 import { toLocalDate, toLocalDateString } from '@/utils/work-schedule/dateUtils';
 
-export default function CheckInPage() {
+function CheckInPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const branchId = searchParams.get('branchId') || ''; // 나중에 매장별 접근 제어 시 사용

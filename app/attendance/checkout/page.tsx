@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { collection, query, where, getDocs, addDoc, Timestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
@@ -8,7 +8,7 @@ import { EmployeeScheduleInfo, AttendanceRecord } from '@/types/attendance';
 import { checkAttendanceStatus, parseTimeString, formatDate } from '@/lib/attendance-utils';
 import { toLocalDate, toLocalDateString } from '@/utils/work-schedule/dateUtils';
 
-export default function CheckOutPage() {
+function CheckOutPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const branchId = searchParams.get('branchId') || '';
@@ -533,5 +533,17 @@ function CheckoutInfoScreen({
   }
 
   return null;
+}
+
+export default function CheckOutPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gradient-to-br from-orange-50 to-red-100 flex items-center justify-center">
+        <div className="text-3xl font-bold text-gray-700">로딩 중...</div>
+      </div>
+    }>
+      <CheckOutPageContent />
+    </Suspense>
+  );
 }
 

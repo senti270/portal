@@ -122,64 +122,64 @@ function CheckInPageContent() {
       
       setEmployeesWithSchedule(Array.from(employeeMap.values()));
       
-      // 스케줄 없는 직원 조회 (지점별 필터링)
+      // 스케줄 없는 직원 조회 (해당 지점에 소속되어 있지만 오늘 스케줄이 없는 직원)
       const allEmployeesSnapshot = await getDocs(collection(db, 'employees'));
       const withoutSchedule: EmployeeScheduleInfo[] = [];
       
-      // employeeBranches 컬렉션에서 지점 관계 확인
-      let employeeBranchMap = new Map<string, string[]>();
-      let branchesSnapshotForFilter: any = null;
+      // employeeBranches 컬렉션에서 해당 지점에 소속된 직원 확인
+      let branchEmployeeIds = new Set<string>();
       
       if (targetBranchId) {
-        // 지점 정보 다시 가져오기 (필터링용)
-        try {
-          branchesSnapshotForFilter = await getDocs(collection(db, 'branches'));
-        } catch (e) {
-          console.log('지점 정보 로드 실패');
-        }
-        
         try {
           const employeeBranchesSnapshot = await getDocs(collection(db, 'employeeBranches'));
           employeeBranchesSnapshot.docs.forEach(doc => {
             const data = doc.data();
-            if (data.branchId === targetBranchId && data.isActive) {
-              const employeeId = data.employeeId;
-              if (!employeeBranchMap.has(employeeId)) {
-                employeeBranchMap.set(employeeId, []);
-              }
-              employeeBranchMap.get(employeeId)!.push(data.branchId);
+            // 해당 지점에 소속되어 있고 활성화된 직원만
+            if (data.branchId === targetBranchId && data.isActive === true) {
+              branchEmployeeIds.add(data.employeeId);
             }
           });
         } catch (e) {
-          console.log('employeeBranches 조회 실패, 직원의 branchNames 필드 사용');
+          console.log('employeeBranches 조회 실패, branchNames 필드 사용');
         }
+        
+        // employeeBranches에서 찾지 못한 경우 branchNames로 대체
+        if (branchEmployeeIds.size === 0) {
+          try {
+            const branchesSnapshotForFilter = await getDocs(collection(db, 'branches'));
+            const targetBranch = branchesSnapshotForFilter.docs.find((b: any) => b.id === targetBranchId);
+            
+            if (targetBranch) {
+              const targetBranchName = targetBranch.data().name;
+              allEmployeesSnapshot.docs.forEach(doc => {
+                const data = doc.data();
+                const branchNames = data.branchNames;
+                if (Array.isArray(branchNames) && branchNames.includes(targetBranchName)) {
+                  branchEmployeeIds.add(doc.id);
+                }
+              });
+            }
+          } catch (e) {
+            console.log('branchNames로 지점 직원 찾기 실패');
+          }
+        }
+      } else {
+        // 지점 ID가 없으면 모든 직원을 지점 직원으로 간주
+        allEmployeesSnapshot.docs.forEach(doc => {
+          branchEmployeeIds.add(doc.id);
+        });
       }
       
+      // 해당 지점에 소속되어 있지만 오늘 스케줄이 없는 직원만 추가
       allEmployeesSnapshot.docs.forEach(doc => {
-        const data = doc.data();
         const employeeId = doc.id;
+        const data = doc.data();
         
         // 이미 스케줄이 있는 직원은 제외
         if (scheduledEmployeeIds.has(employeeId)) return;
         
-        // 지점 필터링
-        if (targetBranchId) {
-          // employeeBranches에서 확인
-          const branchIds = employeeBranchMap.get(employeeId);
-          if (branchIds && branchIds.includes(targetBranchId)) {
-            // 해당 지점 직원
-          } else if (data.branchNames && Array.isArray(data.branchNames) && branchesSnapshotForFilter) {
-            // branchNames 배열에서 확인
-            const branchNames = data.branchNames as string[];
-            const targetBranch = branchesSnapshotForFilter.docs.find((b: any) => b.id === targetBranchId);
-            if (!targetBranch || !branchNames.includes(targetBranch.data().name)) {
-              return; // 해당 지점 직원이 아님
-            }
-          } else {
-            // 지점 정보가 없으면 스킵 (안전한 처리)
-            return;
-          }
-        }
+        // 해당 지점에 소속되어 있는지 확인
+        if (targetBranchId && !branchEmployeeIds.has(employeeId)) return;
         
         withoutSchedule.push({
           employeeId,

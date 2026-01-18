@@ -1,10 +1,21 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 
 export default function AttendanceMainPage() {
   const router = useRouter();
+  const [currentTime, setCurrentTime] = useState(new Date());
+
+  useEffect(() => {
+    // 1초마다 시간 업데이트
+    const timer = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 1000);
+
+    // 컴포넌트 언마운트 시 타이머 정리
+    return () => clearInterval(timer);
+  }, []);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
@@ -42,7 +53,7 @@ export default function AttendanceMainPage() {
         {/* 현재 시간 표시 */}
         <div className="mt-12 text-center">
           <div className="text-2xl text-gray-600 font-semibold">
-            {new Date().toLocaleString('ko-KR', {
+            {currentTime.toLocaleString('ko-KR', {
               year: 'numeric',
               month: 'long',
               day: 'numeric',

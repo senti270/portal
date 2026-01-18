@@ -632,7 +632,7 @@ function ScheduleInfoScreen({
             </p>
           )}
           <p className="text-3xl font-bold text-green-600 mb-8">
-            정각 출근 멋지세요!
+            정각출근 감사합니다 :)
           </p>
           <button
             onClick={onConfirm}

@@ -669,7 +669,7 @@ function ScheduleInfoScreen({
                 <div className="text-2xl font-semibold text-gray-600 mb-4">분</div>
                 <div className="flex flex-col items-center gap-3">
                   <button
-                    onClick={() => handleTimeChange('minute', 5)}
+                    onClick={() => handleTimeChange('minute', 1)}
                     className="w-20 h-20 bg-green-100 hover:bg-green-200 active:bg-green-300 text-green-600 rounded-2xl shadow-lg text-4xl font-bold transition-all duration-200 active:scale-95"
                   >
                     ▲
@@ -680,7 +680,7 @@ function ScheduleInfoScreen({
                     </span>
                   </div>
                   <button
-                    onClick={() => handleTimeChange('minute', -5)}
+                    onClick={() => handleTimeChange('minute', -1)}
                     className="w-20 h-20 bg-green-100 hover:bg-green-200 active:bg-green-300 text-green-600 rounded-2xl shadow-lg text-4xl font-bold transition-all duration-200 active:scale-95"
                   >
                     ▼

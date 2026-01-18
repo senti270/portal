@@ -27,7 +27,16 @@ function CheckInPageContent() {
   const [manualCheckInTime, setManualCheckInTime] = useState('');
 
   useEffect(() => {
+    // 초기 로딩
     loadEmployees();
+    
+    // 5분마다 데이터 새로고침 (스케줄 변경 시 반영)
+    const refreshInterval = setInterval(() => {
+      loadEmployees();
+    }, 5 * 60 * 1000); // 5분 = 5 * 60 * 1000ms
+    
+    // 컴포넌트 언마운트 시 인터벌 정리
+    return () => clearInterval(refreshInterval);
   }, [branchId]);
 
   const loadEmployees = async () => {

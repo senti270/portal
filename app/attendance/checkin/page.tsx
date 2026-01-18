@@ -332,35 +332,51 @@ function CheckInPageContent() {
         }
       }
 
-      // 출근 기록 저장
-      const attendanceRecord: Omit<AttendanceRecord, 'id'> = {
+      // 출근 기록 저장 (Firestore에 저장할 데이터)
+      const recordData: any = {
         employeeId: selectedEmployee.employeeId,
         employeeName: selectedEmployee.employeeName,
         branchId: targetBranchId || branchId || 'unknown',
         branchName: branchName || '',
-        date: todayStr as any,
+        date: todayStr, // YYYY-MM-DD 형식 문자열
         type: 'checkin',
-        scheduledStartTime: selectedEmployee.scheduledStartTime,
-        scheduledEndTime: selectedEmployee.scheduledEndTime,
-        scheduledBreakTime: selectedEmployee.scheduledBreakTime,
-        actualTime: actualCheckInTime,
-        actualTimeManual: manualCheckInTime ? actualCheckInTime : undefined,
+        actualTime: Timestamp.fromDate(actualCheckInTime),
         status,
-        lateMinutes: status === 'late' ? lateMinutes : undefined,
-        earlyMinutes: status === 'early' ? earlyMinutes : undefined,
-        reason: selectedReason || undefined,
-        reasonOther: reasonOther || undefined,
-        note: note || undefined,
-        createdAt: actualTime
+        createdAt: Timestamp.fromDate(actualTime)
       };
 
-      await addDoc(collection(db, 'attendanceRecords'), {
-        ...attendanceRecord,
-        date: todayStr,
-        actualTime: Timestamp.fromDate(actualCheckInTime),
-        actualTimeManual: manualCheckInTime ? Timestamp.fromDate(actualCheckInTime) : undefined,
-        createdAt: Timestamp.fromDate(actualTime)
-      });
+      // 선택적 필드 추가
+      if (selectedEmployee.scheduledStartTime) {
+        recordData.scheduledStartTime = selectedEmployee.scheduledStartTime;
+      }
+      if (selectedEmployee.scheduledEndTime) {
+        recordData.scheduledEndTime = selectedEmployee.scheduledEndTime;
+      }
+      if (selectedEmployee.scheduledBreakTime !== undefined && selectedEmployee.scheduledBreakTime !== null) {
+        recordData.scheduledBreakTime = selectedEmployee.scheduledBreakTime;
+      }
+      if (manualCheckInTime) {
+        recordData.actualTimeManual = Timestamp.fromDate(actualCheckInTime);
+      }
+      if (status === 'late' && lateMinutes > 0) {
+        recordData.lateMinutes = lateMinutes;
+      }
+      if (status === 'early' && earlyMinutes > 0) {
+        recordData.earlyMinutes = earlyMinutes;
+      }
+      if (selectedReason) {
+        recordData.reason = selectedReason;
+      }
+      if (reasonOther) {
+        recordData.reasonOther = reasonOther;
+      }
+      if (note) {
+        recordData.note = note;
+      }
+
+      console.log('출근 기록 저장 시도:', recordData);
+      await addDoc(collection(db, 'attendanceRecords'), recordData);
+      console.log('출근 기록 저장 성공');
 
       // 출근 기록 업데이트 후 목록 상태 업데이트
       const checkInTimeStr = actualCheckInTime.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' });
@@ -370,9 +386,20 @@ function CheckInPageContent() {
       
       alert('출근 기록이 완료되었습니다.');
       router.push('/attendance');
-    } catch (error) {
+    } catch (error: any) {
       console.error('출근 기록 저장 실패:', error);
-      alert('출근 기록 저장 중 오류가 발생했습니다.');
+      console.error('에러 상세:', {
+        message: error?.message,
+        code: error?.code,
+        stack: error?.stack,
+        selectedEmployee,
+        attendanceRecord: {
+          employeeId: selectedEmployee.employeeId,
+          date: todayStr,
+          type: 'checkin'
+        }
+      });
+      alert(`출근 기록 저장 중 오류가 발생했습니다.\n${error?.message || '알 수 없는 오류'}`);
     }
   };
 

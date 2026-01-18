@@ -93,6 +93,17 @@ function CheckInPageContent() {
       const employeeMap = new Map<string, EmployeeScheduleInfo>();
       const scheduledEmployeeIds = new Set<string>();
       
+      // 직원 정보 조회 (퇴사일 확인용)
+      const employeesSnapshot = await getDocs(collection(db, 'employees'));
+      const employeeResignationMap = new Map<string, Date | null>();
+      employeesSnapshot.docs.forEach(doc => {
+        const data = doc.data();
+        const resignationDate = data.resignationDate?.toDate 
+          ? data.resignationDate.toDate() 
+          : (data.resignationDate ? new Date(data.resignationDate) : null);
+        employeeResignationMap.set(doc.id, resignationDate);
+      });
+      
       // 오늘 날짜 + 지점 필터링
       schedulesSnapshot.docs.forEach(doc => {
         const data = doc.data();
@@ -106,6 +117,15 @@ function CheckInPageContent() {
         if (targetBranchId && data.branchId !== targetBranchId) return;
         
         const employeeId = data.employeeId;
+        
+        // 퇴사한 직원 제외 (퇴사일이 오늘 이전이면 제외)
+        const resignationDate = employeeResignationMap.get(employeeId);
+        if (resignationDate) {
+          const resignationDateStr = formatDate(resignationDate);
+          if (resignationDateStr <= todayStr) {
+            return; // 퇴사한 직원 제외
+          }
+        }
         
         if (!employeeMap.has(employeeId)) {
           employeeMap.set(employeeId, {

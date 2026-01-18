@@ -388,16 +388,17 @@ function CheckInPageContent() {
       router.push('/attendance');
     } catch (error: any) {
       console.error('출근 기록 저장 실패:', error);
+      const today = new Date();
+      const todayStr = formatDate(today);
       console.error('에러 상세:', {
         message: error?.message,
         code: error?.code,
         stack: error?.stack,
-        selectedEmployee,
-        attendanceRecord: {
+        selectedEmployee: selectedEmployee ? {
           employeeId: selectedEmployee.employeeId,
-          date: todayStr,
-          type: 'checkin'
-        }
+          employeeName: selectedEmployee.employeeName
+        } : null,
+        date: todayStr
       });
       alert(`출근 기록 저장 중 오류가 발생했습니다.\n${error?.message || '알 수 없는 오류'}`);
     }

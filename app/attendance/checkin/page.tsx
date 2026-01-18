@@ -11,9 +11,12 @@ import { toLocalDate, toLocalDateString } from '@/utils/work-schedule/dateUtils'
 function CheckInPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const branchId = searchParams.get('branchId') || ''; // 나중에 매장별 접근 제어 시 사용
+  // 테스트용: 기본값으로 청담장어마켓 송파점 사용 (나중에 지점 ID로 변경 필요)
+  const branchId = searchParams.get('branchId') || '';
   
   const [loading, setLoading] = useState(true);
+  const [branchName, setBranchName] = useState<string>('');
+  const [targetBranchId, setTargetBranchId] = useState<string>('');
   const [employeesWithSchedule, setEmployeesWithSchedule] = useState<EmployeeScheduleInfo[]>([]);
   const [employeesWithoutSchedule, setEmployeesWithoutSchedule] = useState<EmployeeScheduleInfo[]>([]);
   const [selectedEmployee, setSelectedEmployee] = useState<EmployeeScheduleInfo | null>(null);
@@ -45,6 +48,44 @@ function CheckInPageContent() {
       const today = new Date();
       const todayStr = formatDate(today);
       
+      // 지점 정보 로드 (지점명 표시용)
+      let targetBranchId = branchId;
+      let targetBranchName = '';
+      
+      if (targetBranchId) {
+        // 지점 ID로 지점명 조회
+        try {
+          const branchDoc = await getDocs(query(collection(db, 'branches'), where('__name__', '==', targetBranchId)));
+          if (!branchDoc.empty) {
+            targetBranchName = branchDoc.docs[0].data().name || '';
+          }
+        } catch (e) {
+          // 지점 ID로 조회 실패 시 이름으로 조회
+          const branchesSnapshot = await getDocs(collection(db, 'branches'));
+          const branch = branchesSnapshot.docs.find(doc => doc.id === targetBranchId);
+          if (branch) {
+            targetBranchName = branch.data().name || '';
+          }
+        }
+      } else {
+        // 테스트용: 청담장어마켓 송파점 찾기
+        const branchesSnapshot = await getDocs(collection(db, 'branches'));
+        const testBranch = branchesSnapshot.docs.find(doc => 
+          doc.data().name?.includes('송파') || doc.data().name?.includes('청담')
+        );
+        if (testBranch) {
+          targetBranchId = testBranch.id;
+          targetBranchName = testBranch.data().name || '';
+        } else if (branchesSnapshot.docs.length > 0) {
+          // 첫 번째 지점 사용
+          targetBranchId = branchesSnapshot.docs[0].id;
+          targetBranchName = branchesSnapshot.docs[0].data().name || '';
+        }
+      }
+      
+      setBranchName(targetBranchName);
+      setTargetBranchId(targetBranchId);
+      
       // 모든 스케줄 조회 후 클라이언트에서 필터링
       const schedulesQuery = collection(db, 'schedules');
       const schedulesSnapshot = await getDocs(schedulesQuery);
@@ -52,14 +93,17 @@ function CheckInPageContent() {
       const employeeMap = new Map<string, EmployeeScheduleInfo>();
       const scheduledEmployeeIds = new Set<string>();
       
-      // 오늘 날짜 필터링 (클라이언트 사이드)
+      // 오늘 날짜 + 지점 필터링
       schedulesSnapshot.docs.forEach(doc => {
         const data = doc.data();
         const scheduleDate = toLocalDate(data.date);
         const scheduleDateStr = toLocalDateString(scheduleDate);
         
-        // 오늘 날짜인 스케줄만 포함
+        // 오늘 날짜 필터링
         if (scheduleDateStr !== todayStr) return;
+        
+        // 지점 필터링
+        if (targetBranchId && data.branchId !== targetBranchId) return;
         
         const employeeId = data.employeeId;
         
@@ -78,19 +122,70 @@ function CheckInPageContent() {
       
       setEmployeesWithSchedule(Array.from(employeeMap.values()));
       
-      // 스케줄 없는 직원 조회 (전체 직원에서 스케줄 있는 직원 제외)
-      // 나중에 지점별 필터링 추가 필요
+      // 스케줄 없는 직원 조회 (지점별 필터링)
       const allEmployeesSnapshot = await getDocs(collection(db, 'employees'));
       const withoutSchedule: EmployeeScheduleInfo[] = [];
       
-      allEmployeesSnapshot.docs.forEach(doc => {
-        if (!scheduledEmployeeIds.has(doc.id)) {
-          withoutSchedule.push({
-            employeeId: doc.id,
-            employeeName: doc.data().name || '',
-            hasSchedule: false
-          });
+      // employeeBranches 컬렉션에서 지점 관계 확인
+      let employeeBranchMap = new Map<string, string[]>();
+      let branchesSnapshotForFilter: any = null;
+      
+      if (targetBranchId) {
+        // 지점 정보 다시 가져오기 (필터링용)
+        try {
+          branchesSnapshotForFilter = await getDocs(collection(db, 'branches'));
+        } catch (e) {
+          console.log('지점 정보 로드 실패');
         }
+        
+        try {
+          const employeeBranchesSnapshot = await getDocs(collection(db, 'employeeBranches'));
+          employeeBranchesSnapshot.docs.forEach(doc => {
+            const data = doc.data();
+            if (data.branchId === targetBranchId && data.isActive) {
+              const employeeId = data.employeeId;
+              if (!employeeBranchMap.has(employeeId)) {
+                employeeBranchMap.set(employeeId, []);
+              }
+              employeeBranchMap.get(employeeId)!.push(data.branchId);
+            }
+          });
+        } catch (e) {
+          console.log('employeeBranches 조회 실패, 직원의 branchNames 필드 사용');
+        }
+      }
+      
+      allEmployeesSnapshot.docs.forEach(doc => {
+        const data = doc.data();
+        const employeeId = doc.id;
+        
+        // 이미 스케줄이 있는 직원은 제외
+        if (scheduledEmployeeIds.has(employeeId)) return;
+        
+        // 지점 필터링
+        if (targetBranchId) {
+          // employeeBranches에서 확인
+          const branchIds = employeeBranchMap.get(employeeId);
+          if (branchIds && branchIds.includes(targetBranchId)) {
+            // 해당 지점 직원
+          } else if (data.branchNames && Array.isArray(data.branchNames) && branchesSnapshotForFilter) {
+            // branchNames 배열에서 확인
+            const branchNames = data.branchNames as string[];
+            const targetBranch = branchesSnapshotForFilter.docs.find((b: any) => b.id === targetBranchId);
+            if (!targetBranch || !branchNames.includes(targetBranch.data().name)) {
+              return; // 해당 지점 직원이 아님
+            }
+          } else {
+            // 지점 정보가 없으면 스킵 (안전한 처리)
+            return;
+          }
+        }
+        
+        withoutSchedule.push({
+          employeeId,
+          employeeName: data.name || '',
+          hasSchedule: false
+        });
       });
       
       setEmployeesWithoutSchedule(withoutSchedule);
@@ -208,8 +303,8 @@ function CheckInPageContent() {
       const attendanceRecord: Omit<AttendanceRecord, 'id'> = {
         employeeId: selectedEmployee.employeeId,
         employeeName: selectedEmployee.employeeName,
-        branchId: branchId || 'unknown', // 나중에 실제 지점 ID로 변경
-        branchName: '', // 나중에 지점명 조회
+        branchId: targetBranchId || branchId || 'unknown',
+        branchName: branchName || '',
         date: todayStr as any,
         type: 'checkin',
         scheduledStartTime: selectedEmployee.scheduledStartTime,

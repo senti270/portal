@@ -362,6 +362,12 @@ function CheckInPageContent() {
         createdAt: Timestamp.fromDate(actualTime)
       });
 
+      // 출근 기록 업데이트 후 목록 상태 업데이트
+      const checkInTimeStr = actualCheckInTime.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' });
+      const updatedCheckedIn = new Map(checkedInEmployees);
+      updatedCheckedIn.set(selectedEmployee.employeeId, checkInTimeStr);
+      setCheckedInEmployees(updatedCheckedIn);
+      
       alert('출근 기록이 완료되었습니다.');
       router.push('/attendance');
     } catch (error) {

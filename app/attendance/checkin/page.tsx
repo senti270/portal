@@ -388,7 +388,14 @@ function CheckInPageContent() {
           >
             ← 뒤로
           </button>
-          <h1 className="text-4xl font-bold text-gray-800">출근 기록</h1>
+          <div className="text-center">
+            <h1 className="text-4xl font-bold text-gray-800">출근 기록</h1>
+            {branchName && (
+              <div className="text-2xl font-semibold text-blue-600 mt-2">
+                {branchName}
+              </div>
+            )}
+          </div>
           <div className="w-20"></div>
         </div>
 

@@ -512,9 +512,22 @@ function ScheduleInfoScreen({
   manualCheckInTime: string;
   setManualCheckInTime: (time: string) => void;
 }) {
-  const breakTimeDisplay = employee.scheduledBreakTime
-    ? `${Math.floor(employee.scheduledBreakTime)}분`
-    : '00분';
+  // 휴게시간을 시간 단위로 표시 (예: 2 → "2시간", 1.5 → "1시간 30분")
+  const breakTimeDisplay = (() => {
+    if (!employee.scheduledBreakTime || employee.scheduledBreakTime === 0) {
+      return '0시간';
+    }
+    const hours = Math.floor(employee.scheduledBreakTime);
+    const minutes = Math.round((employee.scheduledBreakTime - hours) * 60);
+    
+    if (hours > 0 && minutes > 0) {
+      return `${hours}시간 ${minutes}분`;
+    } else if (hours > 0) {
+      return `${hours}시간`;
+    } else {
+      return `${minutes}분`;
+    }
+  })();
 
   // 사유 입력 화면 (수동 시간 입력 후 또는 지각/일찍 출근 후)
   if (showReasonInput && !showManualTimeInput) {

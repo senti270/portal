@@ -198,6 +198,17 @@ function CheckInPageContent() {
         // 이미 스케줄이 있는 직원은 제외
         if (scheduledEmployeeIds.has(employeeId)) return;
         
+        // 퇴사한 직원 제외 (퇴사일이 오늘 이전이면 제외)
+        const resignationDate = data.resignationDate?.toDate 
+          ? data.resignationDate.toDate() 
+          : (data.resignationDate ? new Date(data.resignationDate) : null);
+        if (resignationDate) {
+          const resignationDateStr = formatDate(resignationDate);
+          if (resignationDateStr <= todayStr) {
+            return; // 퇴사한 직원 제외
+          }
+        }
+        
         // 해당 지점에 소속되어 있는지 확인
         if (targetBranchId && !branchEmployeeIds.has(employeeId)) return;
         

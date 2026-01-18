@@ -19,6 +19,8 @@ function CheckInPageContent() {
   const [targetBranchId, setTargetBranchId] = useState<string>('');
   const [employeesWithSchedule, setEmployeesWithSchedule] = useState<EmployeeScheduleInfo[]>([]);
   const [employeesWithoutSchedule, setEmployeesWithoutSchedule] = useState<EmployeeScheduleInfo[]>([]);
+  // 이미 출근한 직원 정보 (직원 ID -> 출근 시간)
+  const [checkedInEmployees, setCheckedInEmployees] = useState<Map<string, string>>(new Map());
   const [selectedEmployee, setSelectedEmployee] = useState<EmployeeScheduleInfo | null>(null);
   const [showScheduleInfo, setShowScheduleInfo] = useState(false);
   const [checkResult, setCheckResult] = useState<any>(null);
@@ -435,15 +437,33 @@ function CheckInPageContent() {
           <div className="mb-8">
             <h2 className="text-2xl font-semibold text-gray-700 mb-4">오늘 스케줄에 있는 직원목록</h2>
             <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-              {employeesWithSchedule.map((emp) => (
-                <button
-                  key={emp.employeeId}
-                  onClick={() => handleEmployeeSelect(emp)}
-                  className="h-24 bg-white rounded-2xl shadow-lg hover:shadow-xl transform transition-all duration-200 hover:scale-105 active:scale-95 flex items-center justify-center text-xl font-semibold text-gray-800"
-                >
-                  {emp.employeeName}
-                </button>
-              ))}
+              {employeesWithSchedule.map((emp) => {
+                const checkInTime = checkedInEmployees.get(emp.employeeId);
+                const isCheckedIn = !!checkInTime;
+                
+                return (
+                  <button
+                    key={emp.employeeId}
+                    onClick={() => handleEmployeeSelect(emp)}
+                    disabled={isCheckedIn}
+                    className={`h-24 rounded-2xl shadow-lg flex flex-col items-center justify-center text-xl font-semibold transition-all duration-200 ${
+                      isCheckedIn
+                        ? 'bg-gray-200 text-gray-500 cursor-not-allowed opacity-60'
+                        : 'bg-white text-gray-800 hover:shadow-xl hover:scale-105 active:scale-95'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2">
+                      {isCheckedIn && <span className="text-2xl">✓</span>}
+                      <span>{emp.employeeName}</span>
+                    </div>
+                    {isCheckedIn && (
+                      <div className="text-sm font-normal text-gray-500 mt-1">
+                        {checkInTime} 출근
+                      </div>
+                    )}
+                  </button>
+                );
+              })}
             </div>
           </div>
         )}
@@ -453,15 +473,33 @@ function CheckInPageContent() {
           <div>
             <h2 className="text-2xl font-semibold text-gray-700 mb-4">오늘 스케줄 없는 직원목록</h2>
             <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-              {employeesWithoutSchedule.map((emp) => (
-                <button
-                  key={emp.employeeId}
-                  onClick={() => handleEmployeeSelect(emp)}
-                  className="h-24 bg-gray-100 rounded-2xl shadow-lg hover:shadow-xl transform transition-all duration-200 hover:scale-105 active:scale-95 flex items-center justify-center text-xl font-semibold text-gray-600"
-                >
-                  {emp.employeeName}
-                </button>
-              ))}
+              {employeesWithoutSchedule.map((emp) => {
+                const checkInTime = checkedInEmployees.get(emp.employeeId);
+                const isCheckedIn = !!checkInTime;
+                
+                return (
+                  <button
+                    key={emp.employeeId}
+                    onClick={() => handleEmployeeSelect(emp)}
+                    disabled={isCheckedIn}
+                    className={`h-24 rounded-2xl shadow-lg flex flex-col items-center justify-center text-xl font-semibold transition-all duration-200 ${
+                      isCheckedIn
+                        ? 'bg-gray-200 text-gray-500 cursor-not-allowed opacity-60'
+                        : 'bg-gray-100 text-gray-600 hover:shadow-xl hover:scale-105 active:scale-95'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2">
+                      {isCheckedIn && <span className="text-2xl">✓</span>}
+                      <span>{emp.employeeName}</span>
+                    </div>
+                    {isCheckedIn && (
+                      <div className="text-sm font-normal text-gray-500 mt-1">
+                        {checkInTime} 출근
+                      </div>
+                    )}
+                  </button>
+                );
+              })}
             </div>
           </div>
         )}

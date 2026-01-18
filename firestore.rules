@@ -26,5 +26,10 @@ service cloud.firestore {
     match /rankings/{document} {
       allow read, write: if true;
     }
+    
+    // 출퇴근 기록 컬렉션 - 모든 사용자가 읽기/쓰기 가능
+    match /attendanceRecords/{document} {
+      allow read, write: if true;
+    }
   }
 }

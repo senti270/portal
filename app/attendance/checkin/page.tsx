@@ -555,30 +555,132 @@ function ScheduleInfoScreen({
 
   // 실제 출근 시각 입력 화면
   if (showManualTimeInput) {
+    // 현재 시간을 기본값으로 설정 (아직 입력 안했으면)
+    const currentTime = new Date();
+    const defaultHour = currentTime.getHours();
+    const defaultMinute = currentTime.getMinutes();
+    
+    // manualCheckInTime 파싱
+    let displayHour = defaultHour;
+    let displayMinute = defaultMinute;
+    
+    if (manualCheckInTime) {
+      const [h, m] = manualCheckInTime.split(':').map(Number);
+      displayHour = h;
+      displayMinute = m;
+    }
+    
+    const handleTimeChange = (type: 'hour' | 'minute', delta: number) => {
+      let newHour = displayHour;
+      let newMinute = displayMinute;
+      
+      if (type === 'hour') {
+        newHour = (newHour + delta + 24) % 24;
+      } else {
+        newMinute = (newMinute + delta + 60) % 60;
+      }
+      
+      const timeString = `${String(newHour).padStart(2, '0')}:${String(newMinute).padStart(2, '0')}`;
+      setManualCheckInTime(timeString);
+    };
+    
+    const handleSetCurrentTime = () => {
+      const now = new Date();
+      const hour = now.getHours();
+      const minute = now.getMinutes();
+      const timeString = `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
+      setManualCheckInTime(timeString);
+    };
+    
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-6">
-        <div className="bg-white rounded-3xl shadow-2xl p-12 max-w-2xl w-full">
-          <h2 className="text-3xl font-bold text-gray-800 mb-8 text-center">
+        <div className="bg-white rounded-3xl shadow-2xl p-12 max-w-3xl w-full">
+          <h2 className="text-4xl font-bold text-gray-800 mb-10 text-center">
             실제 출근 시각을 입력해주세요
           </h2>
-          <div className="mb-6">
-            <label className="block text-xl font-semibold text-gray-700 mb-3">
-              출근 시각
-            </label>
-            <input
-              type="time"
-              value={manualCheckInTime}
-              onChange={(e) => setManualCheckInTime(e.target.value)}
-              className="w-full h-20 text-3xl text-center border-4 border-gray-300 rounded-2xl focus:outline-none focus:border-blue-500"
-            />
+          
+          {/* 시간 입력 영역 */}
+          <div className="mb-8">
+            <div className="flex items-center justify-center gap-8 mb-6">
+              {/* 시 */}
+              <div className="flex flex-col items-center">
+                <div className="text-2xl font-semibold text-gray-600 mb-4">시</div>
+                <div className="flex flex-col items-center gap-3">
+                  <button
+                    onClick={() => handleTimeChange('hour', 1)}
+                    className="w-20 h-20 bg-blue-100 hover:bg-blue-200 active:bg-blue-300 text-blue-600 rounded-2xl shadow-lg text-4xl font-bold transition-all duration-200 active:scale-95"
+                  >
+                    ▲
+                  </button>
+                  <div className="w-32 h-32 bg-blue-50 border-4 border-blue-300 rounded-3xl flex items-center justify-center">
+                    <span className="text-6xl font-bold text-gray-800">
+                      {String(displayHour).padStart(2, '0')}
+                    </span>
+                  </div>
+                  <button
+                    onClick={() => handleTimeChange('hour', -1)}
+                    className="w-20 h-20 bg-blue-100 hover:bg-blue-200 active:bg-blue-300 text-blue-600 rounded-2xl shadow-lg text-4xl font-bold transition-all duration-200 active:scale-95"
+                  >
+                    ▼
+                  </button>
+                </div>
+              </div>
+              
+              {/* 구분선 */}
+              <div className="text-6xl font-bold text-gray-400 mt-12">:</div>
+              
+              {/* 분 */}
+              <div className="flex flex-col items-center">
+                <div className="text-2xl font-semibold text-gray-600 mb-4">분</div>
+                <div className="flex flex-col items-center gap-3">
+                  <button
+                    onClick={() => handleTimeChange('minute', 5)}
+                    className="w-20 h-20 bg-green-100 hover:bg-green-200 active:bg-green-300 text-green-600 rounded-2xl shadow-lg text-4xl font-bold transition-all duration-200 active:scale-95"
+                  >
+                    ▲
+                  </button>
+                  <div className="w-32 h-32 bg-green-50 border-4 border-green-300 rounded-3xl flex items-center justify-center">
+                    <span className="text-6xl font-bold text-gray-800">
+                      {String(displayMinute).padStart(2, '0')}
+                    </span>
+                  </div>
+                  <button
+                    onClick={() => handleTimeChange('minute', -5)}
+                    className="w-20 h-20 bg-green-100 hover:bg-green-200 active:bg-green-300 text-green-600 rounded-2xl shadow-lg text-4xl font-bold transition-all duration-200 active:scale-95"
+                  >
+                    ▼
+                  </button>
+                </div>
+              </div>
+            </div>
+            
+            {/* 현재 시간으로 설정 버튼 */}
+            <div className="text-center">
+              <button
+                onClick={handleSetCurrentTime}
+                className="px-8 py-4 bg-gray-200 hover:bg-gray-300 active:bg-gray-400 text-gray-700 rounded-2xl text-xl font-semibold shadow-lg transition-all duration-200 active:scale-95"
+              >
+                🕐 현재 시간으로 설정
+              </button>
+            </div>
+            
+            {/* 선택된 시간 미리보기 */}
+            <div className="mt-6 text-center">
+              <div className="text-xl text-gray-600 mb-2">선택된 시간</div>
+              <div className="text-5xl font-bold text-blue-600">
+                {String(displayHour).padStart(2, '0')}:{String(displayMinute).padStart(2, '0')}
+              </div>
+            </div>
           </div>
+          
+          {/* 버튼 영역 */}
           <div className="flex space-x-4">
             <button
               onClick={() => {
                 setShowManualTimeInput(false);
                 setManualCheckInTime('');
               }}
-              className="flex-1 h-16 bg-gray-300 hover:bg-gray-400 text-gray-800 text-xl font-bold rounded-2xl shadow-lg"
+              className="flex-1 h-20 bg-gray-300 hover:bg-gray-400 active:bg-gray-500 text-gray-800 text-2xl font-bold rounded-2xl shadow-lg transition-all duration-200 active:scale-95"
             >
               뒤로
             </button>
@@ -591,7 +693,7 @@ function ScheduleInfoScreen({
                 setShowManualTimeInput(false);
                 setShowReasonInput(true);
               }}
-              className="flex-1 h-16 bg-blue-500 hover:bg-blue-600 text-white text-xl font-bold rounded-2xl shadow-lg"
+              className="flex-1 h-20 bg-blue-500 hover:bg-blue-600 active:bg-blue-700 text-white text-2xl font-bold rounded-2xl shadow-lg transition-all duration-200 active:scale-95"
             >
               다음 (전달사항 입력)
             </button>

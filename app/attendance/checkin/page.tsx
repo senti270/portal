@@ -714,7 +714,7 @@ export default function CheckInPage() {
   return (
     <Suspense fallback={
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
-        <div className="text-3xl font-bold text-gray-700">濡쒕뵫 以?..</div>
+        <div className="text-3xl font-bold text-gray-700">로딩 중...</div>
       </div>
     }>
       <CheckInPageContent />

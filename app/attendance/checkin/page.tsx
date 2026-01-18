@@ -516,6 +516,41 @@ function ScheduleInfoScreen({
     ? `${Math.floor(employee.scheduledBreakTime)}분`
     : '00분';
 
+  // 사유 입력 화면 (수동 시간 입력 후 또는 지각/일찍 출근 후)
+  if (showReasonInput && !showManualTimeInput) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-6">
+        <div className="bg-white rounded-3xl shadow-2xl p-12 max-w-2xl w-full">
+          {/* 스케줄 정보 표시 (있는 경우) */}
+          {employee.scheduledStartTime && employee.scheduledEndTime && (
+            <div className="mb-6 text-center">
+              <h3 className="text-2xl font-bold text-gray-800 mb-2">
+                금일 {employee.employeeName} 님
+              </h3>
+              <p className="text-xl text-gray-600">
+                {employee.scheduledStartTime} - {employee.scheduledEndTime} 근무스케줄
+              </p>
+              <p className="text-lg text-gray-500 mt-1">
+                휴게시간: {breakTimeDisplay}
+              </p>
+            </div>
+          )}
+          
+          <ReasonInputForm
+            selectedReason={selectedReason}
+            setSelectedReason={setSelectedReason}
+            reasonOther={reasonOther}
+            setReasonOther={setReasonOther}
+            note={note}
+            setNote={setNote}
+            onConfirm={onConfirm}
+            onBack={() => setShowReasonInput(false)}
+          />
+        </div>
+      </div>
+    );
+  }
+
   // 정시 출근
   if (checkResult?.status === 'on_time' && !showReasonInput) {
     return (
@@ -703,7 +738,7 @@ function ScheduleInfoScreen({
     );
   }
 
-  // 지각
+  // 지각 (사유 입력 화면이 아닐 때만)
   if (checkResult?.status === 'late' && !showReasonInput && !showManualTimeInput) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-6">
@@ -734,7 +769,7 @@ function ScheduleInfoScreen({
     );
   }
 
-  // 일찍 출근
+  // 일찍 출근 (사유 입력 화면이 아닐 때만)
   if (checkResult?.status === 'early' && !showReasonInput && !showManualTimeInput) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-6">

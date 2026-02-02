@@ -1,7 +1,7 @@
 ﻿'use client';
 
 import React, { useState, useEffect } from 'react';
-import { collection, addDoc, getDocs, getDoc, updateDoc, deleteDoc, doc, query, where, writeBatch } from 'firebase/firestore';
+import { collection, addDoc, getDocs, getDoc, updateDoc, deleteDoc, doc, query, where, writeBatch, Timestamp } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
 import { db, storage } from '@/lib/firebase';
 import DateInput from '@/components/work-schedule/DateInput';
@@ -1708,17 +1708,35 @@ export default function EmployeeManagement({ userBranch, isManager }: EmployeeMa
 
       // 모든 계약 로드
       const contractsSnapshot = await getDocs(collection(db, 'employmentContracts'));
-      const allContracts = contractsSnapshot.docs.map(doc => ({
-        id: doc.id,
-        employeeId: doc.data().employeeId,
-        startDate: doc.data().startDate?.toDate ? doc.data().startDate.toDate() : new Date(doc.data().startDate),
-        employmentType: doc.data().employmentType,
-        salaryType: doc.data().salaryType,
-        salaryAmount: doc.data().salaryAmount || 0,
-        weeklyWorkHours: doc.data().weeklyWorkHours,
-        includeHolidayAllowance: doc.data().includeHolidayAllowance || false,
-        ...doc.data()
-      }));
+      const allContracts = contractsSnapshot.docs.map(doc => {
+        const data = doc.data();
+        let startDate: Date;
+        if (data.startDate?.toDate) {
+          // Firestore Timestamp
+          startDate = data.startDate.toDate();
+        } else if (data.startDate instanceof Date) {
+          // 이미 Date 객체
+          startDate = data.startDate;
+        } else if (data.startDate) {
+          // 문자열이나 다른 형식
+          startDate = new Date(data.startDate);
+        } else {
+          // startDate가 없는 경우 (기본값)
+          startDate = new Date();
+        }
+        
+        return {
+          id: doc.id,
+          employeeId: data.employeeId,
+          startDate: startDate,
+          employmentType: data.employmentType,
+          salaryType: data.salaryType,
+          salaryAmount: data.salaryAmount || 0,
+          weeklyWorkHours: data.weeklyWorkHours,
+          includeHolidayAllowance: data.includeHolidayAllowance || false,
+          ...data
+        };
+      });
 
       // 직원별로 최신 계약 찾기
       const employeeLatestContracts = new Map<string, typeof allContracts[0]>();
@@ -1782,14 +1800,14 @@ export default function EmployeeManagement({ userBranch, isManager }: EmployeeMa
         try {
           const newContractData = {
             employeeId: employeeId,
-            startDate: NEW_START_DATE,
+            startDate: Timestamp.fromDate(NEW_START_DATE),
             employmentType: currentContract.employmentType || '근로소득',
             salaryType: currentContract.salaryType || 'hourly',
             salaryAmount: MINIMUM_WAGE, // 시급만 10320으로 변경
             weeklyWorkHours: currentContract.weeklyWorkHours || 40,
             includeHolidayAllowance: currentContract.includeHolidayAllowance || false,
-            createdAt: new Date(),
-            updatedAt: new Date()
+            createdAt: Timestamp.now(),
+            updatedAt: Timestamp.now()
           };
 
           await addDoc(collection(db, 'employmentContracts'), newContractData);

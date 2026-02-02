@@ -1754,9 +1754,26 @@ export default function EmployeeManagement({ userBranch, isManager }: EmployeeMa
       allContracts.forEach(contract => {
         if (!contract.startDate || !contract.employeeId) return;
         
+        // startDate가 Date 객체인지 확인
+        if (!(contract.startDate instanceof Date) || isNaN(contract.startDate.getTime())) {
+          console.warn(`⚠️ 유효하지 않은 startDate: ${contract.id}`, contract.startDate);
+          return;
+        }
+        
         const existing = employeeLatestContracts.get(contract.employeeId);
-        if (!existing || (contract.startDate && existing.startDate && contract.startDate.getTime() > existing.startDate.getTime())) {
+        if (!existing) {
           employeeLatestContracts.set(contract.employeeId, contract);
+        } else {
+          // existing.startDate도 Date 객체인지 확인
+          if (existing.startDate instanceof Date && !isNaN(existing.startDate.getTime())) {
+            if (contract.startDate.getTime() > existing.startDate.getTime()) {
+              employeeLatestContracts.set(contract.employeeId, contract);
+            }
+          } else {
+            // existing이 유효하지 않으면 현재 contract로 교체
+            console.warn(`⚠️ 기존 계약의 startDate가 유효하지 않음: ${existing.id}`, existing.startDate);
+            employeeLatestContracts.set(contract.employeeId, contract);
+          }
         }
       });
 
@@ -1776,6 +1793,12 @@ export default function EmployeeManagement({ userBranch, isManager }: EmployeeMa
 
         const latestContract = employeeLatestContracts.get(employee.id);
         if (latestContract && latestContract.startDate) {
+          // startDate가 유효한 Date 객체인지 확인
+          if (!(latestContract.startDate instanceof Date) || isNaN(latestContract.startDate.getTime())) {
+            console.warn(`⚠️ ${employee.name || employee.id}의 계약에 유효하지 않은 startDate가 있습니다.`, latestContract.startDate);
+            return;
+          }
+
           // salaryType이 없는 경우 건너뛰기 (계약 정보 불완전)
           if (!latestContract.salaryType) {
             console.warn(`⚠️ ${employee.name || employee.id}의 계약에 salaryType이 없습니다.`);
@@ -1789,6 +1812,12 @@ export default function EmployeeManagement({ userBranch, isManager }: EmployeeMa
             // 이미 2026.1.1 기준일로 계약이 있는지 확인
             const has2026Contract = allContracts.some(c => {
               if (!c.startDate || c.employeeId !== employee.id) return false;
+              
+              // startDate가 유효한 Date 객체인지 확인
+              if (!(c.startDate instanceof Date) || isNaN(c.startDate.getTime())) {
+                return false;
+              }
+              
               try {
                 return (
                   c.startDate.getFullYear() === 2026 &&

@@ -1708,41 +1708,54 @@ export default function EmployeeManagement({ userBranch, isManager }: EmployeeMa
 
       // 모든 계약 로드
       const contractsSnapshot = await getDocs(collection(db, 'employmentContracts'));
-      const allContracts = contractsSnapshot.docs.map(doc => {
-        const data = doc.data();
-        let startDate: Date;
-        if (data.startDate?.toDate) {
-          // Firestore Timestamp
-          startDate = data.startDate.toDate();
-        } else if (data.startDate instanceof Date) {
-          // 이미 Date 객체
-          startDate = data.startDate;
-        } else if (data.startDate) {
-          // 문자열이나 다른 형식
-          startDate = new Date(data.startDate);
-        } else {
-          // startDate가 없는 경우 (기본값)
-          startDate = new Date();
-        }
-        
-        return {
-          id: doc.id,
-          employeeId: data.employeeId,
-          startDate: startDate,
-          employmentType: data.employmentType,
-          salaryType: data.salaryType,
-          salaryAmount: data.salaryAmount || 0,
-          weeklyWorkHours: data.weeklyWorkHours,
-          includeHolidayAllowance: data.includeHolidayAllowance || false,
-          ...data
-        };
-      });
+      const allContracts = contractsSnapshot.docs
+        .map(doc => {
+          const data = doc.data();
+          let startDate: Date | null = null;
+          
+          try {
+            if (data.startDate?.toDate) {
+              // Firestore Timestamp
+              startDate = data.startDate.toDate();
+            } else if (data.startDate instanceof Date) {
+              // 이미 Date 객체
+              startDate = data.startDate;
+            } else if (data.startDate) {
+              // 문자열이나 다른 형식
+              startDate = new Date(data.startDate);
+            }
+            
+            // 유효한 날짜인지 확인
+            if (startDate && isNaN(startDate.getTime())) {
+              console.warn(`⚠️ 유효하지 않은 날짜: ${doc.id}`, data.startDate);
+              startDate = null;
+            }
+          } catch (error) {
+            console.error(`❌ 날짜 변환 실패: ${doc.id}`, error, data.startDate);
+            startDate = null;
+          }
+          
+          return {
+            id: doc.id,
+            employeeId: data.employeeId || '',
+            startDate: startDate,
+            employmentType: data.employmentType,
+            salaryType: data.salaryType,
+            salaryAmount: data.salaryAmount || 0,
+            weeklyWorkHours: data.weeklyWorkHours,
+            includeHolidayAllowance: data.includeHolidayAllowance || false,
+            ...data
+          };
+        })
+        .filter(contract => contract.startDate !== null && contract.employeeId); // startDate와 employeeId가 있는 계약만
 
       // 직원별로 최신 계약 찾기
       const employeeLatestContracts = new Map<string, typeof allContracts[0]>();
       allContracts.forEach(contract => {
+        if (!contract.startDate || !contract.employeeId) return;
+        
         const existing = employeeLatestContracts.get(contract.employeeId);
-        if (!existing || contract.startDate.getTime() > existing.startDate.getTime()) {
+        if (!existing || (contract.startDate && existing.startDate && contract.startDate.getTime() > existing.startDate.getTime())) {
           employeeLatestContracts.set(contract.employeeId, contract);
         }
       });
@@ -1762,12 +1775,19 @@ export default function EmployeeManagement({ userBranch, isManager }: EmployeeMa
           
           if (isHourly && salaryAmount > 0 && salaryAmount < MINIMUM_WAGE) {
             // 이미 2026.1.1 기준일로 계약이 있는지 확인
-            const has2026Contract = allContracts.some(c => 
-              c.employeeId === employee.id &&
-              c.startDate.getFullYear() === 2026 &&
-              c.startDate.getMonth() === 0 &&
-              c.startDate.getDate() === 1
-            );
+            const has2026Contract = allContracts.some(c => {
+              if (!c.startDate || c.employeeId !== employee.id) return false;
+              try {
+                return (
+                  c.startDate.getFullYear() === 2026 &&
+                  c.startDate.getMonth() === 0 &&
+                  c.startDate.getDate() === 1
+                );
+              } catch (error) {
+                console.error(`❌ 날짜 확인 실패: ${c.id}`, error);
+                return false;
+              }
+            });
 
             if (!has2026Contract) {
               employeesToUpdate.push({
@@ -1829,9 +1849,15 @@ export default function EmployeeManagement({ userBranch, isManager }: EmployeeMa
 
       // 데이터 새로고침
       await loadEmployees();
-    } catch (error) {
+    } catch (error: any) {
       console.error('최저시급 업데이트 중 오류:', error);
-      alert('최저시급 업데이트 중 오류가 발생했습니다.');
+      console.error('에러 상세:', {
+        message: error?.message,
+        code: error?.code,
+        stack: error?.stack,
+        name: error?.name
+      });
+      alert(`최저시급 업데이트 중 오류가 발생했습니다.\n\n${error?.message || '알 수 없는 오류'}\n\n콘솔에서 상세 정보를 확인하세요.`);
     }
   };
 

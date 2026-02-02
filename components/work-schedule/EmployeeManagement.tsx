@@ -1688,14 +1688,14 @@ export default function EmployeeManagement({ userBranch, isManager }: EmployeeMa
     return number.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
   };
 
-  // 최저시급 업데이트: 시급이 10300 미만인 직원들에게 2026.1.1 기준 새 계약 추가
+  // 최저시급 업데이트: 시급이 10320 미만인 직원들에게 2026.1.1 기준 새 계약 추가
   const updateMinimumWageContracts = async () => {
-    if (!confirm('시급이 10,300원 미만인 직원들에게 2026.1.1 기준 새 계약을 추가하시겠습니까?')) {
+    if (!confirm('시급이 10,320원 미만인 직원들에게 2026.1.1 기준 새 계약을 추가하시겠습니까?')) {
       return;
     }
 
     try {
-      const MINIMUM_WAGE = 10300; // 2026년 최저시급 10,300원
+      const MINIMUM_WAGE = 10320; // 2026년 최저시급 10,320원
       const NEW_START_DATE = new Date(2026, 0, 1, 0, 0, 0, 0); // 2026.1.1
       
       // 모든 직원 로드

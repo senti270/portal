@@ -1811,13 +1811,21 @@ export default function EmployeeManagement({ userBranch, isManager }: EmployeeMa
             return;
           }
 
-          const isHourly = latestContract.salaryType === 'hourly' || latestContract.salaryType === '시급';
-          const salaryAmount = latestContract.salaryAmount || 0;
+          // salaryType 확인 (대소문자, 공백 제거)
+          const salaryTypeStr = String(latestContract.salaryType || '').trim().toLowerCase();
+          const isHourly = salaryTypeStr === 'hourly' || salaryTypeStr === '시급';
+          
+          // salaryAmount를 숫자로 변환 (문자열일 수 있음)
+          const salaryAmount = typeof latestContract.salaryAmount === 'string' 
+            ? parseFloat(latestContract.salaryAmount.replace(/,/g, '')) 
+            : Number(latestContract.salaryAmount || 0);
           
           console.log(`🔍 ${employee.name || employee.id} 검사:`, {
             salaryType: latestContract.salaryType,
+            salaryTypeStr,
             isHourly,
             salaryAmount,
+            salaryAmountType: typeof latestContract.salaryAmount,
             최저시급: MINIMUM_WAGE,
             조건만족: isHourly && salaryAmount > 0 && salaryAmount < MINIMUM_WAGE
           });
@@ -1869,8 +1877,18 @@ export default function EmployeeManagement({ userBranch, isManager }: EmployeeMa
         대상직원: employeesToUpdate.map(e => e.employeeName)
       });
 
+      console.log(`🔍 최종 검색 결과 상세:`, {
+        업데이트대상수: employeesToUpdate.length,
+        대상직원목록: employeesToUpdate.map(e => ({
+          이름: e.employeeName,
+          직원ID: e.employeeId,
+          현재시급: e.currentContract.salaryAmount,
+          salaryType: e.currentContract.salaryType
+        }))
+      });
+
       if (employeesToUpdate.length === 0) {
-        alert('시급이 10,320원 미만인 직원이 없거나 이미 2026.1.1 기준 계약이 추가되어 있습니다.');
+        alert('시급이 10,320원 미만인 직원이 없거나 이미 2026.1.1 기준 계약이 추가되어 있습니다.\n\n콘솔에서 상세 정보를 확인하세요.');
         return;
       }
 

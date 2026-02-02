@@ -1768,8 +1768,20 @@ export default function EmployeeManagement({ userBranch, isManager }: EmployeeMa
       }> = [];
 
       allEmployees.forEach(employee => {
+        // 직원 ID가 없는 경우 건너뛰기
+        if (!employee.id) {
+          console.warn(`⚠️ 직원 ID가 없는 직원 발견:`, employee);
+          return;
+        }
+
         const latestContract = employeeLatestContracts.get(employee.id);
-        if (latestContract) {
+        if (latestContract && latestContract.startDate) {
+          // salaryType이 없는 경우 건너뛰기 (계약 정보 불완전)
+          if (!latestContract.salaryType) {
+            console.warn(`⚠️ ${employee.name || employee.id}의 계약에 salaryType이 없습니다.`);
+            return;
+          }
+
           const isHourly = latestContract.salaryType === 'hourly' || latestContract.salaryType === '시급';
           const salaryAmount = latestContract.salaryAmount || 0;
           
@@ -1797,6 +1809,9 @@ export default function EmployeeManagement({ userBranch, isManager }: EmployeeMa
               });
             }
           }
+        } else if (!latestContract) {
+          // 계약이 없는 직원은 로그만 남기고 건너뛰기
+          console.log(`ℹ️ ${employee.name || employee.id}의 근로계약 정보가 없습니다. 건너뜁니다.`);
         }
       });
 
@@ -1818,6 +1833,22 @@ export default function EmployeeManagement({ userBranch, isManager }: EmployeeMa
 
       for (const { employeeId, employeeName, currentContract } of employeesToUpdate) {
         try {
+          // currentContract가 유효한지 확인
+          if (!currentContract) {
+            console.error(`❌ ${employeeName}의 계약 정보가 없습니다.`);
+            failCount++;
+            failedEmployees.push(employeeName);
+            continue;
+          }
+
+          // 필수 필드 검증
+          if (!employeeId) {
+            console.error(`❌ ${employeeName}의 직원 ID가 없습니다.`);
+            failCount++;
+            failedEmployees.push(employeeName);
+            continue;
+          }
+
           const newContractData = {
             employeeId: employeeId,
             startDate: Timestamp.fromDate(NEW_START_DATE),
@@ -1833,10 +1864,21 @@ export default function EmployeeManagement({ userBranch, isManager }: EmployeeMa
           await addDoc(collection(db, 'employmentContracts'), newContractData);
           successCount++;
           console.log(`✅ ${employeeName}에게 새 계약 추가 완료`);
-        } catch (error) {
+        } catch (error: any) {
           failCount++;
           failedEmployees.push(employeeName);
           console.error(`❌ ${employeeName} 계약 추가 실패:`, error);
+          console.error('에러 상세:', {
+            message: error?.message,
+            code: error?.code,
+            employeeId,
+            employeeName,
+            currentContract: currentContract ? {
+              employmentType: currentContract.employmentType,
+              salaryType: currentContract.salaryType,
+              salaryAmount: currentContract.salaryAmount
+            } : null
+          });
         }
       }
 

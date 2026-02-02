@@ -1688,14 +1688,14 @@ export default function EmployeeManagement({ userBranch, isManager }: EmployeeMa
     return number.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
   };
 
-  // 최저시급 업데이트: 시급이 10320 미만인 직원들에게 2026.1.1 기준 새 계약 추가
+  // 최저시급 업데이트: 시급이 10300 미만인 직원들에게 2026.1.1 기준 새 계약 추가
   const updateMinimumWageContracts = async () => {
-    if (!confirm('시급이 10,320원 미만인 직원들에게 2026.1.1 기준 새 계약을 추가하시겠습니까?')) {
+    if (!confirm('시급이 10,300원 미만인 직원들에게 2026.1.1 기준 새 계약을 추가하시겠습니까?')) {
       return;
     }
 
     try {
-      const MINIMUM_WAGE = 10320;
+      const MINIMUM_WAGE = 10300; // 2026년 최저시급 10,300원
       const NEW_START_DATE = new Date(2026, 0, 1, 0, 0, 0, 0); // 2026.1.1
       
       // 모든 직원 로드
@@ -1784,6 +1784,12 @@ export default function EmployeeManagement({ userBranch, isManager }: EmployeeMa
         currentContract: typeof allContracts[0];
       }> = [];
 
+      console.log(`🔍 최저시급 업데이트 검색 시작:`, {
+        전체직원수: allEmployees.length,
+        계약있는직원수: employeeLatestContracts.size,
+        최저시급: MINIMUM_WAGE
+      });
+
       allEmployees.forEach(employee => {
         // 직원 ID가 없는 경우 건너뛰기
         if (!employee.id) {
@@ -1808,6 +1814,14 @@ export default function EmployeeManagement({ userBranch, isManager }: EmployeeMa
           const isHourly = latestContract.salaryType === 'hourly' || latestContract.salaryType === '시급';
           const salaryAmount = latestContract.salaryAmount || 0;
           
+          console.log(`🔍 ${employee.name || employee.id} 검사:`, {
+            salaryType: latestContract.salaryType,
+            isHourly,
+            salaryAmount,
+            최저시급: MINIMUM_WAGE,
+            조건만족: isHourly && salaryAmount > 0 && salaryAmount < MINIMUM_WAGE
+          });
+          
           if (isHourly && salaryAmount > 0 && salaryAmount < MINIMUM_WAGE) {
             // 이미 2026.1.1 기준일로 계약이 있는지 확인
             const has2026Contract = allContracts.some(c => {
@@ -1831,17 +1845,28 @@ export default function EmployeeManagement({ userBranch, isManager }: EmployeeMa
             });
 
             if (!has2026Contract) {
+              console.log(`✅ ${employee.name || employee.id} 추가 대상:`, {
+                현재시급: salaryAmount,
+                새시급: MINIMUM_WAGE
+              });
               employeesToUpdate.push({
                 employeeId: employee.id,
                 employeeName: employee.name || '',
                 currentContract: latestContract
               });
+            } else {
+              console.log(`⏭️ ${employee.name || employee.id}는 이미 2026.1.1 계약이 있습니다.`);
             }
           }
         } else if (!latestContract) {
           // 계약이 없는 직원은 로그만 남기고 건너뛰기
           console.log(`ℹ️ ${employee.name || employee.id}의 근로계약 정보가 없습니다. 건너뜁니다.`);
         }
+      });
+
+      console.log(`🔍 검색 완료:`, {
+        업데이트대상: employeesToUpdate.length,
+        대상직원: employeesToUpdate.map(e => e.employeeName)
       });
 
       if (employeesToUpdate.length === 0) {

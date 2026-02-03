@@ -1415,19 +1415,37 @@ export default function ScheduleInputNew({ selectedBranchId, onWeekChange }: Sch
           }
           
           try {
-            // 같은 직원의 같은 날짜에 있는 모든 기존 스케줄 삭제 (중복 방지)
-            const existingSchedules = schedules.filter(schedule => 
-              schedule.employeeId === employeeId &&
-              schedule.branchId === selectedBranchId &&
-              schedule.date.toDateString() === date.toDateString()
-            );
+            // 🔥 Firestore에서 직접 쿼리하여 같은 직원의 같은 날짜에 있는 모든 기존 스케줄 찾기 (중복 방지)
+            const dateString = toLocalDateString(date);
+            const dateStart = new Date(date);
+            dateStart.setHours(0, 0, 0, 0);
+            const dateEnd = new Date(date);
+            dateEnd.setHours(23, 59, 59, 999);
             
-            for (const existingSchedule of existingSchedules) {
-              await deleteDoc(doc(db, 'schedules', existingSchedule.id));
-            }
+            // 모든 스케줄을 가져온 후 클라이언트에서 필터링 (날짜 비교 정확성)
+            const allSchedulesSnapshot = await getDocs(collection(db, 'schedules'));
+            const existingSchedules = allSchedulesSnapshot.docs
+              .map(doc => ({
+                id: doc.id,
+                ...doc.data(),
+                date: toLocalDate(doc.data().date)
+              }))
+              .filter((schedule: any) => {
+                const scheduleDateStr = toLocalDateString(schedule.date);
+                return schedule.employeeId === employeeId &&
+                       schedule.branchId === selectedBranchId &&
+                       scheduleDateStr === dateString;
+              });
+            
+            // 배치로 기존 스케줄 삭제
+            const batch = writeBatch(db);
+            existingSchedules.forEach((schedule: any) => {
+              batch.delete(doc(db, 'schedules', schedule.id));
+            });
             
             // 새 스케줄 추가
-            await addDoc(collection(db, 'schedules'), {
+            const newScheduleRef = doc(collection(db, 'schedules'));
+            batch.set(newScheduleRef, {
               employeeId: employeeId,
               employeeName: employee.name,
               branchId: selectedBranchId,
@@ -1443,6 +1461,11 @@ export default function ScheduleInputNew({ selectedBranchId, onWeekChange }: Sch
               createdAt: new Date(),
               updatedAt: new Date()
             });
+            
+            // 배치 실행 (삭제와 추가를 원자적으로 처리)
+            await batch.commit();
+            
+            console.log(`✅ 스케줄 저장 완료: ${employee.name}, ${dateString}, 기존 ${existingSchedules.length}개 삭제`);
             await loadSchedules();
           } catch (error) {
             console.error('스케줄 저장 오류:', error);

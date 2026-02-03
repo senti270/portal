@@ -495,10 +495,36 @@ export default function PublicSchedulePage({ params }: PublicSchedulePageProps) 
   const getSchedulesForDate = (date: Date) => {
     // 로컬 시간 기준으로 날짜만 비교 (타임존 문제 해결)
     const targetDateString = toLocalDateString(date);
-    return schedules.filter(schedule => {
+    const result = schedules.filter(schedule => {
       const scheduleDateString = toLocalDateString(schedule.date);
-      return scheduleDateString === targetDateString;
+      const matches = scheduleDateString === targetDateString;
+      
+      // 🔥 고영금님 디버깅
+      if (schedule.employeeName === '고영금') {
+        console.log('🔥 getSchedulesForDate - 고영금님:', {
+          targetDate: targetDateString,
+          scheduleDate: scheduleDateString,
+          matches,
+          scheduleId: schedule.id
+        });
+      }
+      
+      return matches;
     });
+    
+    // 🔥 고영금님 디버깅 - 결과 확인
+    if (targetDateString >= '2026-02-03' && targetDateString <= '2026-02-08') {
+      const goYoungGeumInResult = result.filter(s => s.employeeName === '고영금');
+      if (goYoungGeumInResult.length === 0) {
+        const allGoYoungGeum = schedules.filter(s => s.employeeName === '고영금');
+        console.warn(`⚠️ ${targetDateString}에 고영금님 스케줄이 없습니다. 전체 고영금님 스케줄:`, allGoYoungGeum.map(s => ({
+          날짜: toLocalDateString(s.date),
+          id: s.id
+        })));
+      }
+    }
+    
+    return result;
   };
 
   const goToPreviousWeek = () => {

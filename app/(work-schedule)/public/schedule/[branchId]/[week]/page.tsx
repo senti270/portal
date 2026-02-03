@@ -182,14 +182,47 @@ export default function PublicSchedulePage({ params }: PublicSchedulePageProps) 
       let filteredSchedules = allSchedulesData.filter(schedule => {
         const scheduleDateStr = toLocalDateString(schedule.date);
         const isInRange = scheduleDateStr >= weekStartStr && scheduleDateStr <= weekEndStr;
+        
+        // 🔥 고영금님 디버깅 - 모든 스케줄 확인
+        if (schedule.employeeName === '고영금') {
+          console.log('🔥 고영금님 스케줄 필터링 체크:', {
+            날짜: scheduleDateStr,
+            날짜객체: schedule.date,
+            범위시작: weekStartStr,
+            범위종료: weekEndStr,
+            범위내: isInRange,
+            branchId: schedule.branchId,
+            selectedBranchId: resolvedParams.branchId
+          });
+        }
+        
         return isInRange;
       });
 
       // 특정 지점이 선택된 경우
       if (resolvedParams.branchId !== 'all') {
-        filteredSchedules = filteredSchedules.filter(schedule => 
-          schedule.branchId === resolvedParams.branchId
-        );
+        const beforeBranchFilter = filteredSchedules.length;
+        filteredSchedules = filteredSchedules.filter(schedule => {
+          const isMatch = schedule.branchId === resolvedParams.branchId;
+          
+          // 🔥 고영금님 디버깅 - 지점 필터링 체크
+          if (schedule.employeeName === '고영금') {
+            console.log('🔥 고영금님 지점 필터링 체크:', {
+              날짜: toLocalDateString(schedule.date),
+              scheduleBranchId: schedule.branchId,
+              selectedBranchId: resolvedParams.branchId,
+              일치: isMatch
+            });
+          }
+          
+          return isMatch;
+        });
+        
+        console.log('🔥 지점 필터링 결과:', {
+          필터링전: beforeBranchFilter,
+          필터링후: filteredSchedules.length,
+          선택된지점: resolvedParams.branchId
+        });
       }
 
       // 🔥 고영금님 디버깅 - Firestore 전체 데이터 확인

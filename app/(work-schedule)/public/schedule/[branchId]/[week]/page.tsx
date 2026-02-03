@@ -255,14 +255,21 @@ export default function PublicSchedulePage({ params }: PublicSchedulePageProps) 
       // 필터링 전후 비교
       const goYoungGeumSchedules = filteredSchedules.filter(s => s.employeeName === '고영금');
       console.log('🔥 필터링 후 - 고영금님 스케줄:', goYoungGeumSchedules.length, '개');
-      console.log('🔥 필터링 후 - 고영금님 스케줄 상세:', goYoungGeumSchedules.map(s => ({
-        id: s.id,
-        날짜: toLocalDateString(s.date),
-        시간: `${s.startTime}-${s.endTime}`,
-        branchId: s.branchId,
-        branchName: s.branchName,
-        originalInput: s.originalInput
-      })));
+      if (goYoungGeumSchedules.length > 0) {
+        console.log('🔥 필터링 후 - 고영금님 스케줄 상세:', goYoungGeumSchedules.map(s => ({
+          id: s.id,
+          날짜: toLocalDateString(s.date),
+          시간: `${s.startTime}-${s.endTime}`,
+          branchId: s.branchId,
+          branchName: s.branchName,
+          originalInput: s.originalInput,
+          timeSlots: s.timeSlots
+        })));
+      } else {
+        console.warn('⚠️ 필터링 후 고영금님 스케줄이 없습니다!');
+        console.log('🔥 필터링 범위:', { weekStartStr, weekEndStr });
+        console.log('🔥 전체 고영금님 스케줄 날짜:', allGoYoungGeumSchedules.map(s => toLocalDateString(s.date)));
+      }
       
       // 필터링 범위 확인
       console.log('🔥 필터링 범위 상세:', {

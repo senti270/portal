@@ -1466,6 +1466,14 @@ export default function ScheduleInputNew({ selectedBranchId, onWeekChange }: Sch
             await batch.commit();
             
             console.log(`✅ 스케줄 저장 완료: ${employee.name}, ${dateString}, 기존 ${existingSchedules.length}개 삭제`);
+            console.log(`✅ 저장된 스케줄 정보:`, {
+              employeeName: employee.name,
+              date: dateString,
+              startTime: parsed.startTime,
+              endTime: parsed.endTime,
+              timeSlots: parsed.timeSlots,
+              originalInput: inputValue
+            });
             await loadSchedules();
           } catch (error) {
             console.error('스케줄 저장 오류:', error);

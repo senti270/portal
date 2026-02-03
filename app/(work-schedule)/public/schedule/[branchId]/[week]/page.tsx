@@ -182,9 +182,6 @@ export default function PublicSchedulePage({ params }: PublicSchedulePageProps) 
       let filteredSchedules = allSchedulesData.filter(schedule => {
         const scheduleDateStr = toLocalDateString(schedule.date);
         const isInRange = scheduleDateStr >= weekStartStr && scheduleDateStr <= weekEndStr;
-        if (schedule.date.getDay() === 0) { // 일요일 스케줄 디버그
-          console.log(`일요일 스케줄 확인: ${schedule.employeeName}, 날짜: ${scheduleDateStr}, 범위 내: ${isInRange}`);
-        }
         return isInRange;
       });
 
@@ -195,7 +192,18 @@ export default function PublicSchedulePage({ params }: PublicSchedulePageProps) 
         );
       }
 
-      console.log('공유 페이지 - 필터링된 스케줄 데이터:', filteredSchedules);
+      // 🔥 고영금님 디버깅
+      const goYoungGeumSchedules = filteredSchedules.filter(s => s.employeeName === '고영금');
+      if (goYoungGeumSchedules.length > 0) {
+        console.log('🔥 공유 페이지 - 고영금님 스케줄:', goYoungGeumSchedules.map(s => ({
+          날짜: toLocalDateString(s.date),
+          시간: `${s.startTime}-${s.endTime}`,
+          branchId: s.branchId,
+          branchName: s.branchName
+        })));
+      }
+
+      console.log('공유 페이지 - 필터링된 스케줄 데이터:', filteredSchedules.length, '개');
       setSchedules(filteredSchedules);
       generateWeeklySummary(filteredSchedules);
     } catch (error) {
@@ -339,9 +347,20 @@ export default function PublicSchedulePage({ params }: PublicSchedulePageProps) 
       }
 
       const summary = summaryMap.get(employeeName)!;
-      summary.dailyHours[dayOfWeek.key] = schedule.totalHours;
+      // 🔥 같은 날짜에 여러 스케줄이 있을 수 있으므로 누적 합산
+      if (summary.dailyHours[dayOfWeek.key]) {
+        summary.dailyHours[dayOfWeek.key] += schedule.totalHours;
+      } else {
+        summary.dailyHours[dayOfWeek.key] = schedule.totalHours;
+      }
       summary.totalHours += schedule.totalHours;
     });
+
+    console.log('🔥 generateWeeklySummary 결과:', Array.from(summaryMap.values()).map(s => ({
+      employeeName: s.employeeName,
+      dailyHours: s.dailyHours,
+      totalHours: s.totalHours
+    })));
 
     setWeeklySummaries(Array.from(summaryMap.values()));
   };

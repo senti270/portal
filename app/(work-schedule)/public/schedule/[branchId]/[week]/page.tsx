@@ -227,17 +227,25 @@ export default function PublicSchedulePage({ params }: PublicSchedulePageProps) 
 
       // 🔥 고영금님 디버깅 - Firestore 전체 데이터 확인
       const allGoYoungGeumSchedules = allSchedulesData.filter(s => s.employeeName === '고영금');
+      console.log('========================================');
+      console.log('🔥🔥🔥 고영금님 스케줄 디버깅 시작 🔥🔥🔥');
+      console.log('========================================');
       console.log('🔥 Firestore 전체 - 고영금님 스케줄:', allGoYoungGeumSchedules.length, '개');
-      console.log('🔥 Firestore 전체 - 고영금님 스케줄 상세:', allGoYoungGeumSchedules.map(s => ({
-        id: s.id,
-        날짜: toLocalDateString(s.date),
-        날짜원본: s.date,
-        시간: `${s.startTime}-${s.endTime}`,
-        branchId: s.branchId,
-        branchName: s.branchName,
-        originalInput: s.originalInput,
-        timeSlots: s.timeSlots
-      })));
+      if (allGoYoungGeumSchedules.length > 0) {
+        console.log('🔥 Firestore 전체 - 고영금님 스케줄 상세:', allGoYoungGeumSchedules.map(s => ({
+          id: s.id,
+          날짜: toLocalDateString(s.date),
+          날짜원본: s.date,
+          시간: `${s.startTime}-${s.endTime}`,
+          branchId: s.branchId,
+          branchName: s.branchName,
+          originalInput: s.originalInput,
+          timeSlots: s.timeSlots
+        })));
+      } else {
+        console.warn('⚠️ Firestore에 고영금님 스케줄이 없습니다!');
+      }
+      console.log('========================================');
       
       // 필터링 전후 비교
       const goYoungGeumSchedules = filteredSchedules.filter(s => s.employeeName === '고영금');

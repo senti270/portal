@@ -192,15 +192,39 @@ export default function PublicSchedulePage({ params }: PublicSchedulePageProps) 
         );
       }
 
-      // 🔥 고영금님 디버깅
+      // 🔥 고영금님 디버깅 - 같은 날짜에 여러 스케줄이 있는지 확인
       const goYoungGeumSchedules = filteredSchedules.filter(s => s.employeeName === '고영금');
       if (goYoungGeumSchedules.length > 0) {
-        console.log('🔥 공유 페이지 - 고영금님 스케줄:', goYoungGeumSchedules.map(s => ({
+        console.log('🔥 공유 페이지 - 고영금님 전체 스케줄:', goYoungGeumSchedules.length, '개');
+        console.log('🔥 고영금님 스케줄 상세:', goYoungGeumSchedules.map(s => ({
+          id: s.id,
           날짜: toLocalDateString(s.date),
           시간: `${s.startTime}-${s.endTime}`,
           branchId: s.branchId,
-          branchName: s.branchName
+          branchName: s.branchName,
+          originalInput: s.originalInput,
+          timeSlots: s.timeSlots
         })));
+        
+        // 같은 날짜에 여러 스케줄이 있는지 확인
+        const dateGroups = goYoungGeumSchedules.reduce((acc, schedule) => {
+          const dateStr = toLocalDateString(schedule.date);
+          if (!acc[dateStr]) {
+            acc[dateStr] = [];
+          }
+          acc[dateStr].push(schedule);
+          return acc;
+        }, {} as {[key: string]: typeof goYoungGeumSchedules});
+        
+        Object.entries(dateGroups).forEach(([date, schedules]) => {
+          if (schedules.length > 1) {
+            console.error(`❌ 고영금님 ${date}에 중복 스케줄 발견:`, schedules.length, '개', schedules.map(s => ({
+              id: s.id,
+              시간: `${s.startTime}-${s.endTime}`,
+              originalInput: s.originalInput
+            })));
+          }
+        });
       }
 
       console.log('공유 페이지 - 필터링된 스케줄 데이터:', filteredSchedules.length, '개');

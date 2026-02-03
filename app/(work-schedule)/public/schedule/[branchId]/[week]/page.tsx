@@ -192,40 +192,80 @@ export default function PublicSchedulePage({ params }: PublicSchedulePageProps) 
         );
       }
 
-      // 🔥 고영금님 디버깅 - 같은 날짜에 여러 스케줄이 있는지 확인
+      // 🔥 고영금님 디버깅 - Firestore 전체 데이터 확인
+      const allGoYoungGeumSchedules = allSchedulesData.filter(s => s.employeeName === '고영금');
+      console.log('🔥 Firestore 전체 - 고영금님 스케줄:', allGoYoungGeumSchedules.length, '개');
+      console.log('🔥 Firestore 전체 - 고영금님 스케줄 상세:', allGoYoungGeumSchedules.map(s => ({
+        id: s.id,
+        날짜: toLocalDateString(s.date),
+        날짜원본: s.date,
+        시간: `${s.startTime}-${s.endTime}`,
+        branchId: s.branchId,
+        branchName: s.branchName,
+        originalInput: s.originalInput,
+        timeSlots: s.timeSlots
+      })));
+      
+      // 필터링 전후 비교
       const goYoungGeumSchedules = filteredSchedules.filter(s => s.employeeName === '고영금');
-      if (goYoungGeumSchedules.length > 0) {
-        console.log('🔥 공유 페이지 - 고영금님 전체 스케줄:', goYoungGeumSchedules.length, '개');
-        console.log('🔥 고영금님 스케줄 상세:', goYoungGeumSchedules.map(s => ({
-          id: s.id,
+      console.log('🔥 필터링 후 - 고영금님 스케줄:', goYoungGeumSchedules.length, '개');
+      console.log('🔥 필터링 후 - 고영금님 스케줄 상세:', goYoungGeumSchedules.map(s => ({
+        id: s.id,
+        날짜: toLocalDateString(s.date),
+        시간: `${s.startTime}-${s.endTime}`,
+        branchId: s.branchId,
+        branchName: s.branchName,
+        originalInput: s.originalInput
+      })));
+      
+      // 필터링 범위 확인
+      console.log('🔥 필터링 범위 상세:', {
+        weekStart: weekStartStr,
+        weekEnd: weekEndStr,
+        weekStartDate: weekStart,
+        weekEndDate: weekEnd,
+        selectedBranchId: resolvedParams.branchId
+      });
+      
+      // 필터링에서 제외된 스케줄 확인
+      const excludedSchedules = allGoYoungGeumSchedules.filter(s => {
+        const scheduleDateStr = toLocalDateString(s.date);
+        const isInRange = scheduleDateStr >= weekStartStr && scheduleDateStr <= weekEndStr;
+        const isBranchMatch = resolvedParams.branchId === 'all' || s.branchId === resolvedParams.branchId;
+        return !isInRange || !isBranchMatch;
+      });
+      
+      if (excludedSchedules.length > 0) {
+        console.warn('⚠️ 필터링에서 제외된 고영금님 스케줄:', excludedSchedules.map(s => ({
           날짜: toLocalDateString(s.date),
-          시간: `${s.startTime}-${s.endTime}`,
           branchId: s.branchId,
           branchName: s.branchName,
-          originalInput: s.originalInput,
-          timeSlots: s.timeSlots
+          제외이유: {
+            날짜범위외: toLocalDateString(s.date) < weekStartStr || toLocalDateString(s.date) > weekEndStr,
+            지점불일치: resolvedParams.branchId !== 'all' && s.branchId !== resolvedParams.branchId
+          }
         })));
-        
-        // 같은 날짜에 여러 스케줄이 있는지 확인
-        const dateGroups = goYoungGeumSchedules.reduce((acc, schedule) => {
-          const dateStr = toLocalDateString(schedule.date);
-          if (!acc[dateStr]) {
-            acc[dateStr] = [];
-          }
-          acc[dateStr].push(schedule);
-          return acc;
-        }, {} as {[key: string]: typeof goYoungGeumSchedules});
-        
-        Object.entries(dateGroups).forEach(([date, schedules]) => {
-          if (schedules.length > 1) {
-            console.error(`❌ 고영금님 ${date}에 중복 스케줄 발견:`, schedules.length, '개', schedules.map(s => ({
-              id: s.id,
-              시간: `${s.startTime}-${s.endTime}`,
-              originalInput: s.originalInput
-            })));
-          }
-        });
       }
+      
+      // 같은 날짜에 여러 스케줄이 있는지 확인
+      const dateGroups = goYoungGeumSchedules.reduce((acc, schedule) => {
+        const dateStr = toLocalDateString(schedule.date);
+        if (!acc[dateStr]) {
+          acc[dateStr] = [];
+        }
+        acc[dateStr].push(schedule);
+        return acc;
+      }, {} as {[key: string]: typeof goYoungGeumSchedules});
+      
+      Object.entries(dateGroups).forEach(([date, schedules]) => {
+        if (schedules.length > 1) {
+          console.error(`❌ 고영금님 ${date}에 중복 스케줄 발견:`, schedules.length, '개', schedules.map(s => ({
+            id: s.id,
+            시간: `${s.startTime}-${s.endTime}`,
+            originalInput: s.originalInput
+          })));
+        }
+      });
 
       console.log('공유 페이지 - 필터링된 스케줄 데이터:', filteredSchedules.length, '개');
       setSchedules(filteredSchedules);

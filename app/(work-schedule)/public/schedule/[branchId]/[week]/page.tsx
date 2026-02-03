@@ -462,24 +462,35 @@ export default function PublicSchedulePage({ params }: PublicSchedulePageProps) 
   }, [resolvedParams.week, resolvedParams.branchId, loadBranchInfo, loadSchedules, loadWeeklyNote, loadOtherBranchSchedules]);
 
   const generateWeeklySummary = (schedulesData: Schedule[]) => {
-    const summaryMap = new Map<string, WeeklySummary>();
+    // 🔥 employeeId로 그룹화 (같은 직원이 다른 이름으로 저장된 경우 대응)
+    const summaryMapByEmployeeId = new Map<string, {
+      employeeId: string;
+      employeeNames: Set<string>; // 같은 employeeId에 여러 이름이 있을 수 있음
+      dailyHours: { [key: string]: number };
+      totalHours: number;
+    }>();
 
     schedulesData.forEach(schedule => {
+      const employeeId = schedule.employeeId;
       const employeeName = schedule.employeeName;
+      
       // JavaScript Date.getDay(): 0=일요일, 1=월요일, ..., 6=토요일
       // DAYS_OF_WEEK 배열: 0=월요일, 1=화요일, ..., 6=일요일
       const dayIndex = schedule.date.getDay() === 0 ? 6 : schedule.date.getDay() - 1;
       const dayOfWeek = DAYS_OF_WEEK[dayIndex];
 
-      if (!summaryMap.has(employeeName)) {
-        summaryMap.set(employeeName, {
-          employeeName,
+      if (!summaryMapByEmployeeId.has(employeeId)) {
+        summaryMapByEmployeeId.set(employeeId, {
+          employeeId,
+          employeeNames: new Set([employeeName]),
           dailyHours: {},
           totalHours: 0
         });
       }
 
-      const summary = summaryMap.get(employeeName)!;
+      const summary = summaryMapByEmployeeId.get(employeeId)!;
+      summary.employeeNames.add(employeeName); // 모든 이름 수집
+      
       // 🔥 같은 날짜에 여러 스케줄이 있을 수 있으므로 누적 합산
       if (summary.dailyHours[dayOfWeek.key]) {
         summary.dailyHours[dayOfWeek.key] += schedule.totalHours;
@@ -489,13 +500,42 @@ export default function PublicSchedulePage({ params }: PublicSchedulePageProps) 
       summary.totalHours += schedule.totalHours;
     });
 
-    console.log('🔥 generateWeeklySummary 결과:', Array.from(summaryMap.values()).map(s => ({
+    // 🔥 employeeId별로 그룹화된 데이터를 employeeName 기준으로 변환
+    // 같은 employeeId에 여러 이름이 있으면 가장 많이 사용된 이름 사용
+    const nameCountMap = new Map<string, Map<string, number>>(); // employeeId -> (employeeName -> count)
+    
+    schedulesData.forEach(schedule => {
+      if (!nameCountMap.has(schedule.employeeId)) {
+        nameCountMap.set(schedule.employeeId, new Map());
+      }
+      const nameMap = nameCountMap.get(schedule.employeeId)!;
+      nameMap.set(schedule.employeeName, (nameMap.get(schedule.employeeName) || 0) + 1);
+    });
+
+    const summaries: WeeklySummary[] = Array.from(summaryMapByEmployeeId.entries()).map(([employeeId, data]) => {
+      // 가장 많이 사용된 이름 선택
+      const nameMap = nameCountMap.get(employeeId)!;
+      const mostUsedName = Array.from(nameMap.entries()).sort((a, b) => b[1] - a[1])[0][0];
+      
+      // 🔥 같은 employeeId에 여러 이름이 있는 경우 경고
+      if (data.employeeNames.size > 1) {
+        console.warn(`⚠️ 직원 ID ${employeeId}에 여러 이름이 있습니다:`, Array.from(data.employeeNames), '→', mostUsedName, '사용');
+      }
+      
+      return {
+        employeeName: mostUsedName,
+        dailyHours: data.dailyHours,
+        totalHours: data.totalHours
+      };
+    });
+
+    console.log('🔥 generateWeeklySummary 결과 (employeeId 기준):', summaries.map(s => ({
       employeeName: s.employeeName,
       dailyHours: s.dailyHours,
       totalHours: s.totalHours
     })));
 
-    setWeeklySummaries(Array.from(summaryMap.values()));
+    setWeeklySummaries(summaries);
   };
 
   const getWeekDates = (weekStart: Date) => {

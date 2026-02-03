@@ -745,8 +745,19 @@ export default function PublicSchedulePage({ params }: PublicSchedulePageProps) 
                   .map((summary, index) => (
                   <tr key={index} className={`hover:bg-gray-50 ${index < weeklySummaries.length - 1 ? 'border-b border-gray-200' : ''}`}>
                     {weekDates.map((date, dayIndex) => {
+                      // 🔥 employeeId로 찾기 (같은 직원이 다른 이름으로 저장된 경우 대응)
+                      // 먼저 employeeName으로 찾고, 없으면 employeeId로 찾기
+                      const fallbackSchedule = schedules.find(s => s.employeeName === summary.employeeName);
+                      const targetEmployeeId = fallbackSchedule?.employeeId;
+                      
                       const daySchedules = getSchedulesForDate(date).filter(
-                        schedule => schedule.employeeName === summary.employeeName
+                        schedule => {
+                          // employeeName으로 먼저 매칭
+                          if (schedule.employeeName === summary.employeeName) return true;
+                          // 같은 employeeId인 경우도 포함 (이름이 다른 경우)
+                          if (targetEmployeeId && schedule.employeeId === targetEmployeeId) return true;
+                          return false;
+                        }
                       );
                       
                       return (
@@ -755,8 +766,7 @@ export default function PublicSchedulePage({ params }: PublicSchedulePageProps) 
                             {(() => {
                               const dateString = toLocalDateString(date);
                               // daySchedules가 없을 때도 다른 지점 스케줄을 보여주기 위해 employeeId 확보
-                              const fallbackSchedule = schedules.find(s => s.employeeName === summary.employeeName);
-                              const employeeIdForKey = (daySchedules[0]?.employeeId) || fallbackSchedule?.employeeId;
+                              const employeeIdForKey = (daySchedules[0]?.employeeId) || targetEmployeeId;
                               const otherBranchKey = employeeIdForKey ? `${employeeIdForKey}-${dateString}` : '';
                               const otherBranchSchedule = otherBranchKey ? otherBranchSchedules[otherBranchKey] : undefined;
 

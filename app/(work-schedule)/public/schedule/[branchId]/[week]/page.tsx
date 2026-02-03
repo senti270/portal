@@ -225,25 +225,41 @@ export default function PublicSchedulePage({ params }: PublicSchedulePageProps) 
         });
       }
 
-      // 🔥 고영금님 디버깅 - Firestore 전체 데이터 확인
+      // 🔥 고영금님 디버깅 - Firestore 전체 데이터 확인 (모든 지점 포함)
       const allGoYoungGeumSchedules = allSchedulesData.filter(s => s.employeeName === '고영금');
       
       // 🔥 강제로 alert로 표시 (콘솔이 안 보일 때)
       if (allGoYoungGeumSchedules.length > 0) {
         const scheduleDates = allGoYoungGeumSchedules.map(s => toLocalDateString(s.date)).join(', ');
-        console.log('🔥🔥🔥 고영금님 스케줄 디버깅 🔥🔥🔥');
+        console.log('🔥🔥🔥 고영금님 스케줄 디버깅 (모든 지점) 🔥🔥🔥');
         console.log('Firestore 전체:', allGoYoungGeumSchedules.length, '개');
         console.log('날짜들:', scheduleDates);
-        console.log('상세:', allGoYoungGeumSchedules.map(s => ({
+        console.log('상세 (지점별):', allGoYoungGeumSchedules.map(s => ({
           날짜: toLocalDateString(s.date),
           시간: `${s.startTime}-${s.endTime}`,
           branchId: s.branchId,
-          branchName: s.branchName
+          branchName: s.branchName,
+          selectedBranchId: resolvedParams.branchId,
+          현재지점일치: s.branchId === resolvedParams.branchId
         })));
+        
+        // 현재 지점의 스케줄만 필터링
+        const currentBranchSchedules = allGoYoungGeumSchedules.filter(s => s.branchId === resolvedParams.branchId);
+        console.log('🔥 현재 지점 스케줄:', currentBranchSchedules.length, '개');
+        console.log('🔥 현재 지점 스케줄 날짜:', currentBranchSchedules.map(s => toLocalDateString(s.date)));
+        
+        // 다른 지점의 스케줄
+        const otherBranchSchedules = allGoYoungGeumSchedules.filter(s => s.branchId !== resolvedParams.branchId);
+        if (otherBranchSchedules.length > 0) {
+          console.warn('⚠️ 다른 지점에 고영금님 스케줄이 있습니다:', otherBranchSchedules.map(s => ({
+            날짜: toLocalDateString(s.date),
+            지점: s.branchName
+          })));
+        }
         
         // URL에 ?debug=1이 있으면 alert로 표시
         if (window.location.search.includes('debug=1')) {
-          alert(`고영금님 스케줄: ${allGoYoungGeumSchedules.length}개\n날짜: ${scheduleDates}`);
+          alert(`고영금님 스케줄:\n전체: ${allGoYoungGeumSchedules.length}개\n현재지점: ${currentBranchSchedules.length}개\n다른지점: ${otherBranchSchedules.length}개\n\n날짜: ${scheduleDates}`);
         }
       } else {
         console.warn('⚠️ Firestore에 고영금님 스케줄이 없습니다!');

@@ -227,25 +227,30 @@ export default function PublicSchedulePage({ params }: PublicSchedulePageProps) 
 
       // 🔥 고영금님 디버깅 - Firestore 전체 데이터 확인
       const allGoYoungGeumSchedules = allSchedulesData.filter(s => s.employeeName === '고영금');
-      console.log('========================================');
-      console.log('🔥🔥🔥 고영금님 스케줄 디버깅 시작 🔥🔥🔥');
-      console.log('========================================');
-      console.log('🔥 Firestore 전체 - 고영금님 스케줄:', allGoYoungGeumSchedules.length, '개');
+      
+      // 🔥 강제로 alert로 표시 (콘솔이 안 보일 때)
       if (allGoYoungGeumSchedules.length > 0) {
-        console.log('🔥 Firestore 전체 - 고영금님 스케줄 상세:', allGoYoungGeumSchedules.map(s => ({
-          id: s.id,
+        const scheduleDates = allGoYoungGeumSchedules.map(s => toLocalDateString(s.date)).join(', ');
+        console.log('🔥🔥🔥 고영금님 스케줄 디버깅 🔥🔥🔥');
+        console.log('Firestore 전체:', allGoYoungGeumSchedules.length, '개');
+        console.log('날짜들:', scheduleDates);
+        console.log('상세:', allGoYoungGeumSchedules.map(s => ({
           날짜: toLocalDateString(s.date),
-          날짜원본: s.date,
           시간: `${s.startTime}-${s.endTime}`,
           branchId: s.branchId,
-          branchName: s.branchName,
-          originalInput: s.originalInput,
-          timeSlots: s.timeSlots
+          branchName: s.branchName
         })));
+        
+        // URL에 ?debug=1이 있으면 alert로 표시
+        if (window.location.search.includes('debug=1')) {
+          alert(`고영금님 스케줄: ${allGoYoungGeumSchedules.length}개\n날짜: ${scheduleDates}`);
+        }
       } else {
         console.warn('⚠️ Firestore에 고영금님 스케줄이 없습니다!');
+        if (window.location.search.includes('debug=1')) {
+          alert('⚠️ Firestore에 고영금님 스케줄이 없습니다!');
+        }
       }
-      console.log('========================================');
       
       // 필터링 전후 비교
       const goYoungGeumSchedules = filteredSchedules.filter(s => s.employeeName === '고영금');

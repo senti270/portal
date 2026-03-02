@@ -969,11 +969,11 @@ export class PayrollCalculator {
     // 모든 예정일 출근 여부 (단순화)
     const workedAllScheduledDays = weekSchedules.length >= weeklyWorkdays;
 
-    // 주휴수당 계산 (무조건 15시간 기준)
+    // 주휴수당 계산 (기본: 해당 주 실제 근무시간 기준 15시간 요건)
     let eligible = false;
     let hours = 0;
     let pay = 0;
-
+    
     if (totalHours >= 15) {
       eligible = true;
       hours = totalHours / weeklyWorkdays; // 주간 근무시간 ÷ 주간 근무일수
@@ -991,6 +991,29 @@ export class PayrollCalculator {
     endSunday.setDate(startMonday.getDate() + 6); // 일요일
     const weekStart = startMonday.toISOString().split('T')[0];
     const weekEnd = endSunday.toISOString().split('T')[0];
+
+    // 🔥 전월 이월 주 보정 로직
+    // - 해당 주의 월요일이 선택된 월 이전에 있고
+    // - 해당 주의 일요일이 선택된 월에 포함되는 경우
+    //   → "전월 이월 주"로 간주하고, 계약 주간 근로시간을 기준으로 15시간 요건 재검토
+    let carriedOverFromPrevMonth = false;
+    if (!eligible && monthStart) {
+      const isCrossingFromPrevMonth =
+        startMonday < monthStart && endSunday >= monthStart;
+
+      if (isCrossingFromPrevMonth) {
+        // 전월 포함 주의 경우, 실제 근무시간(totalHours) 대신
+        // 계약 주간 근로시간(weeklyContractHours)을 기준으로 15시간 요건을 판단
+        const combinedHoursForEligibility = weeklyContractHours;
+
+        if (combinedHoursForEligibility >= 15) {
+          carriedOverFromPrevMonth = true;
+          eligible = true;
+          hours = combinedHoursForEligibility / weeklyWorkdays;
+          pay = Math.round(hours * salaryAmount);
+        }
+      }
+    }
 
     // 마지막 주인지 확인 (다음달로 이월되는 주)
     // 🔥 주의 일요일이 선택된 월의 마지막 날보다 이후인 경우만 이월
@@ -1022,13 +1045,22 @@ export class PayrollCalculator {
     const finalHours = finalEligible ? hours : 0;
     const finalPay = finalEligible ? pay : 0;
 
+    let reason: string | undefined;
+    if (!finalEligible) {
+      reason = (isLastWeek && !isLastWeekEndingOnSunday)
+        ? '다음달로 이월하여 합산'
+        : '근무시간 부족 또는 출근일 부족';
+    } else if (carriedOverFromPrevMonth) {
+      reason = '지급 (전월 이월 주 합산)';
+    }
+
     return {
       weekStart,
       weekEnd,
       hours: finalHours,
       pay: finalPay,
       eligible: finalEligible,
-      reason: finalEligible ? undefined : (isLastWeek && !isLastWeekEndingOnSunday ? '다음달로 이월하여 합산' : '근무시간 부족 또는 출근일 부족')
+      reason
     };
   }
 

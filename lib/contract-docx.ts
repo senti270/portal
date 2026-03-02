@@ -1,6 +1,5 @@
 import Docxtemplater from 'docxtemplater'
 import PizZip from 'pizzip'
-import { saveAs } from 'file-saver'
 import jsPDF from 'jspdf'
 
 // 기본 DOCX 템플릿 (간단한 버전)

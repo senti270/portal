@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef, useEffect, useState } from 'react'
+import { useRef, useState } from 'react'
 import SignatureCanvas from 'react-signature-canvas'
 
 interface SignaturePadProps {
@@ -11,15 +11,6 @@ interface SignaturePadProps {
 export default function SignaturePad({ onComplete, onClear }: SignaturePadProps) {
   const canvasRef = useRef<SignatureCanvas>(null)
   const [isEmpty, setIsEmpty] = useState(true)
-
-  useEffect(() => {
-    const canvas = canvasRef.current
-    if (canvas) {
-      canvas.onEnd = () => {
-        setIsEmpty(canvas.isEmpty())
-      }
-    }
-  }, [])
 
   const handleClear = () => {
     canvasRef.current?.clear()
@@ -45,6 +36,12 @@ export default function SignaturePad({ onComplete, onClear }: SignaturePadProps)
       <div className="border-2 border-gray-300 rounded-lg p-4 bg-white">
         <SignatureCanvas
           ref={canvasRef}
+          onEnd={() => {
+            const canvas = canvasRef.current
+            if (canvas) {
+              setIsEmpty(canvas.isEmpty())
+            }
+          }}
           canvasProps={{
             width: 800,
             height: 300,

@@ -217,6 +217,36 @@ const generateDefaultLineItems = (calc: PayrollResult): PayrollLineItem[] => {
   return items;
 };
 
+// 근무시간비교 합계(예: 138:16)를 급여계산에서도 동일하게 쓰기 위한 헬퍼
+// "HH:MM-HH:MM" 형태의 문자열을 시간(소수)로 변환
+const parseTimeRangeToHoursForPayroll = (timeRange: string): number => {
+  if (!timeRange || timeRange === '-' || !timeRange.includes('-')) {
+    return 0;
+  }
+
+  try {
+    const [startTime, endTime] = timeRange.split('-');
+    const [startHour, startMinute] = startTime.split(':').map(Number);
+    const [endHour, endMinute] = endTime.split(':').map(Number);
+
+    const startMinutes = startHour * 60 + startMinute;
+    const endMinutes = endHour * 60 + endMinute;
+
+    let diffMinutes = endMinutes - startMinutes;
+    if (diffMinutes < 0) {
+      // 익일 근무 (예: 22:00-06:00)
+      diffMinutes += 24 * 60;
+    }
+
+    const hours = diffMinutes / 60;
+    // 소수점 4자리까지 유지해 부동소수점 오차 최소화
+    return Math.round(hours * 10000) / 10000;
+  } catch (error) {
+    console.error('parseTimeRangeToHoursForPayroll 오류:', error, 'timeRange:', timeRange);
+    return 0;
+  }
+};
+
 interface PayrollCalculationProps {
   selectedMonth: string;
   selectedEmployeeId: string;
@@ -720,13 +750,25 @@ const PayrollCalculation: React.FC<PayrollCalculationProps> = ({
             .map(doc => {
               const data = doc.data();
               const date = data.date?.toDate ? data.date.toDate() : new Date(data.date);
+
+              // 근무시간비교 합계(138:16 등)와 동일하게 실근무시간을 재계산
+              const rawActualWorkHours = data.actualWorkHours || 0;
+              const actualTimeRange = data.actualTimeRange || data.posTimeRange || '';
+              const actualBreakTime = data.actualBreakTime ?? data.breakTime ?? 0;
+
+              let computedActualWorkHours = rawActualWorkHours;
+              if ((!computedActualWorkHours || computedActualWorkHours === 0) && actualTimeRange) {
+                const rangeHours = parseTimeRangeToHoursForPayroll(actualTimeRange);
+                computedActualWorkHours = Math.max(0, rangeHours - (actualBreakTime || 0));
+              }
+
               return {
                 employeeId: data.employeeId,
                 date: date,
-                actualWorkHours: data.actualWorkHours || 0,
+                actualWorkHours: computedActualWorkHours || 0,
                 branchId: data.branchId,
                 branchName: data.branchName,
-                breakTime: data.breakTime || 0,
+                breakTime: actualBreakTime || 0,
                 posTimeRange: data.posTimeRange || '',
                 isManual: data.isManual || false,
                 docId: doc.id

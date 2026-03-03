@@ -4,8 +4,7 @@ import { useState, useEffect } from 'react'
 import { collection, getDocs } from 'firebase/firestore'
 import { db } from '@/lib/firebase'
 import PortalAuth from '@/components/PortalAuth'
-import ContractForm from '@/components/EmploymentContract/ContractForm'
-import TemplateFileUploader from '@/components/EmploymentContract/TemplateFileUploader'
+import ContractTemplateHandler from '@/components/EmploymentContract/ContractTemplateHandler'
 
 interface Branch {
   id: string
@@ -81,22 +80,9 @@ export default function EmploymentContractPage() {
                 </select>
               </div>
 
-              {/* 템플릿 파일 업로드 (선택사항) */}
-              <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
-                <h2 className="text-lg font-semibold text-gray-900 mb-4">
-                  DOCX 템플릿 파일 설정 (선택사항)
-                </h2>
-                <p className="text-sm text-gray-600 mb-4">
-                  근로계약서 DOCX 템플릿 파일을 업로드하면, 템플릿의 필드에 데이터를 자동으로 채워넣습니다.
-                  <br />
-                  템플릿 파일에는 {'{필드명}'} 형식으로 변수를 사용하세요. (예: {'{employeeName}'}, {'{startDate}'})
-                </p>
-                <TemplateFileUploader />
-              </div>
-
               {/* 계약서 작성 폼 */}
               {selectedBranchId ? (
-                <ContractForm
+                <ContractTemplateHandler
                   branchId={selectedBranchId}
                   branch={branches.find(b => b.id === selectedBranchId)!}
                 />

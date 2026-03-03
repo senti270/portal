@@ -71,8 +71,8 @@ export default function ContractTemplateHandler({ branchId, branch }: ContractTe
           startDate,
           endDate,
           workType: '정규직', // 기본값
-          workPlace: contractData.workPlace,
-          workContent: contractData.workContent,
+          workPlace: '청담장어마켓(송파점/동탄점/분당점), 카페드로잉(송파점/홍대점/동탄점), 사업주가 관리하는 신규추가지점',
+          workContent: '고객응대 및 서빙, 음료, 음식제조 및 매장관리 등 사업장이 지정한 업무',
           salaryType: contractData.salaryType,
           salaryAmount: parseFloat(contractData.salaryAmount),
           weeklyWorkHours: parseFloat(contractData.workDaysPerWeek) * 8, // 근사치
@@ -190,13 +190,16 @@ export default function ContractTemplateHandler({ branchId, branch }: ContractTe
     // 2. 근무장소
     doc.text('2. 근무장소', 20, y)
     y += 7
-    doc.text(contractData.workPlace, 20, y)
-    y += 10
+    const workPlaceText = '청담장어마켓(송파점/동탄점/분당점), 카페드로잉(송파점/홍대점/동탄점), 사업주가 관리하는 신규추가지점'
+    const workPlaceLines = doc.splitTextToSize(workPlaceText, 170)
+    doc.text(workPlaceLines, 20, y)
+    y += workPlaceLines.length * 7 + 3
     
     // 3. 업무의 내용
     doc.text('3. 업무의 내용', 20, y)
     y += 7
-    const workContentLines = doc.splitTextToSize(contractData.workContent, 170)
+    const workContentText = '고객응대 및 서빙, 음료, 음식제조 및 매장관리 등 사업장이 지정한 업무'
+    const workContentLines = doc.splitTextToSize(workContentText, 170)
     doc.text(workContentLines, 20, y)
     y += workContentLines.length * 7 + 3
     

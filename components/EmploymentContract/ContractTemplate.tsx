@@ -1,6 +1,8 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { collection, getDocs } from 'firebase/firestore'
+import { db } from '@/lib/firebase'
 import SignaturePad from './SignaturePad'
 
 interface Branch {
@@ -35,11 +37,9 @@ export interface ContractData {
   endDateDay?: string
   probationPeriod: string // 수습기간 (개월)
   
-  // 근무장소
-  workPlace: string
+  // 근무장소 (고정 텍스트)
   
-  // 업무 내용
-  workContent: string
+  // 업무 내용 (고정 텍스트)
   
   // 소정근로시간
   workStartHour: string
@@ -62,6 +62,7 @@ export interface ContractData {
   includesWeeklyHoliday: boolean // 주휴수당 포함 여부
   paymentDay: string // 임금지급일
   paymentMethod: 'cash' | 'bank' // 지급방법
+  bankName?: string // 은행명
   bankAccount?: string // 계좌번호
   
   // 계약일자
@@ -74,12 +75,19 @@ export interface ContractData {
   employerSignature: string
 }
 
+interface BankCode {
+  id: string
+  name: string
+  code: string
+}
+
 export default function ContractTemplate({ branch, onComplete }: ContractTemplateProps) {
   const [step, setStep] = useState<'form' | 'signature' | 'complete'>('form')
   const [currentSigner, setCurrentSigner] = useState<'employee' | 'employer'>('employee')
   const [employeeSignature, setEmployeeSignature] = useState<string>('')
   const [employerSignature, setEmployerSignature] = useState<string>('')
   const [loading, setLoading] = useState(false)
+  const [banks, setBanks] = useState<BankCode[]>([])
 
   const [formData, setFormData] = useState<ContractData>({
     employeeName: '',
@@ -91,8 +99,6 @@ export default function ContractTemplate({ branch, onComplete }: ContractTemplat
     startDateMonth: String(new Date().getMonth() + 1).padStart(2, '0'),
     startDateDay: String(new Date().getDate()).padStart(2, '0'),
     probationPeriod: '3',
-    workPlace: branch.name,
-    workContent: '고객응대 및 서빙, 음료, 음식제조 및 매장관리 등 사업장이 지정한 업무',
     workStartHour: '09',
     workStartMinute: '00',
     workEndHour: '18',
@@ -110,6 +116,23 @@ export default function ContractTemplate({ branch, onComplete }: ContractTemplat
     employeeSignature: '',
     employerSignature: ''
   })
+
+  useEffect(() => {
+    loadBanks()
+  }, [])
+
+  const loadBanks = async () => {
+    try {
+      const querySnapshot = await getDocs(collection(db, 'bankCodes'))
+      const banksData = querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      })) as BankCode[]
+      setBanks(banksData.sort((a, b) => a.name.localeCompare(b.name, 'ko')))
+    } catch (error) {
+      console.error('은행 목록을 불러올 수 없습니다:', error)
+    }
+  }
 
   const handleInputChange = (field: keyof ContractData, value: any) => {
     setFormData(prev => ({
@@ -353,28 +376,14 @@ export default function ContractTemplate({ branch, onComplete }: ContractTemplat
         {/* 2. 근무장소 */}
         <div className="mb-6">
           <p className="text-base">
-            <span className="font-semibold">2. 근 무 장 소</span> : {' '}
-            <input
-              type="text"
-              value={formData.workPlace}
-              onChange={(e) => handleInputChange('workPlace', e.target.value)}
-              className="border-b-2 border-gray-300 px-2 py-1 focus:outline-none focus:border-blue-500 flex-1 min-w-[300px]"
-              placeholder="청담장어마켓(송파점/동탄점), 카페드로잉(송파점/분당점/동탄점), 사업주가 관리하는 신규추가지점"
-            />
+            <span className="font-semibold">2. 근 무 장 소</span> : 청담장어마켓(송파점/동탄점/분당점), 카페드로잉(송파점/홍대점/동탄점), 사업주가 관리하는 신규추가지점
           </p>
         </div>
 
         {/* 3. 업무의 내용 */}
         <div className="mb-6">
           <p className="text-base">
-            <span className="font-semibold">3. 업무의 내용</span> : {' '}
-            <textarea
-              value={formData.workContent}
-              onChange={(e) => handleInputChange('workContent', e.target.value)}
-              className="border-b-2 border-gray-300 px-2 py-1 focus:outline-none focus:border-blue-500 w-full mt-1"
-              rows={2}
-              placeholder="고객응대 및 서빙, 음료, 음식제조 및 매장관리 등 사업장이 지정한 업무"
-            />
+            <span className="font-semibold">3. 업무의 내용</span> : 고객응대 및 서빙, 음료, 음식제조 및 매장관리 등 사업장이 지정한 업무
           </p>
         </div>
 
@@ -531,16 +540,47 @@ export default function ContractTemplate({ branch, onComplete }: ContractTemplat
         <div className="mb-6">
           <p className="text-base font-semibold mb-2">6. 임 금</p>
           <p className="text-base mb-2">
-            - <select
-              value={formData.salaryType}
-              onChange={(e) => handleInputChange('salaryType', e.target.value as 'monthly' | 'daily' | 'hourly')}
-              className="border-b-2 border-gray-300 px-2 py-1 focus:outline-none focus:border-blue-500"
-            >
-              <option value="monthly">월</option>
-              <option value="daily">일</option>
-              <option value="hourly">시간</option>
-            </select>
-            (일, 시간)급 : {' '}
+            - 월(일, 시간)급 : {' '}
+            <label className="inline-flex items-center gap-1 mr-3">
+              <input
+                type="checkbox"
+                checked={formData.salaryType === 'monthly'}
+                onChange={(e) => {
+                  if (e.target.checked) {
+                    handleInputChange('salaryType', 'monthly')
+                  }
+                }}
+                className="w-4 h-4"
+              />
+              <span>월</span>
+            </label>
+            <label className="inline-flex items-center gap-1 mr-3">
+              <input
+                type="checkbox"
+                checked={formData.salaryType === 'daily'}
+                onChange={(e) => {
+                  if (e.target.checked) {
+                    handleInputChange('salaryType', 'daily')
+                  }
+                }}
+                className="w-4 h-4"
+              />
+              <span>일</span>
+            </label>
+            <label className="inline-flex items-center gap-1 mr-3">
+              <input
+                type="checkbox"
+                checked={formData.salaryType === 'hourly'}
+                onChange={(e) => {
+                  if (e.target.checked) {
+                    handleInputChange('salaryType', 'hourly')
+                  }
+                }}
+                className="w-4 h-4"
+              />
+              <span>시간</span>
+            </label>
+            {' '}급 : {' '}
             <input
               type="number"
               value={formData.salaryAmount}
@@ -584,7 +624,7 @@ export default function ContractTemplate({ branch, onComplete }: ContractTemplat
               onChange={(e) => handleInputChange('paymentMethod', e.target.value as 'cash' | 'bank')}
               className="w-4 h-4"
             />
-            {' '}[ ], 근로자 명의 계좌에 입금 {' '}
+            {' '}, 근로자 명의 계좌에 입금 {' '}
             <input
               type="radio"
               name="paymentMethod"
@@ -593,11 +633,20 @@ export default function ContractTemplate({ branch, onComplete }: ContractTemplat
               onChange={(e) => handleInputChange('paymentMethod', e.target.value as 'cash' | 'bank')}
               className="w-4 h-4"
             />
-            {' '}[ ]
           </p>
           {formData.paymentMethod === 'bank' && (
             <p className="text-base mb-2">
               - 계좌번호 : {' '}
+              <select
+                value={formData.bankName || ''}
+                onChange={(e) => handleInputChange('bankName', e.target.value)}
+                className="border-b-2 border-gray-300 px-2 py-1 focus:outline-none focus:border-blue-500 mr-2"
+              >
+                <option value="">은행 선택</option>
+                {banks.map(bank => (
+                  <option key={bank.id} value={bank.name}>{bank.name}</option>
+                ))}
+              </select>
               <input
                 type="text"
                 value={formData.bankAccount || ''}

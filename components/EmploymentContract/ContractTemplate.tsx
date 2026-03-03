@@ -245,79 +245,77 @@ export default function ContractTemplate({ branch, onComplete }: ContractTemplat
         <h1 className="text-2xl font-bold text-center mb-8">표준근로계약서</h1>
         
         {/* 서문 */}
-        <div className="mb-6 text-center">
-          <p className="text-base">
-            <span className="font-semibold">{branch.ceoName || '대표자'}</span>(이하 "사업주"라 함)과(와)
-          </p>
-          <p className="text-base mt-2">
+        <div className="mb-6">
+          <p className="text-base leading-relaxed">
+            <span className="font-semibold">{branch.ceoName || '대표자'}</span> (이하 "사업주"라 함)과(와) {' '}
             <input
               type="text"
               value={formData.employeeName}
               onChange={(e) => handleInputChange('employeeName', e.target.value)}
               placeholder="근로자 성명"
-              className="border-b-2 border-gray-300 px-2 py-1 text-center focus:outline-none focus:border-blue-500 min-w-[120px]"
+              className="border-b-2 border-gray-300 px-2 py-1 inline-block focus:outline-none focus:border-blue-500 min-w-[120px] text-center"
             />
-            (이하 "근로자"라 함)은 다음과 같이 근로계약을 체결한다.
+            {' '}(이하 "근로자"라 함)은 다음과 같이 근로계약을 체결한다.
           </p>
         </div>
 
         {/* 1. 근로개시일 */}
-        <div className="mb-6 border-b pb-4">
-          <h3 className="font-semibold mb-3">1. 근로개시일</h3>
-          <div className="flex items-center gap-2 mb-2">
+        <div className="mb-6">
+          <p className="text-base mb-2">
+            <span className="font-semibold">1. 근로개시일</span> : {' '}
             <select
               value={formData.startDateYear}
               onChange={(e) => handleInputChange('startDateYear', e.target.value)}
-              className="border border-gray-300 rounded px-2 py-1"
+              className="border-b-2 border-gray-300 px-2 py-1 focus:outline-none focus:border-blue-500"
             >
               {years.map(y => <option key={y} value={y}>{y}</option>)}
             </select>
-            <span>년</span>
+            {' '}년 {' '}
             <select
               value={formData.startDateMonth}
               onChange={(e) => handleInputChange('startDateMonth', e.target.value)}
-              className="border border-gray-300 rounded px-2 py-1"
+              className="border-b-2 border-gray-300 px-2 py-1 focus:outline-none focus:border-blue-500"
             >
               {months.map(m => <option key={m} value={m}>{m}</option>)}
             </select>
-            <span>월</span>
+            {' '}월 {' '}
             <select
               value={formData.startDateDay}
               onChange={(e) => handleInputChange('startDateDay', e.target.value)}
-              className="border border-gray-300 rounded px-2 py-1"
+              className="border-b-2 border-gray-300 px-2 py-1 focus:outline-none focus:border-blue-500"
             >
               {days.map(d => <option key={d} value={d}>{d}</option>)}
             </select>
-            <span>일</span>
-            <span className="text-sm text-gray-500">(필요시 종료일 기재)</span>
-          </div>
+            {' '}일부터 (필요시 종료일 기재)
+          </p>
           {formData.endDateYear && (
-            <div className="flex items-center gap-2 mt-2">
+            <p className="text-base mb-2">
+              종료일 : {' '}
               <select
                 value={formData.endDateYear}
                 onChange={(e) => handleInputChange('endDateYear', e.target.value)}
-                className="border border-gray-300 rounded px-2 py-1"
+                className="border-b-2 border-gray-300 px-2 py-1 focus:outline-none focus:border-blue-500"
               >
                 {years.map(y => <option key={y} value={y}>{y}</option>)}
               </select>
-              <span>년</span>
+              {' '}년 {' '}
               <select
                 value={formData.endDateMonth}
                 onChange={(e) => handleInputChange('endDateMonth', e.target.value)}
-                className="border border-gray-300 rounded px-2 py-1"
+                className="border-b-2 border-gray-300 px-2 py-1 focus:outline-none focus:border-blue-500"
               >
                 {months.map(m => <option key={m} value={m}>{m}</option>)}
               </select>
-              <span>월</span>
+              {' '}월 {' '}
               <select
                 value={formData.endDateDay}
                 onChange={(e) => handleInputChange('endDateDay', e.target.value)}
-                className="border border-gray-300 rounded px-2 py-1"
+                className="border-b-2 border-gray-300 px-2 py-1 focus:outline-none focus:border-blue-500"
               >
                 {days.map(d => <option key={d} value={d}>{d}</option>)}
               </select>
-              <span>일</span>
-            </div>
+              {' '}일
+            </p>
           )}
           <button
             type="button"
@@ -332,290 +330,306 @@ export default function ContractTemplate({ branch, onComplete }: ContractTemplat
                 handleInputChange('endDateDay', undefined)
               }
             }}
-            className="text-sm text-blue-600 hover:underline mt-2"
+            className="text-sm text-blue-600 hover:underline mb-2"
           >
             {formData.endDateYear ? '종료일 제거' : '종료일 추가'}
           </button>
-          <div className="mt-3 flex items-center gap-2">
-            <span>최초</span>
+          <p className="text-base mb-1">
+            - 최초 {' '}
             <input
               type="number"
               value={formData.probationPeriod}
               onChange={(e) => handleInputChange('probationPeriod', e.target.value)}
-              className="border border-gray-300 rounded px-2 py-1 w-16 text-center"
+              className="border-b-2 border-gray-300 px-2 py-1 w-16 text-center focus:outline-none focus:border-blue-500"
               min="0"
             />
-            <span>개월은 수습기간임. 수습기간은 임금의 90% 지급함.</span>
-          </div>
-          <p className="text-sm text-gray-600 mt-1">
-            단, 수습기간 중 업무평가결과에 따라 계약을 해지할 수 있음
+            {' '}개월은 수습기간임. 수습기간은 임금의 90% 지급함.
+          </p>
+          <p className="text-base">
+            - 단, 수습기간 중 업무평가결과에 따라 계약을 해지할 수 있음
           </p>
         </div>
 
         {/* 2. 근무장소 */}
-        <div className="mb-6 border-b pb-4">
-          <h3 className="font-semibold mb-3">2. 근무장소</h3>
-          <input
-            type="text"
-            value={formData.workPlace}
-            onChange={(e) => handleInputChange('workPlace', e.target.value)}
-            className="w-full border border-gray-300 rounded px-3 py-2"
-            placeholder="청담장어마켓(송파점/동탄점), 카페드로잉(송파점/분당점/동탄점), 사업주가 관리하는 신규추가지점"
-          />
+        <div className="mb-6">
+          <p className="text-base">
+            <span className="font-semibold">2. 근 무 장 소</span> : {' '}
+            <input
+              type="text"
+              value={formData.workPlace}
+              onChange={(e) => handleInputChange('workPlace', e.target.value)}
+              className="border-b-2 border-gray-300 px-2 py-1 focus:outline-none focus:border-blue-500 flex-1 min-w-[300px]"
+              placeholder="청담장어마켓(송파점/동탄점), 카페드로잉(송파점/분당점/동탄점), 사업주가 관리하는 신규추가지점"
+            />
+          </p>
         </div>
 
         {/* 3. 업무의 내용 */}
-        <div className="mb-6 border-b pb-4">
-          <h3 className="font-semibold mb-3">3. 업무의 내용</h3>
-          <textarea
-            value={formData.workContent}
-            onChange={(e) => handleInputChange('workContent', e.target.value)}
-            className="w-full border border-gray-300 rounded px-3 py-2"
-            rows={2}
-            placeholder="고객응대 및 서빙, 음료, 음식제조 및 매장관리 등 사업장이 지정한 업무"
-          />
+        <div className="mb-6">
+          <p className="text-base">
+            <span className="font-semibold">3. 업무의 내용</span> : {' '}
+            <textarea
+              value={formData.workContent}
+              onChange={(e) => handleInputChange('workContent', e.target.value)}
+              className="border-b-2 border-gray-300 px-2 py-1 focus:outline-none focus:border-blue-500 w-full mt-1"
+              rows={2}
+              placeholder="고객응대 및 서빙, 음료, 음식제조 및 매장관리 등 사업장이 지정한 업무"
+            />
+          </p>
         </div>
 
         {/* 4. 소정근로시간 */}
-        <div className="mb-6 border-b pb-4">
-          <h3 className="font-semibold mb-3">4. 소정근로시간</h3>
-          <div className="flex items-center gap-2 mb-2">
+        <div className="mb-6">
+          <p className="text-base mb-2">
+            <span className="font-semibold">4. 소정근로시간</span> : {' '}
             <select
               value={formData.workStartHour}
               onChange={(e) => handleInputChange('workStartHour', e.target.value)}
-              className="border border-gray-300 rounded px-2 py-1"
+              className="border-b-2 border-gray-300 px-2 py-1 focus:outline-none focus:border-blue-500"
             >
               {hours.map(h => <option key={h} value={h}>{h}</option>)}
             </select>
-            <span>시</span>
+            {' '}시 {' '}
             <select
               value={formData.workStartMinute}
               onChange={(e) => handleInputChange('workStartMinute', e.target.value)}
-              className="border border-gray-300 rounded px-2 py-1"
+              className="border-b-2 border-gray-300 px-2 py-1 focus:outline-none focus:border-blue-500"
             >
               {minutes.map(m => <option key={m} value={m}>{m}</option>)}
             </select>
-            <span>분</span>
-            <span>~</span>
+            {' '}분 ~ {' '}
             <select
               value={formData.workEndHour}
               onChange={(e) => handleInputChange('workEndHour', e.target.value)}
-              className="border border-gray-300 rounded px-2 py-1"
+              className="border-b-2 border-gray-300 px-2 py-1 focus:outline-none focus:border-blue-500"
             >
               {hours.map(h => <option key={h} value={h}>{h}</option>)}
             </select>
-            <span>시</span>
+            {' '}시 {' '}
             <select
               value={formData.workEndMinute}
               onChange={(e) => handleInputChange('workEndMinute', e.target.value)}
-              className="border border-gray-300 rounded px-2 py-1"
+              className="border-b-2 border-gray-300 px-2 py-1 focus:outline-none focus:border-blue-500"
             >
               {minutes.map(m => <option key={m} value={m}>{m}</option>)}
             </select>
-            <span>분</span>
-          </div>
-          <div className="text-sm text-gray-600 mb-2">
-            (휴게시간 : 
+            {' '}분 (휴게시간 : {' '}
             {formData.breakStartHour ? (
               <>
                 <select
                   value={formData.breakStartHour}
                   onChange={(e) => handleInputChange('breakStartHour', e.target.value)}
-                  className="border border-gray-300 rounded px-1 py-0.5 text-sm"
+                  className="border-b-2 border-gray-300 px-2 py-1 focus:outline-none focus:border-blue-500"
                 >
                   {hours.map(h => <option key={h} value={h}>{h}</option>)}
                 </select>
-                시
+                {' '}시 {' '}
                 <select
                   value={formData.breakStartMinute}
                   onChange={(e) => handleInputChange('breakStartMinute', e.target.value)}
-                  className="border border-gray-300 rounded px-1 py-0.5 text-sm"
+                  className="border-b-2 border-gray-300 px-2 py-1 focus:outline-none focus:border-blue-500"
                 >
                   {minutes.map(m => <option key={m} value={m}>{m}</option>)}
                 </select>
-                분 ~
+                {' '}분 ~ {' '}
                 <select
                   value={formData.breakEndHour}
                   onChange={(e) => handleInputChange('breakEndHour', e.target.value)}
-                  className="border border-gray-300 rounded px-1 py-0.5 text-sm"
+                  className="border-b-2 border-gray-300 px-2 py-1 focus:outline-none focus:border-blue-500"
                 >
                   {hours.map(h => <option key={h} value={h}>{h}</option>)}
                 </select>
-                시
+                {' '}시 {' '}
                 <select
                   value={formData.breakEndMinute}
                   onChange={(e) => handleInputChange('breakEndMinute', e.target.value)}
-                  className="border border-gray-300 rounded px-1 py-0.5 text-sm"
+                  className="border-b-2 border-gray-300 px-2 py-1 focus:outline-none focus:border-blue-500"
                 >
                   {minutes.map(m => <option key={m} value={m}>{m}</option>)}
                 </select>
-                분)
+                {' '}분)
               </>
             ) : (
-              <button
-                type="button"
-                onClick={() => {
-                  handleInputChange('breakStartHour', '12')
-                  handleInputChange('breakStartMinute', '00')
-                  handleInputChange('breakEndHour', '13')
-                  handleInputChange('breakEndMinute', '00')
-                }}
-                className="text-blue-600 hover:underline ml-1"
-              >
-                휴게시간 추가
-              </button>
+              <>
+                <button
+                  type="button"
+                  onClick={() => {
+                    handleInputChange('breakStartHour', '12')
+                    handleInputChange('breakStartMinute', '00')
+                    handleInputChange('breakEndHour', '13')
+                    handleInputChange('breakEndMinute', '00')
+                  }}
+                  className="text-blue-600 hover:underline"
+                >
+                  휴게시간 추가
+                </button>
+                )
+              </>
             )}
-          </div>
-          <p className="text-sm text-gray-600">
-            (법정휴게시간 준수 : 4시간 근무시마다 30분)
           </p>
-          <p className="text-sm text-gray-600">
-            (흡연, 식사, 차량출차 같은 업무에 해당하지 않는 시간은 휴게시간으로 본다)
+          <p className="text-base mb-1">
+            - (법정휴게시간 준수 : 4시간 근무시마다 30분)
+          </p>
+          <p className="text-base">
+            - (흡연, 식사, 차량출차 같은 업무에 해당하지 않는 시간은 휴게시간으로 본다)
           </p>
         </div>
 
         {/* 5. 근무일/휴일 */}
-        <div className="mb-6 border-b pb-4">
-          <h3 className="font-semibold mb-3">5. 근무일/휴일</h3>
-          <div className="flex items-center gap-2 mb-2">
-            <span>매주</span>
+        <div className="mb-6">
+          <p className="text-base mb-2">
+            <span className="font-semibold">5. 근무일/휴일</span> : 매주 {' '}
             <input
               type="number"
               value={formData.workDaysPerWeek}
               onChange={(e) => handleInputChange('workDaysPerWeek', e.target.value)}
-              className="border border-gray-300 rounded px-2 py-1 w-16 text-center"
+              className="border-b-2 border-gray-300 px-2 py-1 w-16 text-center focus:outline-none focus:border-blue-500"
               min="1"
               max="7"
             />
-            <span>일 근무</span>
-            <input
-              type="text"
-              value={formData.workDaysDetail || ''}
-              onChange={(e) => handleInputChange('workDaysDetail', e.target.value)}
-              placeholder="(필요시, 근무요일)"
-              className="border border-gray-300 rounded px-2 py-1 flex-1"
-            />
-          </div>
-          <div className="flex items-center gap-2 mb-2">
-            <span>주휴일 매주</span>
+            {' '}일 근무(필요시, 근무요일), 주휴일 매주 {' '}
             <select
               value={formData.weeklyHolidayDay}
               onChange={(e) => handleInputChange('weeklyHolidayDay', e.target.value)}
-              className="border border-gray-300 rounded px-2 py-1"
+              className="border-b-2 border-gray-300 px-2 py-1 focus:outline-none focus:border-blue-500"
             >
               {weekDays.map(d => <option key={d} value={d}>{d}</option>)}
             </select>
-            <span>요일</span>
-          </div>
-          <p className="text-sm text-gray-600">
-            사업장의 상황이나 근로자 요청에 따라 근무일 또는 휴무일이 변경될 수 있으며, 이 경우 상호 협의하여 조정함
+            {' '}요일
+          </p>
+          {formData.workDaysDetail && (
+            <p className="text-base mb-2">
+              근무요일 : {' '}
+              <input
+                type="text"
+                value={formData.workDaysDetail}
+                onChange={(e) => handleInputChange('workDaysDetail', e.target.value)}
+                className="border-b-2 border-gray-300 px-2 py-1 focus:outline-none focus:border-blue-500"
+                placeholder="예: 월, 화, 수, 목, 금"
+              />
+            </p>
+          )}
+          <button
+            type="button"
+            onClick={() => {
+              if (!formData.workDaysDetail) {
+                handleInputChange('workDaysDetail', '')
+              } else {
+                handleInputChange('workDaysDetail', undefined)
+              }
+            }}
+            className="text-sm text-blue-600 hover:underline mb-2"
+          >
+            {formData.workDaysDetail ? '근무요일 제거' : '근무요일 추가'}
+          </button>
+          <p className="text-base">
+            - 사업장의 상황이나 근로자 요청에 따라 근무일 또는 휴무일이 변경될 수 있으며, 이 경우 상호 협의하여 조정함
           </p>
         </div>
 
         {/* 6. 임금 */}
-        <div className="mb-6 border-b pb-4">
-          <h3 className="font-semibold mb-3">6. 임금</h3>
-          <div className="flex items-center gap-2 mb-2">
-            <select
+        <div className="mb-6">
+          <p className="text-base font-semibold mb-2">6. 임 금</p>
+          <p className="text-base mb-2">
+            - <select
               value={formData.salaryType}
               onChange={(e) => handleInputChange('salaryType', e.target.value as 'monthly' | 'daily' | 'hourly')}
-              className="border border-gray-300 rounded px-2 py-1"
+              className="border-b-2 border-gray-300 px-2 py-1 focus:outline-none focus:border-blue-500"
             >
               <option value="monthly">월</option>
               <option value="daily">일</option>
               <option value="hourly">시간</option>
             </select>
-            <span>급 :</span>
+            (일, 시간)급 : {' '}
             <input
               type="number"
               value={formData.salaryAmount}
               onChange={(e) => handleInputChange('salaryAmount', e.target.value)}
-              className="border border-gray-300 rounded px-3 py-1 flex-1"
+              className="border-b-2 border-gray-300 px-2 py-1 focus:outline-none focus:border-blue-500 min-w-[200px]"
               placeholder="임금액"
             />
-            <span>원(세전)</span>
-          </div>
+            {' '}원 (세전)
+          </p>
           {formData.salaryType === 'hourly' && (
-            <div className="flex items-center gap-2 mb-2">
-              <span>시급인 경우 확인: 주휴수당 포함</span>
+            <p className="text-base mb-2">
+              - 시급인 경우 확인 : 주휴수당 포함 {' '}
               <input
                 type="checkbox"
                 checked={formData.includesWeeklyHoliday}
                 onChange={(e) => handleInputChange('includesWeeklyHoliday', e.target.checked)}
                 className="w-4 h-4"
               />
-            </div>
+              {' '}[ ]
+            </p>
           )}
-          <div className="flex items-center gap-2 mb-2">
-            <span>임금지급일 : 매월(매주 또는 매일)</span>
+          <p className="text-base mb-2">
+            - 임금지급일 : 매월(매주 또는 매일) {' '}
             <input
               type="number"
               value={formData.paymentDay}
               onChange={(e) => handleInputChange('paymentDay', e.target.value)}
-              className="border border-gray-300 rounded px-2 py-1 w-16 text-center"
+              className="border-b-2 border-gray-300 px-2 py-1 w-16 text-center focus:outline-none focus:border-blue-500"
               min="1"
               max="31"
             />
-            <span>일(휴일의 경우는 익일 지급)</span>
-          </div>
-          <div className="flex items-center gap-4 mb-2">
-            <span>지급방법 :</span>
-            <label className="flex items-center gap-1">
-              <input
-                type="radio"
-                name="paymentMethod"
-                value="cash"
-                checked={formData.paymentMethod === 'cash'}
-                onChange={(e) => handleInputChange('paymentMethod', e.target.value as 'cash' | 'bank')}
-              />
-              <span>근로자에게 직접(현금)지급</span>
-            </label>
-            <label className="flex items-center gap-1">
-              <input
-                type="radio"
-                name="paymentMethod"
-                value="bank"
-                checked={formData.paymentMethod === 'bank'}
-                onChange={(e) => handleInputChange('paymentMethod', e.target.value as 'cash' | 'bank')}
-              />
-              <span>근로자 명의 계좌에 입금</span>
-            </label>
-          </div>
+            {' '}일(휴일의 경우는 익일 지급)
+          </p>
+          <p className="text-base mb-2">
+            - 지급방법 : 근로자에게 직접(현금)지급 {' '}
+            <input
+              type="radio"
+              name="paymentMethod"
+              value="cash"
+              checked={formData.paymentMethod === 'cash'}
+              onChange={(e) => handleInputChange('paymentMethod', e.target.value as 'cash' | 'bank')}
+              className="w-4 h-4"
+            />
+            {' '}[ ], 근로자 명의 계좌에 입금 {' '}
+            <input
+              type="radio"
+              name="paymentMethod"
+              value="bank"
+              checked={formData.paymentMethod === 'bank'}
+              onChange={(e) => handleInputChange('paymentMethod', e.target.value as 'cash' | 'bank')}
+              className="w-4 h-4"
+            />
+            {' '}[ ]
+          </p>
           {formData.paymentMethod === 'bank' && (
-            <div className="flex items-center gap-2">
-              <span>계좌번호 :</span>
+            <p className="text-base mb-2">
+              - 계좌번호 : {' '}
               <input
                 type="text"
                 value={formData.bankAccount || ''}
                 onChange={(e) => handleInputChange('bankAccount', e.target.value)}
-                className="border border-gray-300 rounded px-3 py-1 flex-1"
+                className="border-b-2 border-gray-300 px-2 py-1 focus:outline-none focus:border-blue-500 min-w-[200px]"
                 placeholder="계좌번호 입력"
               />
-            </div>
+            </p>
           )}
         </div>
 
         {/* 7. 근로계약서 교부 */}
-        <div className="mb-6 border-b pb-4">
-          <h3 className="font-semibold mb-3">7. 근로계약서 교부</h3>
-          <p className="text-sm text-gray-600">
-            사업주는 근로계약을 체결함과 동시에 본 계약서를 사본하여 근로자의 교부 요구와 관계없이 근로자에게 교부함(근로기준법 제17조 이행)
+        <div className="mb-6">
+          <p className="text-base font-semibold mb-2">7. 근로계약서 교부</p>
+          <p className="text-base">
+            - 사업주는 근로계약을 체결함과 동시에 본 계약서를 사본하여 근로자의 교부 요구와 관계없이 근로자에게 교부함(근로기준법 제17조 이행)
           </p>
         </div>
 
         {/* 8. 근로계약, 취업규칙 등의 성실한 이행의무 */}
-        <div className="mb-6 border-b pb-4">
-          <h3 className="font-semibold mb-3">8. 근로계약, 취업규칙 등의 성실한 이행의무</h3>
-          <p className="text-sm text-gray-600">
-            사업주와 근로자는 각자가 근로계약, 취업규칙, 단체협약을 지키고 성실하게 이행하여야 함
+        <div className="mb-6">
+          <p className="text-base font-semibold mb-2">8. 근로계약, 취업규칙 등의 성실한 이행의무</p>
+          <p className="text-base">
+            - 사업주와 근로자는 각자가 근로계약, 취업규칙, 단체협약을 지키고 성실하게 이행하여야 함
           </p>
         </div>
 
         {/* 9. 그 밖의 사항 */}
-        <div className="mb-6 border-b pb-4">
-          <h3 className="font-semibold mb-3">9. 그 밖의 사항</h3>
-          <p className="text-sm text-gray-600">
-            이 계약에 정함이 없는 사항은 근로관계법령에 따름
+        <div className="mb-6">
+          <p className="text-base font-semibold mb-2">9. 그 밖의 사항</p>
+          <p className="text-base">
+            - 이 계약에 정함이 없는 사항은 근로관계법령에 따름
           </p>
         </div>
 
@@ -625,7 +639,7 @@ export default function ContractTemplate({ branch, onComplete }: ContractTemplat
             <select
               value={formData.contractDateYear}
               onChange={(e) => handleInputChange('contractDateYear', e.target.value)}
-              className="border border-gray-300 rounded px-2 py-1"
+              className="border-b-2 border-gray-300 px-2 py-1 focus:outline-none focus:border-blue-500"
             >
               {years.map(y => <option key={y} value={y}>{y}</option>)}
             </select>
@@ -633,7 +647,7 @@ export default function ContractTemplate({ branch, onComplete }: ContractTemplat
             <select
               value={formData.contractDateMonth}
               onChange={(e) => handleInputChange('contractDateMonth', e.target.value)}
-              className="border border-gray-300 rounded px-2 py-1"
+              className="border-b-2 border-gray-300 px-2 py-1 focus:outline-none focus:border-blue-500"
             >
               {months.map(m => <option key={m} value={m}>{m}</option>)}
             </select>
@@ -641,7 +655,7 @@ export default function ContractTemplate({ branch, onComplete }: ContractTemplat
             <select
               value={formData.contractDateDay}
               onChange={(e) => handleInputChange('contractDateDay', e.target.value)}
-              className="border border-gray-300 rounded px-2 py-1"
+              className="border-b-2 border-gray-300 px-2 py-1 focus:outline-none focus:border-blue-500"
             >
               {days.map(d => <option key={d} value={d}>{d}</option>)}
             </select>
@@ -650,70 +664,66 @@ export default function ContractTemplate({ branch, onComplete }: ContractTemplat
         </div>
 
         {/* 사업주 정보 */}
-        <div className="mb-6 border-t pt-4">
-          <h3 className="font-semibold mb-3">사업주</h3>
-          <div className="space-y-2">
-            <div>
-              <span className="font-medium">사업체명 :</span>
-              <span className="ml-2">{branch.companyName || branch.name}</span>
-            </div>
-            <div>
-              <span className="font-medium">주 소 :</span>
-              <span className="ml-2">{branch.address || ''}</span>
-            </div>
-            <div>
-              <span className="font-medium">대표자:</span>
-              <span className="ml-2">{branch.ceoName || ''}</span>
-              <span className="ml-2 text-gray-500">(서명)</span>
-            </div>
+        <div className="mb-6">
+          <p className="text-base font-semibold mb-2">(사업주)</p>
+          <div className="space-y-1">
+            <p className="text-base">
+              사업체명 : {branch.companyName || branch.name}
+            </p>
+            <p className="text-base">
+              주 소 : {branch.address || ''}
+            </p>
+            <p className="text-base">
+              대 표 자 : {branch.ceoName || ''} (서명)
+            </p>
           </div>
         </div>
 
         {/* 근로자 정보 */}
-        <div className="mb-6 border-t pt-4">
-          <h3 className="font-semibold mb-3">근로자</h3>
-          <div className="space-y-2">
-            <div>
-              <span className="font-medium">주 소:</span>
+        <div className="mb-6">
+          <p className="text-base font-semibold mb-2">(근로자)</p>
+          <div className="space-y-1">
+            <p className="text-base">
+              주 소 : {' '}
               <input
                 type="text"
                 value={formData.employeeAddress}
                 onChange={(e) => handleInputChange('employeeAddress', e.target.value)}
-                className="ml-2 border border-gray-300 rounded px-2 py-1 flex-1 max-w-md"
+                className="border-b-2 border-gray-300 px-2 py-1 focus:outline-none focus:border-blue-500 min-w-[300px]"
                 placeholder="근로자 주소"
               />
-            </div>
-            <div>
-              <span className="font-medium">연락처 :</span>
+            </p>
+            <p className="text-base">
+              연 락 처 : {' '}
               <input
                 type="tel"
                 value={formData.employeePhone}
                 onChange={(e) => handleInputChange('employeePhone', e.target.value)}
-                className="ml-2 border border-gray-300 rounded px-2 py-1 max-w-md"
+                className="border-b-2 border-gray-300 px-2 py-1 focus:outline-none focus:border-blue-500"
                 placeholder="010-0000-0000"
               />
-            </div>
-            <div>
-              <span className="font-medium">성명:</span>
+            </p>
+            <p className="text-base">
+              성 명 : {' '}
               <input
                 type="text"
                 value={formData.employeeName}
                 onChange={(e) => handleInputChange('employeeName', e.target.value)}
-                className="ml-2 border border-gray-300 rounded px-2 py-1 max-w-md"
+                className="border-b-2 border-gray-300 px-2 py-1 focus:outline-none focus:border-blue-500"
                 placeholder="근로자 성명"
               />
-              <span className="ml-2 text-gray-500">(서명)</span>
-            </div>
-            <div>
-              <span className="font-medium">주민등록번호 :</span>
+              {' '}(서명)
+            </p>
+            <p className="text-base">
+              주민등록번호 : {' '}
               <input
                 type="text"
                 value={formData.residentNumber}
                 onChange={(e) => handleInputChange('residentNumber', e.target.value)}
-                className="ml-2 border border-gray-300 rounded px-2 py-1 max-w-md"
+                className="border-b-2 border-gray-300 px-2 py-1 focus:outline-none focus:border-blue-500"
                 placeholder="000000-0000000"
               />
-            </div>
+            </p>
           </div>
         </div>
 

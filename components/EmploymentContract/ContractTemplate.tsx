@@ -633,6 +633,8 @@ export default function ContractTemplate({ branch, onComplete }: ContractTemplat
                 onChange={(e) => handleInputChange('includesWeeklyHoliday', e.target.checked)}
                 className="w-4 h-4"
               />
+              {' '}
+              <span className="text-xs text-gray-500">(주휴수당 기준은 매주 월~일입니다)</span>
             </p>
           )}
           <p className="text-base mb-2">

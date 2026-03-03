@@ -251,6 +251,8 @@ interface PayrollCalculationProps {
   selectedMonth: string;
   selectedEmployeeId: string;
   employees: Employee[];
+  // 직원별급여처리 화면에서 선택된 지점 (카페드로잉 동탄점 등)
+  selectedBranchId?: string;
   onPayrollStatusChange?: () => void;
 }
 
@@ -258,6 +260,7 @@ const PayrollCalculation: React.FC<PayrollCalculationProps> = ({
   selectedMonth,
   selectedEmployeeId,
   employees,
+  selectedBranchId,
   onPayrollStatusChange
 }) => {
   const [loading, setLoading] = useState(false);
@@ -706,10 +709,18 @@ const PayrollCalculation: React.FC<PayrollCalculationProps> = ({
       
       try {
         // employeeId와 month로 필터링하여 actualWorkHours 합산
+        const comparisonConstraints: any[] = [
+          where('month', '==', selectedMonth),
+          where('employeeId', '==', selectedEmployeeId),
+        ];
+        // 선택된 지점이 있으면 해당 지점만 사용 (근무시간비교 화면과 동일한 합계 사용)
+        if (selectedBranchId) {
+          comparisonConstraints.push(where('branchId', '==', selectedBranchId));
+        }
+
         const comparisonQuery = query(
           collection(db, 'workTimeComparisonResults'),
-          where('month', '==', selectedMonth),
-          where('employeeId', '==', selectedEmployeeId)
+          ...comparisonConstraints
         );
         const comparisonSnapshot = await getDocs(comparisonQuery);
         console.log('🔥 calculatePayroll - workTimeComparisonResults 조회 결과:', comparisonSnapshot.docs.length, '건');

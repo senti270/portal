@@ -932,6 +932,7 @@ const EmployeePayrollProcessing: React.FC<EmployeePayrollProcessingProps> = ({
               selectedEmployeeId={selectedEmployeeId}
               selectedMonth={selectedMonth}
               employees={employees}
+              selectedBranchId={selectedBranchId}
               onPayrollStatusChange={() => {
                 // 급여확정 상태 변경 시 직원 목록과 상태 다시 로드
                 loadAllData();

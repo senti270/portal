@@ -573,6 +573,9 @@ const EmployeePayrollProcessing: React.FC<EmployeePayrollProcessingProps> = ({
     }
     
     return matchesSearch && matchesStatus && matchesBranch && matchesEmploymentType;
+  }).sort((a, b) => {
+    // 한글 이름 순으로 정렬 (ㄱㄴㄷ 순)
+    return a.name.localeCompare(b.name, 'ko');
   });
 
   // 직원 선택 핸들러
@@ -816,6 +819,8 @@ const EmployeePayrollProcessing: React.FC<EmployeePayrollProcessingProps> = ({
                                   return '시급';
                                 case 'monthly':
                                   return '월급';
+                                case 'daily':
+                                  return '일급';
                                 default:
                                   return contract.salaryType || '시급';
                               }

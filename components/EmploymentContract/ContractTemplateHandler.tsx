@@ -248,7 +248,32 @@ export default function ContractTemplateHandler({ branchId, branch }: ContractTe
     y += 7
     doc.text(`주소: ${branch.address || ''}`, 20, y)
     y += 7
-    doc.text(`대표자: ${branch.ceoName || ''} (서명)`, 20, y)
+    doc.text(`대표자: ${branch.ceoName || ''}`, 20, y)
+    
+    // 사업주 서명 이미지 추가 (서명 자리에)
+    if (contractData.employerSignature) {
+      try {
+        const employerSigImg = new Image()
+        employerSigImg.src = contractData.employerSignature
+        await new Promise((resolve) => {
+          employerSigImg.onload = () => {
+            // 대표자 이름 옆에 서명 이미지 추가
+            const textWidth = doc.getTextWidth(`대표자: ${branch.ceoName || ''}`)
+            doc.addImage(employerSigImg, 'PNG', 20 + textWidth + 2, y - 5, 40, 15)
+            resolve(null)
+          }
+          employerSigImg.onerror = () => {
+            doc.text('(서명)', 20 + doc.getTextWidth(`대표자: ${branch.ceoName || ''}`) + 2, y)
+            resolve(null)
+          }
+        })
+      } catch (error) {
+        console.error('사업주 서명 이미지 추가 실패:', error)
+        doc.text('(서명)', 20 + doc.getTextWidth(`대표자: ${branch.ceoName || ''}`) + 2, y)
+      }
+    } else {
+      doc.text('(서명)', 20 + doc.getTextWidth(`대표자: ${branch.ceoName || ''}`) + 2, y)
+    }
     y += 10
     
     // 근로자 정보
@@ -258,42 +283,34 @@ export default function ContractTemplateHandler({ branchId, branch }: ContractTe
     y += 7
     doc.text(`연락처: ${contractData.employeePhone}`, 20, y)
     y += 7
-    doc.text(`성명: ${contractData.employeeName} (서명)`, 20, y)
-    y += 7
-    doc.text(`주민등록번호: ${contractData.residentNumber}`, 20, y)
+    doc.text(`성명: ${contractData.employeeName}`, 20, y)
     
-    // 서명 이미지 추가
+    // 근로자 서명 이미지 추가 (서명 자리에)
     if (contractData.employeeSignature) {
       try {
         const employeeSigImg = new Image()
         employeeSigImg.src = contractData.employeeSignature
         await new Promise((resolve) => {
           employeeSigImg.onload = () => {
-            doc.addImage(employeeSigImg, 'PNG', 20, y + 5, 40, 20)
+            // 성명 옆에 서명 이미지 추가
+            const textWidth = doc.getTextWidth(`성명: ${contractData.employeeName}`)
+            doc.addImage(employeeSigImg, 'PNG', 20 + textWidth + 2, y - 5, 40, 15)
             resolve(null)
           }
-          employeeSigImg.onerror = () => resolve(null)
+          employeeSigImg.onerror = () => {
+            doc.text('(서명)', 20 + doc.getTextWidth(`성명: ${contractData.employeeName}`) + 2, y)
+            resolve(null)
+          }
         })
       } catch (error) {
         console.error('근로자 서명 이미지 추가 실패:', error)
+        doc.text('(서명)', 20 + doc.getTextWidth(`성명: ${contractData.employeeName}`) + 2, y)
       }
+    } else {
+      doc.text('(서명)', 20 + doc.getTextWidth(`성명: ${contractData.employeeName}`) + 2, y)
     }
-    
-    if (contractData.employerSignature) {
-      try {
-        const employerSigImg = new Image()
-        employerSigImg.src = contractData.employerSignature
-        await new Promise((resolve) => {
-          employerSigImg.onload = () => {
-            doc.addImage(employerSigImg, 'PNG', 120, y + 5, 40, 20)
-            resolve(null)
-          }
-          employerSigImg.onerror = () => resolve(null)
-        })
-      } catch (error) {
-        console.error('사업주 서명 이미지 추가 실패:', error)
-      }
-    }
+    y += 7
+    doc.text(`주민등록번호: ${contractData.residentNumber}`, 20, y)
     
     const pdfBlob = doc.output('blob')
     return pdfBlob

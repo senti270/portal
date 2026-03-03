@@ -757,7 +757,16 @@ export default function ContractTemplate({ branch, onComplete }: ContractTemplat
               주 소 : {branch.address || ''}
             </p>
             <p className="text-base">
-              대 표 자 : {branch.ceoName || ''} (서명)
+              대 표 자 : {branch.ceoName || ''} {' '}
+              {employerSignature ? (
+                <img 
+                  src={employerSignature} 
+                  alt="사업주 서명" 
+                  className="inline-block h-8 w-auto ml-2 border border-gray-300"
+                />
+              ) : (
+                '(서명)'
+              )}
             </p>
           </div>
         </div>
@@ -795,7 +804,16 @@ export default function ContractTemplate({ branch, onComplete }: ContractTemplat
                 className="border-b-2 border-gray-300 px-2 py-1 focus:outline-none focus:border-blue-500"
                 placeholder="근로자 성명"
               />
-              {' '}(서명)
+              {' '}
+              {employeeSignature ? (
+                <img 
+                  src={employeeSignature} 
+                  alt="근로자 서명" 
+                  className="inline-block h-8 w-auto ml-2 border border-gray-300"
+                />
+              ) : (
+                '(서명)'
+              )}
             </p>
             <p className="text-base">
               주민등록번호 : {' '}

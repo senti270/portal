@@ -110,7 +110,7 @@ export default function ContractTemplate({ branch, onComplete }: ContractTemplat
     salaryType: 'hourly',
     salaryAmount: '',
     includesWeeklyHoliday: false,
-    paymentDay: '5',
+    paymentDay: '10',
     paymentMethod: 'bank',
     contractDateYear: new Date().getFullYear().toString(),
     contractDateMonth: String(new Date().getMonth() + 1).padStart(2, '0'),
@@ -638,16 +638,7 @@ export default function ContractTemplate({ branch, onComplete }: ContractTemplat
             </p>
           )}
           <p className="text-base mb-2">
-            - 임금지급일 : 매월(매주 또는 매일) {' '}
-            <input
-              type="number"
-              value={formData.paymentDay}
-              onChange={(e) => handleInputChange('paymentDay', e.target.value)}
-              className="border-b-2 border-gray-300 px-2 py-1 w-16 text-center focus:outline-none focus:border-blue-500"
-              min="1"
-              max="31"
-            />
-            {' '}일(휴일의 경우는 익일 지급)
+            - 임금지급일 : 매월 10일(휴일의 경우는 익일 지급)
           </p>
           <p className="text-base mb-2">
             - 지급방법 : 근로자에게 직접(현금)지급 {' '}

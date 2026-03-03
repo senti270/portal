@@ -574,7 +574,7 @@ export default function ContractTemplate({ branch, onComplete }: ContractTemplat
         <div className="mb-6">
           <p className="text-base font-semibold mb-2">6. 임 금</p>
           <p className="text-base mb-2">
-            - 월(일, 시간)급 : {' '}
+            - {' '}
             <label className="inline-flex items-center gap-1 mr-3">
               <input
                 type="checkbox"
@@ -586,7 +586,7 @@ export default function ContractTemplate({ branch, onComplete }: ContractTemplat
                 }}
                 className="w-4 h-4"
               />
-              <span>월</span>
+              <span>월급</span>
             </label>
             <label className="inline-flex items-center gap-1 mr-3">
               <input
@@ -599,7 +599,7 @@ export default function ContractTemplate({ branch, onComplete }: ContractTemplat
                 }}
                 className="w-4 h-4"
               />
-              <span>일</span>
+              <span>일급</span>
             </label>
             <label className="inline-flex items-center gap-1 mr-3">
               <input
@@ -612,9 +612,9 @@ export default function ContractTemplate({ branch, onComplete }: ContractTemplat
                 }}
                 className="w-4 h-4"
               />
-              <span>시간</span>
+              <span>시급</span>
             </label>
-            {' '}급 : {' '}
+            {' '}: {' '}
             <input
               type="number"
               value={formData.salaryAmount}

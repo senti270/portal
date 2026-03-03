@@ -54,6 +54,7 @@ export interface ContractData {
   // 근무일/휴일
   workDaysPerWeek: string // 매주 몇 일
   workDaysDetail?: string // 근무요일 (필요시)
+  selectedWorkDays: string[] // 선택한 근무요일 (월~일)
   weeklyHolidayDay: string // 주휴일 요일
   
   // 임금
@@ -104,6 +105,7 @@ export default function ContractTemplate({ branch, onComplete }: ContractTemplat
     workEndHour: '18',
     workEndMinute: '00',
     workDaysPerWeek: '5',
+    selectedWorkDays: ['월', '화', '수', '목', '금'],
     weeklyHolidayDay: '일',
     salaryType: 'hourly',
     salaryAmount: '',
@@ -139,6 +141,37 @@ export default function ContractTemplate({ branch, onComplete }: ContractTemplat
       ...prev,
       [field]: value
     }))
+  }
+
+  const handleWorkDayToggle = (day: string) => {
+    setFormData(prev => {
+      const currentSelected = prev.selectedWorkDays || []
+      let newSelected: string[]
+      
+      if (currentSelected.includes(day)) {
+        // 체크 해제
+        newSelected = currentSelected.filter(d => d !== day)
+      } else {
+        // 체크 추가
+        newSelected = [...currentSelected, day]
+      }
+      
+      // 선택된 요일 개수로 매주 x일 업데이트
+      const workDaysCount = newSelected.length.toString()
+      
+      // 선택되지 않은 요일 중 첫 번째를 주휴일로 자동 설정
+      const allDays = ['월', '화', '수', '목', '금', '토', '일']
+      const notSelected = allDays.filter(d => !newSelected.includes(d))
+      const newHolidayDay = notSelected.length > 0 ? notSelected[0] : prev.weeklyHolidayDay
+      
+      return {
+        ...prev,
+        selectedWorkDays: newSelected,
+        workDaysPerWeek: workDaysCount,
+        weeklyHolidayDay: newHolidayDay,
+        workDaysDetail: newSelected.join(', ')
+      }
+    })
   }
 
   const handleSignatureComplete = (signature: string) => {
@@ -488,49 +521,50 @@ export default function ContractTemplate({ branch, onComplete }: ContractTemplat
         <div className="mb-6">
           <p className="text-base mb-2">
             <span className="font-semibold">5. 근무일/휴일</span> : 매주 {' '}
-            <input
-              type="number"
-              value={formData.workDaysPerWeek}
-              onChange={(e) => handleInputChange('workDaysPerWeek', e.target.value)}
-              className="border-b-2 border-gray-300 px-2 py-1 w-16 text-center focus:outline-none focus:border-blue-500"
-              min="1"
-              max="7"
-            />
+            <span className="font-semibold text-blue-600">{formData.workDaysPerWeek}</span>
             {' '}일 근무(필요시, 근무요일), 주휴일 매주 {' '}
-            <select
-              value={formData.weeklyHolidayDay}
-              onChange={(e) => handleInputChange('weeklyHolidayDay', e.target.value)}
-              className="border-b-2 border-gray-300 px-2 py-1 focus:outline-none focus:border-blue-500"
-            >
-              {weekDays.map(d => <option key={d} value={d}>{d}</option>)}
-            </select>
+            <span className="font-semibold text-blue-600">{formData.weeklyHolidayDay}</span>
             {' '}요일
           </p>
-          {formData.workDaysDetail && (
-            <p className="text-base mb-2">
-              근무요일 : {' '}
-              <input
-                type="text"
-                value={formData.workDaysDetail}
-                onChange={(e) => handleInputChange('workDaysDetail', e.target.value)}
-                className="border-b-2 border-gray-300 px-2 py-1 focus:outline-none focus:border-blue-500"
-                placeholder="예: 월, 화, 수, 목, 금"
-              />
-            </p>
-          )}
-          <button
-            type="button"
-            onClick={() => {
-              if (!formData.workDaysDetail) {
-                handleInputChange('workDaysDetail', '')
-              } else {
-                handleInputChange('workDaysDetail', undefined)
-              }
-            }}
-            className="text-sm text-blue-600 hover:underline mb-2"
-          >
-            {formData.workDaysDetail ? '근무요일 제거' : '근무요일 추가'}
-          </button>
+          <div className="mb-2">
+            <button
+              type="button"
+              onClick={() => {
+                const currentShow = formData.workDaysDetail !== undefined
+                if (currentShow) {
+                  handleInputChange('workDaysDetail', undefined)
+                } else {
+                  handleInputChange('workDaysDetail', formData.selectedWorkDays.join(', '))
+                }
+              }}
+              className="text-sm text-blue-600 hover:underline mb-2"
+            >
+              {formData.workDaysDetail !== undefined ? '근무요일 선택 닫기' : '근무요일 선택'}
+            </button>
+            {formData.workDaysDetail !== undefined && (
+              <div className="mt-2 p-3 border border-gray-300 rounded-lg bg-gray-50">
+                <p className="text-sm text-gray-600 mb-2">근무요일을 선택하세요:</p>
+                <div className="flex flex-wrap gap-3">
+                  {weekDays.map(day => (
+                    <label key={day} className="inline-flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={formData.selectedWorkDays?.includes(day) || false}
+                        onChange={() => handleWorkDayToggle(day)}
+                        className="w-4 h-4"
+                      />
+                      <span className="text-base">{day}</span>
+                    </label>
+                  ))}
+                </div>
+                {formData.selectedWorkDays && formData.selectedWorkDays.length > 0 && (
+                  <p className="text-sm text-gray-600 mt-2">
+                    선택된 근무요일: {formData.selectedWorkDays.join(', ')}
+                  </p>
+                )}
+              </div>
+            )}
+          </div>
           <p className="text-base">
             - 사업장의 상황이나 근로자 요청에 따라 근무일 또는 휴무일이 변경될 수 있으며, 이 경우 상호 협의하여 조정함
           </p>

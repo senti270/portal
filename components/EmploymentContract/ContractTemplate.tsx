@@ -599,7 +599,6 @@ export default function ContractTemplate({ branch, onComplete }: ContractTemplat
                 onChange={(e) => handleInputChange('includesWeeklyHoliday', e.target.checked)}
                 className="w-4 h-4"
               />
-              {' '}[ ]
             </p>
           )}
           <p className="text-base mb-2">
@@ -616,23 +615,31 @@ export default function ContractTemplate({ branch, onComplete }: ContractTemplat
           </p>
           <p className="text-base mb-2">
             - 지급방법 : 근로자에게 직접(현금)지급 {' '}
-            <input
-              type="radio"
-              name="paymentMethod"
-              value="cash"
-              checked={formData.paymentMethod === 'cash'}
-              onChange={(e) => handleInputChange('paymentMethod', e.target.value as 'cash' | 'bank')}
-              className="w-4 h-4"
-            />
-            {' '}, 근로자 명의 계좌에 입금 {' '}
-            <input
-              type="radio"
-              name="paymentMethod"
-              value="bank"
-              checked={formData.paymentMethod === 'bank'}
-              onChange={(e) => handleInputChange('paymentMethod', e.target.value as 'cash' | 'bank')}
-              className="w-4 h-4"
-            />
+            <label className="inline-flex items-center gap-1 mr-3">
+              <input
+                type="checkbox"
+                checked={formData.paymentMethod === 'cash'}
+                onChange={(e) => {
+                  if (e.target.checked) {
+                    handleInputChange('paymentMethod', 'cash')
+                  }
+                }}
+                className="w-4 h-4"
+              />
+            </label>
+            , 근로자 명의 계좌에 입금 {' '}
+            <label className="inline-flex items-center gap-1">
+              <input
+                type="checkbox"
+                checked={formData.paymentMethod === 'bank'}
+                onChange={(e) => {
+                  if (e.target.checked) {
+                    handleInputChange('paymentMethod', 'bank')
+                  }
+                }}
+                className="w-4 h-4"
+              />
+            </label>
           </p>
           {formData.paymentMethod === 'bank' && (
             <p className="text-base mb-2">

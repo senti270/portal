@@ -92,11 +92,19 @@ export class PayrollCalculator {
   private employee: Employee;
   private contract: Contract;
   private schedules: Schedule[];
+  // 🔥 전월 이월 주 처리를 위한 "이전달 부분 주"의 실 근무시간 합계 (weekStart YYYY-MM-DD -> hours)
+  private prevWeekHoursMap?: Record<string, number>;
 
-  constructor(employee: Employee, contract: Contract, schedules: Schedule[]) {
+  constructor(
+    employee: Employee,
+    contract: Contract,
+    schedules: Schedule[],
+    prevWeekHoursMap?: Record<string, number>
+  ) {
     this.employee = employee;
     this.contract = contract;
     this.schedules = schedules;
+    this.prevWeekHoursMap = prevWeekHoursMap;
   }
 
   // 🔥 고용형태별 계산 함수들
@@ -960,25 +968,10 @@ export class PayrollCalculator {
     reason?: string;
   } {
     const salaryAmount = this.contract.salaryAmount;
-    const weeklyContractHours = this.contract.weeklyWorkHours || 40;
-    const weeklyWorkdays = 5; // 기본값
+    const weeklyWorkdays = 5; // 기본값 (주 5일 기준)
 
-    // 해당 주의 총 근무시간
+    // 해당 주의 총 근무시간 (현재 달에 포함된 부분만)
     const totalHours = weekSchedules.reduce((sum, s) => sum + s.actualWorkHours, 0);
-    
-    // 모든 예정일 출근 여부 (단순화)
-    const workedAllScheduledDays = weekSchedules.length >= weeklyWorkdays;
-
-    // 주휴수당 계산 (기본: 해당 주 실제 근무시간 기준 15시간 요건)
-    let eligible = false;
-    let hours = 0;
-    let pay = 0;
-    
-    if (totalHours >= 15) {
-      eligible = true;
-      hours = totalHours / weeklyWorkdays; // 주간 근무시간 ÷ 주간 근무일수
-      pay = Math.round(hours * salaryAmount);
-    }
 
     // 날짜 순으로 정렬 후 주차 경계(월~일) 계산
     const sortedSchedules = [...weekSchedules].sort((a, b) => a.date.getTime() - b.date.getTime());
@@ -992,34 +985,39 @@ export class PayrollCalculator {
     const weekStart = startMonday.toISOString().split('T')[0];
     const weekEnd = endSunday.toISOString().split('T')[0];
 
-    // 🔥 전월 이월 주 보정 로직
+    // 🔥 전월 이월 주 보정 로직 (실제 근무시간 기반)
     // - 해당 주의 월요일이 선택된 월 이전에 있고
     // - 해당 주의 일요일이 선택된 월에 포함되는 경우
-    //   → "전월 이월 주"로 간주하고, 계약 주간 근로시간을 기준으로 15시간 요건 재검토
+    //   → "전월 이월 주"로 간주하고, 이전달에 속한 나머지 일자(예: 1/26~1/31)의
+    //      실제 근무시간을 prevWeekHoursMap에서 가져와 합산하여 15시간 요건과 주휴시간을 계산
     let carriedOverFromPrevMonth = false;
-    // 🔥 전월 이월 주 처리:
-    // - 기존 로직: 월초를 포함하는 주(전월~당월跨)에서 totalHours가 15시간 미만이더라도
-    //   weeklyContractHours(주 소정근로시간)으로 15시간 요건을 강제로 만족시켜 주휴수당을 지급
-    // - 문제 사례: 실제 근무시간이 0시간인 주(전월에도 근무가 전혀 없는 주)에도
-    //   weeklyContractHours 때문에 8시간 주휴수당이 발생
-    // - 수정: "해당 주에 실제 근무가 1시간 이상 있었던 경우"에만 이월주 보정 로직을 적용
-    //   → totalHours > 0 인 경우에만 전월 이월 보정 허용
-    if (!eligible && monthStart && totalHours > 0) {
+    let prevMonthHours = 0;
+    let combinedTotalHours = totalHours;
+
+    if (monthStart) {
       const isCrossingFromPrevMonth =
         startMonday < monthStart && endSunday >= monthStart;
 
       if (isCrossingFromPrevMonth) {
-        // 전월 포함 주의 경우, 실제 근무시간(totalHours) 대신
-        // 계약 주간 근로시간(weeklyContractHours)을 기준으로 15시간 요건을 판단
-        const combinedHoursForEligibility = weeklyContractHours;
+        // PayrollCalculator 생성 시 전달된 이전달 부분 주의 근무시간(예: 1/26~1/31)을 가져옴
+        prevMonthHours = this.prevWeekHoursMap?.[weekStart] || 0;
 
-        if (combinedHoursForEligibility >= 15) {
+        if (prevMonthHours > 0) {
           carriedOverFromPrevMonth = true;
-          eligible = true;
-          hours = combinedHoursForEligibility / weeklyWorkdays;
-          pay = Math.round(hours * salaryAmount);
+          combinedTotalHours = totalHours + prevMonthHours;
         }
       }
+    }
+
+    // 주휴수당 계산 (기본: 해당 주 실제 근무시간 + 이전달 부분을 모두 합산한 시간 기준 15시간 요건)
+    let eligible = false;
+    let hours = 0;
+    let pay = 0;
+
+    if (combinedTotalHours >= 15) {
+      eligible = true;
+      hours = combinedTotalHours / weeklyWorkdays; // 주 전체 근무시간 ÷ 주간 근무일수
+      pay = Math.round(hours * salaryAmount);
     }
 
     // 마지막 주인지 확인 (다음달로 이월되는 주)
@@ -1034,7 +1032,8 @@ export class PayrollCalculator {
       weekStart,
       weekEnd,
       totalHours,
-      weeklyContractHours,
+      combinedTotalHours,
+      prevMonthHours,
       workedAllScheduledDays,
       scheduleCount: weekSchedules.length,
       weeklyWorkdays,

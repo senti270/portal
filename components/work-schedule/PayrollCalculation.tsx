@@ -858,6 +858,82 @@ const PayrollCalculation: React.FC<PayrollCalculationProps> = ({
           const totalHours = schedulesToUse.reduce((sum, s) => sum + (s.actualWorkHours || 0), 0);
           console.log('🔥 총 근무시간:', totalHours, '시간');
           console.log('🔥 선택된 월:', selectedMonth);
+
+          // 🔥 전월 이월 주 처리를 위한 이전달 부분 주 근무시간 맵 생성 (weekStart YYYY-MM-DD -> hours)
+          // 예: 1/26~2/1 주의 경우, 1/26~1/31 근무시간을 prevWeekHoursMap에 저장
+          let prevWeekHoursMap: Record<string, number> | undefined = undefined;
+
+          try {
+            const [yearPrev, monthPrevNum] = selectedMonth.split('-').map(Number);
+            const monthStartPrev = new Date(yearPrev, monthPrevNum - 1, 1);
+            // 선택된 월의 시작일 (monthStart는 위에서 계산됨)
+            const firstDayOfMonth = monthStart;
+            // 전월에서 가져올 범위: 선택된 월 시작일 기준 최대 6일 전까지 (한 주분)
+            const prevRangeStart = new Date(firstDayOfMonth);
+            prevRangeStart.setDate(firstDayOfMonth.getDate() - 6);
+
+            const prevMonthDate = new Date(firstDayOfMonth);
+            prevMonthDate.setMonth(firstDayOfMonth.getMonth() - 1);
+            const prevMonthStr = `${prevMonthDate.getFullYear()}-${String(prevMonthDate.getMonth() + 1).padStart(2, '0')}`;
+
+            const prevConstraints: any[] = [
+              where('month', '==', prevMonthStr),
+              where('employeeId', '==', selectedEmployeeId),
+            ];
+            if (selectedBranchId) {
+              prevConstraints.push(where('branchId', '==', selectedBranchId));
+            }
+
+            const prevSnapshot = await getDocs(
+              query(collection(db, 'workTimeComparisonResults'), ...prevConstraints)
+            );
+
+            const prevSchedulesRaw = prevSnapshot.docs.map(doc => {
+              const data = doc.data();
+              const date = data.date?.toDate ? data.date.toDate() : new Date(data.date);
+
+              const rawActualWorkHours = data.actualWorkHours || 0;
+              const actualTimeRange = data.actualTimeRange || data.posTimeRange || '';
+              const actualBreakTime = data.actualBreakTime ?? data.breakTime ?? 0;
+
+              let computedActualWorkHours = rawActualWorkHours;
+              if ((!computedActualWorkHours || computedActualWorkHours === 0) && actualTimeRange) {
+                const rangeHours = parseTimeRangeToHoursForPayroll(actualTimeRange);
+                computedActualWorkHours = Math.max(0, rangeHours - (actualBreakTime || 0));
+              }
+
+              return {
+                date,
+                actualWorkHours: computedActualWorkHours || 0,
+              };
+            });
+
+            const prevSchedules = prevSchedulesRaw.filter(s => {
+              const d = s.date;
+              return d >= prevRangeStart && d < firstDayOfMonth;
+            });
+
+            if (prevSchedules.length > 0) {
+              const map: Record<string, number> = {};
+
+              prevSchedules.forEach(s => {
+                const monday = new Date(s.date);
+                const dow = monday.getDay(); // 0=일,1=월,...
+                const offset = dow === 0 ? -6 : 1 - dow;
+                monday.setDate(monday.getDate() + offset);
+                const key = monday.toISOString().split('T')[0];
+
+                map[key] = (map[key] || 0) + (s.actualWorkHours || 0);
+              });
+
+              prevWeekHoursMap = map;
+              console.log('🔥 전월 부분 주 근무시간 맵(prevWeekHoursMap):', prevWeekHoursMap);
+            } else {
+              console.log('🔥 전월 부분 주 근무시간 없음 (prevWeekHoursMap 비어있음)');
+            }
+          } catch (e) {
+            console.error('🔥 전월 부분 주 근무시간 계산 중 오류:', e);
+          }
         }
       } catch (error) {
         console.error('근무시간비교 데이터 확인 실패:', error);
@@ -1074,7 +1150,7 @@ const PayrollCalculation: React.FC<PayrollCalculationProps> = ({
             includeHolidayAllowance: period.contract.includeHolidayAllowance ?? employee.includesWeeklyHolidayInWage
           };
 
-          const calculator = new PayrollCalculator(employeeData, contractData, period.schedules);
+          const calculator = new PayrollCalculator(employeeData, contractData, period.schedules, prevWeekHoursMap);
           const periodResult = calculator.calculate();
           results.push(periodResult);
         }
@@ -1159,7 +1235,7 @@ const PayrollCalculation: React.FC<PayrollCalculationProps> = ({
       console.log('🔥 PayrollCalculator에 전달되는 총 근무시간:', totalScheduleHours, '시간');
 
       // PayrollCalculator로 계산
-      const calculator = new PayrollCalculator(employeeData, contractData, scheduleData);
+      const calculator = new PayrollCalculator(employeeData, contractData, scheduleData, prevWeekHoursMap);
       const result = calculator.calculate();
       console.log('🔥 PayrollCalculator 계산 결과:', result);
       console.log('🔥 branches 정보:', result.branches);

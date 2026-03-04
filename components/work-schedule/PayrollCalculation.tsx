@@ -703,6 +703,8 @@ const PayrollCalculation: React.FC<PayrollCalculationProps> = ({
     
     // 스케줄 데이터 로드 (항상 Firestore에서 직접 로드하여 최신 데이터 보장)
     let schedulesToUse: Schedule[] = [];
+    // 🔥 전월 이월 주 처리를 위한 이전달 부분 주 근무시간 맵 (weekStart YYYY-MM-DD -> hours)
+    let prevWeekHoursMap: Record<string, number> | undefined = undefined;
     
     if (!isMonthlySalary) {
       console.log('🔥 calculatePayroll - workTimeComparisonResults에서 직접 로드');
@@ -861,7 +863,6 @@ const PayrollCalculation: React.FC<PayrollCalculationProps> = ({
 
           // 🔥 전월 이월 주 처리를 위한 이전달 부분 주 근무시간 맵 생성 (weekStart YYYY-MM-DD -> hours)
           // 예: 1/26~2/1 주의 경우, 1/26~1/31 근무시간을 prevWeekHoursMap에 저장
-          let prevWeekHoursMap: Record<string, number> | undefined = undefined;
 
           try {
             const [yearPrev, monthPrevNum] = selectedMonth.split('-').map(Number);

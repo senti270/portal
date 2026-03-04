@@ -245,8 +245,8 @@ export default function WorkTimeComparison({
         const employeeData = employeeSnap.data();
         // console.log('직원 데이터:', employeeData);
         const branches = employeeData.branches || [];
-        // console.log('직원 지점:', branches);
-        return branches;
+        // 🔥 중복 제거
+        return [...new Set(branches)];
       } else {
         console.log('직원 문서가 존재하지 않음:', employeeId);
         return [];
@@ -268,7 +268,8 @@ export default function WorkTimeComparison({
       // Props로 받은 지점 정보가 있으면 사용, 없으면 DB에서 조회
       if (propSelectedEmployeeBranches && propSelectedEmployeeBranches.length > 0) {
         console.log('Props 지점 정보 사용:', propSelectedEmployeeBranches);
-        setEmployeeBranches(propSelectedEmployeeBranches);
+        // 🔥 중복 제거
+        setEmployeeBranches([...new Set(propSelectedEmployeeBranches)]);
         // 지점이 1개인 경우 자동 선택, 여러 개인 경우 기존 선택 유지
         if (propSelectedEmployeeBranches.length === 1) {
           setSelectedBranchId(propSelectedEmployeeBranches[0]);
@@ -279,7 +280,8 @@ export default function WorkTimeComparison({
         console.log('DB에서 지점 정보 조회');
         getEmployeeBranches(selectedEmployeeId).then(branchIds => {
           console.log('직원 지점 정보 로드 결과:', branchIds);
-          setEmployeeBranches(branchIds);
+          // 🔥 중복 제거
+          setEmployeeBranches([...new Set(branchIds)]);
           // 지점이 1개인 경우 자동 선택, 여러 개인 경우 기존 선택 유지
           if (branchIds.length === 1) {
             setSelectedBranchId(branchIds[0]);
@@ -635,7 +637,7 @@ export default function WorkTimeComparison({
           where('employeeId', '==', selectedEmployeeId)
         );
         const employeeBranchesSnapshot = await getDocs(employeeBranchesQuery);
-        const employeeBranchIds = employeeBranchesSnapshot.docs.map(doc => doc.data().branchId).filter(Boolean);
+        const employeeBranchIds = [...new Set(employeeBranchesSnapshot.docs.map(doc => doc.data().branchId).filter(Boolean))]; // 🔥 중복 제거
         
         // 해당 직원의 모든 지점에 대해 DB에 상태가 있는지 확인
         const allStatusesExist = employeeBranchIds.every(branchId => {
@@ -2589,13 +2591,26 @@ export default function WorkTimeComparison({
                     {/* 지점별 검토 상태 - 급여확정완료 상태여도 표시 */}
                     <div className="space-y-3">
                       <h4 className="text-sm font-medium text-gray-700">지점별 검토 상태</h4>
-                      {employeeBranches.length > 0 ? (
-                        employeeBranches.map(branchId => {
+                      {(() => {
+                        // 🔥 중복 제거된 지점 목록
+                        const uniqueBranches = [...new Set(employeeBranches)];
+                        
+                        return uniqueBranches.length > 0 ? (
+                          uniqueBranches.map(branchId => {
                             const branch = branches.find(b => b.id === branchId);
                             const branchStatus = employeeStatuses.find(status => status.branchId === branchId);
                             const status = branchStatus?.status || '검토전';
                             
-                            console.log(`🔥 지점 ${branch?.name} (${branchId}) 상태:`, status, 'branchStatus:', branchStatus);
+                            // 🔥 해당 지점의 총 근무시간 계산 (workTimeComparisonResults에서)
+                            const branchWorkHours = workTimeComparisons
+                              .filter(comp => comp.branchId === branchId && comp.employeeId === selectedEmployeeId)
+                              .reduce((sum, comp) => sum + ((comp as any).actualWorkHours || 0), 0);
+                            
+                            const hours = Math.floor(branchWorkHours);
+                            const minutes = Math.round((branchWorkHours - hours) * 60);
+                            const formattedHours = `${hours}:${minutes.toString().padStart(2, '0')}`;
+                            
+                            console.log(`🔥 지점 ${branch?.name} (${branchId}) 상태:`, status, 'branchStatus:', branchStatus, '총 근무시간:', formattedHours);
                             
                             return (
                               <div key={branchId} className={`flex items-center justify-between p-3 border rounded-lg cursor-pointer transition-colors w-full ${
@@ -2639,6 +2654,12 @@ export default function WorkTimeComparison({
                                   }`}>
                                     {status}
                                   </span>
+                                  {/* 🔥 총 근무시간 표시 */}
+                                  {branchWorkHours > 0 && (
+                                    <span className="text-sm font-semibold text-gray-700">
+                                      {formattedHours}
+                                    </span>
+                                  )}
                                 </div>
                                 {/* 급여확정완료 상태일 때는 버튼 숨김 */}
                                 <div className="flex space-x-2" onClick={(e) => e.stopPropagation()}>
@@ -2778,7 +2799,8 @@ export default function WorkTimeComparison({
                           })
                         ) : (
                           <div className="text-sm text-gray-500">지점 정보가 없습니다.</div>
-                        )}
+                        );
+                      })()}
                       </div>
                   </div>
                 );

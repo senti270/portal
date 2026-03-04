@@ -7,6 +7,7 @@ import {
   where,
 } from 'firebase/firestore'
 import * as dotenv from 'dotenv'
+// @ts-ignore - TypeScript 모듈 해석 문제 우회
 import { PayrollCalculator, PayrollResult } from '../../utils/work-schedule/PayrollCalculator'
 
 dotenv.config()

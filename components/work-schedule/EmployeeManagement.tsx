@@ -163,6 +163,7 @@ export default function EmployeeManagement({ userBranch, isManager }: EmployeeMa
 
   const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+  const [sortField, setSortField] = useState<'name' | 'resignationDate'>('name');
   const [contracts, setContracts] = useState<EmploymentContract[]>([]);
   const [contractsKey, setContractsKey] = useState(0); // 강제 리렌더링용
   const [modalContracts, setModalContracts] = useState<EmploymentContract[]>([]); // 근로계약관리 모달용
@@ -1360,9 +1361,18 @@ export default function EmployeeManagement({ userBranch, isManager }: EmployeeMa
     
   };
 
-  // 이름 정렬 함수
-  const handleSort = () => {
-    setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+  // 정렬 함수 (이름 / 퇴사일)
+  const handleSort = (field: 'name' | 'resignationDate') => {
+    setSortField((prevField) => {
+      if (prevField === field) {
+        // 같은 필드를 다시 누르면 오름/내림차순 토글
+        setSortOrder((prevOrder) => (prevOrder === 'asc' ? 'desc' : 'asc'));
+        return prevField;
+      }
+      // 다른 필드를 누르면 해당 필드 기준 오름차순으로 초기화
+      setSortOrder('asc');
+      return field;
+    });
   };
 
   // 근무일수 계산 함수
@@ -2258,11 +2268,15 @@ export default function EmployeeManagement({ userBranch, isManager }: EmployeeMa
       return true;
     })
     .sort((a, b) => {
-      if (sortOrder === 'asc') {
-        return a.name.localeCompare(b.name);
-      } else {
-        return b.name.localeCompare(a.name);
+      if (sortField === 'resignationDate') {
+        const aTime = a.resignationDate ? a.resignationDate.getTime() : 0;
+        const bTime = b.resignationDate ? b.resignationDate.getTime() : 0;
+        return sortOrder === 'asc' ? aTime - bTime : bTime - aTime;
       }
+
+      // 기본: 이름 정렬
+      const cmp = a.name.localeCompare(b.name, 'ko');
+      return sortOrder === 'asc' ? cmp : -cmp;
     });
 
   return (
@@ -2408,12 +2422,12 @@ export default function EmployeeManagement({ userBranch, isManager }: EmployeeMa
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   <button
-                    onClick={handleSort}
+                    onClick={() => handleSort('name')}
                     className="flex items-center space-x-1 hover:text-gray-700"
                   >
                     <span>이름 / 주민번호</span>
                     <span className="text-gray-400">
-                      {sortOrder === 'asc' ? '↑' : '↓'}
+                      {sortField === 'name' ? (sortOrder === 'asc' ? '↑' : '↓') : '↕'}
                     </span>
                   </button>
                 </th>
@@ -2428,7 +2442,15 @@ export default function EmployeeManagement({ userBranch, isManager }: EmployeeMa
                 </th>
                 {showResignedEmployees && (
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    퇴사일
+                    <button
+                      onClick={() => handleSort('resignationDate')}
+                      className="flex items-center space-x-1 hover:text-gray-700"
+                    >
+                      <span>퇴사일</span>
+                      <span className="text-gray-400">
+                        {sortField === 'resignationDate' ? (sortOrder === 'asc' ? '↑' : '↓') : '↕'}
+                      </span>
+                    </button>
                   </th>
                 )}
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">

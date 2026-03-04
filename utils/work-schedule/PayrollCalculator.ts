@@ -1034,7 +1034,6 @@ export class PayrollCalculator {
       totalHours,
       combinedTotalHours,
       prevMonthHours,
-      workedAllScheduledDays,
       scheduleCount: weekSchedules.length,
       weeklyWorkdays,
       salaryAmount,

@@ -2607,10 +2607,17 @@ export default function WorkTimeComparison({
                             const branchStatus = employeeStatuses.find(status => status.branchId === branchId);
                             const status = branchStatus?.status || '검토전';
                             
-                            // 🔥 해당 지점의 총 근무시간 계산 (workTimeComparisonResults에서)
-                            const branchWorkHours = workTimeComparisons
-                              .filter(comp => comp.branchId === branchId && comp.employeeId === selectedEmployeeId)
-                              .reduce((sum, comp) => sum + ((comp as any).actualWorkHours || 0), 0);
+                            // 🔥 해당 지점의 총 근무시간 계산
+                            // 현재 컴포넌트에서 전체 workTimeComparisonResults는 가지고 있지 않으므로,
+                            // 선택된 지점(selectedBranchId)에 대해서만 comparisonResults를 사용해 합계를 표시하고,
+                            // 다른 지점은 0으로 둡니다.
+                            const branchWorkHours =
+                              branchId === selectedBranchId
+                                ? comparisonResults.reduce(
+                                    (sum, comp) => sum + ((comp as any).actualWorkHours || 0),
+                                    0
+                                  )
+                                : 0;
                             
                             const hours = Math.floor(branchWorkHours);
                             const minutes = Math.round((branchWorkHours - hours) * 60);

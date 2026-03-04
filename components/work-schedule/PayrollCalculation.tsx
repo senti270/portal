@@ -1013,21 +1013,17 @@ const PayrollCalculation: React.FC<PayrollCalculationProps> = ({
           const contractStart = contract.startDate;
           const contractEnd = i < contracts.length - 1 ? new Date(contracts[i + 1].startDate.getTime() - 1) : monthEnd;
           
-          // 🔥 계약 시작일 이전의 스케줄도 포함: periodStart는 항상 monthStart로 설정
-          // 계약 시작일은 "이 계약이 시작된 날"이지, "이전 근무는 무효"라는 의미가 아님
-          const periodStart = monthStart; // 계약 시작일과 관계없이 월의 시작일부터 포함
+          const periodStart = contractStart > monthStart ? contractStart : monthStart;
           const periodEnd = contractEnd < monthEnd ? contractEnd : monthEnd;
           
           console.log(`🔥 계약 구간 [${i}]:`, {
             contractStart: contractStart.toISOString().split('T')[0],
             contractEnd: contractEnd.toISOString().split('T')[0],
             periodStart: periodStart.toISOString().split('T')[0],
-            periodEnd: periodEnd.toISOString().split('T')[0],
-            note: '계약 시작일 이전 스케줄도 포함'
+            periodEnd: periodEnd.toISOString().split('T')[0]
           });
           
           if (periodStart <= periodEnd) {
-            // 🔥 계약 시작일 이전의 스케줄도 포함: periodStart는 monthStart이므로 모든 스케줄 포함
             const periodSchedules = scheduleData.filter(s => {
               const sDate = new Date(s.date);
               const sDateOnly = new Date(sDate.getFullYear(), sDate.getMonth(), sDate.getDate());

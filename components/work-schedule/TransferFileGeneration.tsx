@@ -212,15 +212,12 @@ const TransferFileGeneration: React.FC = () => {
     loadDeposits();
   }, [loadConfirmedPayrolls, loadDeposits]);
 
-  // 지점별 필터링된 데이터
-  const filteredPayrolls = selectedBranchId 
-    ? confirmedPayrolls.filter(payroll => payroll.branchId === selectedBranchId)
-    : confirmedPayrolls;
-
   // 이체 데이터 생성 (대표지점 기준으로 그룹화)
   const transferDataMap = new Map<string, TransferData>();
   
-  filteredPayrolls.forEach(payroll => {
+  // 🔥 모든 확정 급여 데이터를 한 번에 합산하고,
+  // 이후에 대표지점(branchId)을 기준으로 지점 필터를 적용한다.
+  confirmedPayrolls.forEach(payroll => {
     const employee = employees.find(emp => emp.id === payroll.employeeId);
     if (!employee) return;
     
@@ -256,7 +253,11 @@ const TransferFileGeneration: React.FC = () => {
     }
   });
   
-  const transferData: TransferData[] = Array.from(transferDataMap.values());
+  // 지점 필터 적용: 대표지점(branchId)을 기준으로 필터링
+  const transferDataAll: TransferData[] = Array.from(transferDataMap.values());
+  const transferData: TransferData[] = selectedBranchId
+    ? transferDataAll.filter(item => item.branchId === selectedBranchId)
+    : transferDataAll;
 
   // 행 펼치기/접기
   const toggleRow = (employeeId: string) => {

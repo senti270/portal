@@ -244,9 +244,9 @@ export default function WorkTimeComparison({
       if (employeeSnap.exists()) {
         const employeeData = employeeSnap.data();
         // console.log('직원 데이터:', employeeData);
-        const branches = employeeData.branches || [];
+        const branches = (employeeData.branches || []) as string[];
         // 🔥 중복 제거
-        return [...new Set(branches)];
+        return Array.from(new Set<string>(branches));
       } else {
         console.log('직원 문서가 존재하지 않음:', employeeId);
         return [];
@@ -269,7 +269,7 @@ export default function WorkTimeComparison({
       if (propSelectedEmployeeBranches && propSelectedEmployeeBranches.length > 0) {
         console.log('Props 지점 정보 사용:', propSelectedEmployeeBranches);
         // 🔥 중복 제거
-        setEmployeeBranches([...new Set(propSelectedEmployeeBranches)]);
+        setEmployeeBranches(Array.from(new Set<string>(propSelectedEmployeeBranches)));
         // 지점이 1개인 경우 자동 선택, 여러 개인 경우 기존 선택 유지
         if (propSelectedEmployeeBranches.length === 1) {
           setSelectedBranchId(propSelectedEmployeeBranches[0]);
@@ -281,7 +281,7 @@ export default function WorkTimeComparison({
         getEmployeeBranches(selectedEmployeeId).then(branchIds => {
           console.log('직원 지점 정보 로드 결과:', branchIds);
           // 🔥 중복 제거
-          setEmployeeBranches([...new Set(branchIds)]);
+          setEmployeeBranches(Array.from(new Set<string>(branchIds as string[])));
           // 지점이 1개인 경우 자동 선택, 여러 개인 경우 기존 선택 유지
           if (branchIds.length === 1) {
             setSelectedBranchId(branchIds[0]);
@@ -637,7 +637,13 @@ export default function WorkTimeComparison({
           where('employeeId', '==', selectedEmployeeId)
         );
         const employeeBranchesSnapshot = await getDocs(employeeBranchesQuery);
-        const employeeBranchIds = [...new Set(employeeBranchesSnapshot.docs.map(doc => doc.data().branchId).filter(Boolean))]; // 🔥 중복 제거
+        const employeeBranchIds = Array.from(
+          new Set<string>(
+            employeeBranchesSnapshot.docs
+              .map(doc => doc.data().branchId as string)
+              .filter((id): id is string => Boolean(id))
+          )
+        ); // 🔥 중복 제거
         
         // 해당 직원의 모든 지점에 대해 DB에 상태가 있는지 확인
         const allStatusesExist = employeeBranchIds.every(branchId => {
@@ -2593,7 +2599,7 @@ export default function WorkTimeComparison({
                       <h4 className="text-sm font-medium text-gray-700">지점별 검토 상태</h4>
                       {(() => {
                         // 🔥 중복 제거된 지점 목록
-                        const uniqueBranches = [...new Set(employeeBranches)];
+                        const uniqueBranches = Array.from(new Set<string>(employeeBranches));
                         
                         return uniqueBranches.length > 0 ? (
                           uniqueBranches.map(branchId => {

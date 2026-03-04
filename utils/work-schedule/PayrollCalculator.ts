@@ -997,7 +997,14 @@ export class PayrollCalculator {
     // - 해당 주의 일요일이 선택된 월에 포함되는 경우
     //   → "전월 이월 주"로 간주하고, 계약 주간 근로시간을 기준으로 15시간 요건 재검토
     let carriedOverFromPrevMonth = false;
-    if (!eligible && monthStart) {
+    // 🔥 전월 이월 주 처리:
+    // - 기존 로직: 월초를 포함하는 주(전월~당월跨)에서 totalHours가 15시간 미만이더라도
+    //   weeklyContractHours(주 소정근로시간)으로 15시간 요건을 강제로 만족시켜 주휴수당을 지급
+    // - 문제 사례: 실제 근무시간이 0시간인 주(전월에도 근무가 전혀 없는 주)에도
+    //   weeklyContractHours 때문에 8시간 주휴수당이 발생
+    // - 수정: "해당 주에 실제 근무가 1시간 이상 있었던 경우"에만 이월주 보정 로직을 적용
+    //   → totalHours > 0 인 경우에만 전월 이월 보정 허용
+    if (!eligible && monthStart && totalHours > 0) {
       const isCrossingFromPrevMonth =
         startMonday < monthStart && endSunday >= monthStart;
 

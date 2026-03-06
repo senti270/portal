@@ -407,10 +407,10 @@ const TransferFileGeneration: React.FC = () => {
                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                 }`}
               >
-                전체 ({confirmedPayrolls.length}건)
+                전체 ({transferDataAll.length}건)
               </button>
               {branches.map((branch) => {
-                const branchCount = confirmedPayrolls.filter(p => p.branchId === branch.id).length;
+                const branchCount = transferDataAll.filter(item => item.branchId === branch.id).length;
                 return (
                   <button
                     key={branch.id}

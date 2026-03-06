@@ -285,14 +285,29 @@ const TaxFileGeneration: React.FC = () => {
       return;
     }
 
+    console.log('🔥 엑셀 다운로드 시작:', {
+      tableDataLength: tableData.length,
+      selectedEmployeeIdsSize: selectedEmployeeIds.size,
+      selectedEmployeeIds: Array.from(selectedEmployeeIds)
+    });
+
     // 선택된 직원 필터링 (모두 선택 시 전체, 외국인 제외)
     const filteredData = tableData.filter(row => {
       if (selectedEmployeeIds.size === 0) {
         // 전체 선택 시 외국인만 제외
         const emp = employees.find(e => e.id === row.id);
-        return emp && emp.employmentType !== '외국인';
+        const result = emp && emp.employmentType !== '외국인';
+        if (!result) {
+          console.log('🔥 필터링 제외:', { employeeId: row.id, employeeName: row.employeeName, employmentType: emp?.employmentType });
+        }
+        return result;
       }
       return selectedEmployeeIds.has(row.id);
+    });
+
+    console.log('🔥 필터링 후 데이터:', {
+      filteredDataLength: filteredData.length,
+      filteredData: filteredData.map(row => ({ id: row.id, name: row.employeeName }))
     });
 
     if (filteredData.length === 0) {
@@ -312,6 +327,15 @@ const TaxFileGeneration: React.FC = () => {
       branchGroups.get(key)!.push(row);
     });
 
+    console.log('🔥 지점별 그룹화:', {
+      branchGroupsSize: branchGroups.size,
+      branchGroups: Array.from(branchGroups.entries()).map(([branchId, data]) => ({
+        branchId,
+        count: data.length,
+        employees: data.map(row => row.employeeName)
+      }))
+    });
+
     // 엑셀 워크북 생성
     const wb = XLSX.utils.book_new();
 
@@ -319,18 +343,47 @@ const TaxFileGeneration: React.FC = () => {
     branchGroups.forEach((data, branchId) => {
       const branchName = branches.find(b => b.id === branchId)?.name || '전체';
       
-      // 근로소득, 일용직, 사업소득으로 분류 (employee에서 가져오기)
+      console.log(`🔥 지점 ${branchName} 처리 시작:`, { dataCount: data.length });
+      
+      // 근로소득, 일용직, 사업소득으로 분류 (employee 또는 confirmedPayrolls에서 가져오기)
       const laborIncome = data.filter(row => {
         const emp = employees.find(e => e.id === row.id);
-        return emp?.employmentType === '근로소득';
+        const payroll = confirmedPayrolls.find(p => p.employeeId === row.id);
+        const employmentType = payroll?.employmentType || emp?.employmentType;
+        const result = employmentType === '근로소득' || employmentType === '근로소득자';
+        if (result) {
+          console.log('🔥 근로소득자:', { employeeId: row.id, employeeName: row.employeeName, employmentType, source: payroll ? 'payroll' : 'employee' });
+        }
+        return result;
       });
       const dailyWorker = data.filter(row => {
         const emp = employees.find(e => e.id === row.id);
-        return emp?.employmentType === '일용직';
+        const payroll = confirmedPayrolls.find(p => p.employeeId === row.id);
+        const employmentType = payroll?.employmentType || emp?.employmentType;
+        const result = employmentType === '일용직';
+        if (result) {
+          console.log('🔥 일용직:', { employeeId: row.id, employeeName: row.employeeName, employmentType, source: payroll ? 'payroll' : 'employee' });
+        }
+        return result;
       });
       const businessIncome = data.filter(row => {
         const emp = employees.find(e => e.id === row.id);
-        return emp?.employmentType && emp.employmentType !== '근로소득' && emp.employmentType !== '일용직';
+        const payroll = confirmedPayrolls.find(p => p.employeeId === row.id);
+        const employmentType = payroll?.employmentType || emp?.employmentType;
+        const result = employmentType && employmentType !== '근로소득' && employmentType !== '근로소득자' && employmentType !== '일용직' && employmentType !== '외국인';
+        if (result) {
+          console.log('🔥 사업소득:', { employeeId: row.id, employeeName: row.employeeName, employmentType, source: payroll ? 'payroll' : 'employee' });
+        }
+        return result;
+      });
+
+      console.log(`🔥 지점 ${branchName} 분류 결과:`, {
+        laborIncome: laborIncome.length,
+        dailyWorker: dailyWorker.length,
+        businessIncome: businessIncome.length,
+        laborIncomeNames: laborIncome.map(r => r.employeeName),
+        dailyWorkerNames: dailyWorker.map(r => r.employeeName),
+        businessIncomeNames: businessIncome.map(r => r.employeeName)
       });
 
       // 섹션별 데이터 변환
@@ -350,21 +403,21 @@ const TaxFileGeneration: React.FC = () => {
       
       // 근로소득 섹션
       if (laborIncome.length > 0) {
-        excelData.push({ 주민번호: '4대보험', 성명: '', 입사일: '', 은행: '', 은행코드: '', 지급액: '', 신고총액: '', 비고: '' });
+        excelData.push({ 주민번호: '4대보험', 성명: '', 입사일: '', 은행: '', 은행코드: '', 계좌번호: '', 지급액: '', 신고총액: '', 비고: '' });
         excelData.push(...convertToExcelData(laborIncome));
         excelData.push({}); // 빈 행
       }
 
       // 일용직 섹션
       if (dailyWorker.length > 0) {
-        excelData.push({ 주민번호: '일용직', 성명: '', 입사일: '', 은행: '', 은행코드: '', 지급액: '', 신고총액: '', 비고: '' });
+        excelData.push({ 주민번호: '일용직', 성명: '', 입사일: '', 은행: '', 은행코드: '', 계좌번호: '', 지급액: '', 신고총액: '', 비고: '' });
         excelData.push(...convertToExcelData(dailyWorker));
         excelData.push({}); // 빈 행
       }
 
       // 사업소득 섹션
       if (businessIncome.length > 0) {
-        excelData.push({ 주민번호: '사업소득', 성명: '', 입사일: '', 은행: '', 은행코드: '', 지급액: '', 신고총액: '', 비고: '' });
+        excelData.push({ 주민번호: '사업소득', 성명: '', 입사일: '', 은행: '', 은행코드: '', 계좌번호: '', 지급액: '', 신고총액: '', 비고: '' });
         excelData.push(...convertToExcelData(businessIncome));
       }
 

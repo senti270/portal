@@ -244,6 +244,7 @@ const TaxFileGeneration: React.FC = () => {
         hireDate: hireDateStr,
         bankName: employee?.bankName || '-',
         bankCode: employee?.bankCode || '-',
+        accountNumber: employee?.accountNumber || '-',
         netPay: payroll.netPay,
         grossPay: payroll.grossPay,
         memo: payroll.memo || '',
@@ -339,6 +340,7 @@ const TaxFileGeneration: React.FC = () => {
         입사일: row.hireDate,
         은행: row.bankName,
         은행코드: row.bankCode,
+        계좌번호: row.accountNumber,
         지급액: row.netPay,
         신고총액: row.grossPay,
         비고: row.memo || ''
@@ -479,6 +481,9 @@ const TaxFileGeneration: React.FC = () => {
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       은행코드
                     </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      계좌번호
+                    </th>
                     <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                       지급액
                     </th>
@@ -507,6 +512,9 @@ const TaxFileGeneration: React.FC = () => {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                         {row.bankCode}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {row.accountNumber}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 text-right">
                         {(row.netPay || 0).toLocaleString()}원

@@ -287,23 +287,25 @@ const TaxFileGeneration: React.FC = () => {
 
     console.log('🔥 엑셀 다운로드 시작:', {
       tableDataLength: tableData.length,
+      tableDataAllLength: tableDataAll.length,
       selectedEmployeeIdsSize: selectedEmployeeIds.size,
       selectedEmployeeIds: Array.from(selectedEmployeeIds)
     });
 
-    // 선택된 직원 필터링 (모두 선택 시 전체, 외국인 제외)
-    const filteredData = tableData.filter(row => {
-      if (selectedEmployeeIds.size === 0) {
-        // 전체 선택 시 외국인만 제외
-        const emp = employees.find(e => e.id === row.id);
-        const result = emp && emp.employmentType !== '외국인';
-        if (!result) {
-          console.log('🔥 필터링 제외:', { employeeId: row.id, employeeName: row.employeeName, employmentType: emp?.employmentType });
-        }
-        return result;
-      }
-      return selectedEmployeeIds.has(row.id);
-    });
+    // ✅ 엑셀 저장은 항상 전체 지점 기준으로 처리하되,
+    // 선택된 직원이 있으면 그 직원들만 포함하고,
+    // 선택이 없으면 전체(외국인 제외)를 포함한다.
+    const filteredData = (selectedEmployeeIds.size === 0
+      ? tableDataAll.filter(row => {
+          const emp = employees.find(e => e.id === row.id);
+          const result = emp && emp.employmentType !== '외국인';
+          if (!result) {
+            console.log('🔥 필터링 제외:', { employeeId: row.id, employeeName: row.employeeName, employmentType: emp?.employmentType });
+          }
+          return result;
+        })
+      : tableDataAll.filter(row => selectedEmployeeIds.has(row.id))
+    );
 
     console.log('🔥 필터링 후 데이터:', {
       filteredDataLength: filteredData.length,

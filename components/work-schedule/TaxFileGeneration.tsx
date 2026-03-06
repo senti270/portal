@@ -184,30 +184,39 @@ const TaxFileGeneration: React.FC = () => {
     }
   };
 
-  // 전체 데이터(대표지점 기준 보정) - 탭 건수 계산용, selectedBranchId와 무관
+  // 🔥 대표지점 기준으로 그룹화된 데이터 생성 (급여이체파일생성과 동일한 로직)
   const normalizedAllPayrolls = confirmedPayrolls.map(payroll => {
-    // branchId가 비어있는 기존 데이터 보정: 직원의 대표지점 사용
-    if (!payroll.branchId) {
-      const emp = employees.find(e => e.id === payroll.employeeId) as any;
-      const primaryBranchId = emp?.primaryBranchId || '';
-      const primaryBranchName = emp?.primaryBranchName || '';
-      return { ...payroll, branchId: primaryBranchId, branchName: primaryBranchName } as any;
-    }
-    return payroll;
+    const employee = employees.find(emp => emp.id === payroll.employeeId);
+    if (!employee) return payroll;
+    
+    // 대표지점이 있으면 대표지점 사용, 없으면 payroll의 branchId 사용
+    const primaryBranchId = (employee as any).primaryBranchId || payroll.branchId;
+    const primaryBranchName = (employee as any).primaryBranchName || payroll.branchName;
+    
+    return {
+      ...payroll,
+      branchId: primaryBranchId,
+      branchName: primaryBranchName
+    } as any;
   });
 
-  // 지점별 필터링된 데이터 (대표지점 기준 보정) - 실제 표시용
-  const filteredPayrolls = (selectedBranchId 
+  // 지점별 필터링된 데이터 (대표지점 기준) - 실제 표시용
+  const filteredPayrolls = selectedBranchId 
     ? normalizedAllPayrolls.filter(payroll => payroll.branchId === selectedBranchId)
-    : normalizedAllPayrolls
-  );
+    : normalizedAllPayrolls;
 
-  // 테이블 데이터 생성 (대표지점 기준으로 그룹화)
+  // 🔥 테이블 데이터 생성 (대표지점 기준으로 그룹화) - 급여이체파일생성과 동일한 로직
   const tableDataMap = new Map<string, any>();
   
-  filteredPayrolls.forEach(payroll => {
+  // 🔥 모든 확정 급여 데이터를 한 번에 합산하고,
+  // 이후에 대표지점(branchId)을 기준으로 지점 필터를 적용한다.
+  confirmedPayrolls.forEach(payroll => {
     const employee = employees.find(emp => emp.id === payroll.employeeId);
     if (!employee) return;
+    
+    // 대표지점이 있으면 대표지점 사용, 없으면 payroll의 branchId 사용
+    const primaryBranchId = (employee as any).primaryBranchId || payroll.branchId;
+    const primaryBranchName = (employee as any).primaryBranchName || payroll.branchName;
     
     const key = payroll.employeeId;
     
@@ -237,7 +246,9 @@ const TaxFileGeneration: React.FC = () => {
         bankCode: employee?.bankCode || '-',
         netPay: payroll.netPay,
         grossPay: payroll.grossPay,
-        memo: payroll.memo || ''
+        memo: payroll.memo || '',
+        branchId: primaryBranchId,
+        branchName: primaryBranchName
       });
     } else {
       // 이미 있는 경우 netPay와 grossPay 누적
@@ -247,7 +258,11 @@ const TaxFileGeneration: React.FC = () => {
     }
   });
   
-  const tableData = Array.from(tableDataMap.values());
+  // 지점 필터 적용: 대표지점(branchId)을 기준으로 필터링
+  const tableDataAll = Array.from(tableDataMap.values());
+  const tableData = selectedBranchId
+    ? tableDataAll.filter(item => item.branchId === selectedBranchId)
+    : tableDataAll;
 
   // 모달 열 때 초기 선택 상태 설정 (전체 선택, 외국인 제외)
   useEffect(() => {
@@ -284,12 +299,10 @@ const TaxFileGeneration: React.FC = () => {
       return;
     }
 
-    // 지점별로 그룹화
+    // 지점별로 그룹화 (tableData의 branchId 사용)
     const branchGroups = new Map<string, typeof filteredData>();
     filteredData.forEach(row => {
-      const payroll = normalizedAllPayrolls.find(p => p.employeeId === row.id);
-      const branchId = payroll?.branchId || '전체';
-      const branchName = payroll?.branchName || '전체';
+      const branchId = row.branchId || '전체';
       const key = branchId;
       
       if (!branchGroups.has(key)) {
@@ -305,24 +318,18 @@ const TaxFileGeneration: React.FC = () => {
     branchGroups.forEach((data, branchId) => {
       const branchName = branches.find(b => b.id === branchId)?.name || '전체';
       
-      // 근로소득, 일용직, 사업소득으로 분류 (payroll 또는 employee에서 가져오기)
+      // 근로소득, 일용직, 사업소득으로 분류 (employee에서 가져오기)
       const laborIncome = data.filter(row => {
-        const payroll = normalizedAllPayrolls.find(p => p.employeeId === row.id);
         const emp = employees.find(e => e.id === row.id);
-        const employmentType = payroll?.employmentType || emp?.employmentType;
-        return employmentType === '근로소득';
+        return emp?.employmentType === '근로소득';
       });
       const dailyWorker = data.filter(row => {
-        const payroll = normalizedAllPayrolls.find(p => p.employeeId === row.id);
         const emp = employees.find(e => e.id === row.id);
-        const employmentType = payroll?.employmentType || emp?.employmentType;
-        return employmentType === '일용직';
+        return emp?.employmentType === '일용직';
       });
       const businessIncome = data.filter(row => {
-        const payroll = normalizedAllPayrolls.find(p => p.employeeId === row.id);
         const emp = employees.find(e => e.id === row.id);
-        const employmentType = payroll?.employmentType || emp?.employmentType;
-        return employmentType && employmentType !== '근로소득' && employmentType !== '일용직';
+        return emp?.employmentType && emp.employmentType !== '근로소득' && emp.employmentType !== '일용직';
       });
 
       // 섹션별 데이터 변환
@@ -444,7 +451,7 @@ const TaxFileGeneration: React.FC = () => {
         <div className="bg-white shadow rounded-lg">
           <div className="px-6 py-4 border-b border-gray-200">
             <h3 className="text-lg font-medium text-gray-900">
-              세무사 전송 데이터 ({filteredPayrolls.length}건)
+              세무사 전송 데이터 ({tableData.length}건)
             </h3>
           </div>
           
@@ -516,19 +523,14 @@ const TaxFileGeneration: React.FC = () => {
                             className="flex-1 px-2 py-1 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
                             placeholder="비고 입력"
                           />
-                          {editingMemo[row.id] !== undefined && editingMemo[row.id] !== row.memo && (() => {
-                            // 🔥 직원별로 그룹화되어 있으므로, 해당 직원의 첫 번째 payroll을 찾아서 사용
-                            const payroll = normalizedAllPayrolls.find(p => p.employeeId === row.id);
-                            const payrollId = payroll?.id || row.payrollId;
-                            return (
-                              <button
-                                onClick={() => payrollId && saveMemo(payrollId, editingMemo[row.id])}
-                                className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 text-xs font-medium whitespace-nowrap"
-                              >
-                                저장
-                              </button>
-                            );
-                          })()}
+                          {editingMemo[row.id] !== undefined && editingMemo[row.id] !== row.memo && (
+                            <button
+                              onClick={() => row.payrollId && saveMemo(row.payrollId, editingMemo[row.id])}
+                              className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 text-xs font-medium whitespace-nowrap"
+                            >
+                              저장
+                            </button>
+                          )}
                         </div>
                       </td>
                     </tr>

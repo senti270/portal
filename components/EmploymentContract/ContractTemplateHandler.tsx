@@ -30,12 +30,42 @@ export default function ContractTemplateHandler({ branchId, branch }: ContractTe
   const handleContractComplete = async (contractData: ContractData) => {
     setLoading(true)
     try {
-      // 1. 날짜 변환
+      // 0. 데이터 검증
+      if (!contractData.employeeName?.trim()) {
+        throw new Error('근로자 성명을 입력해주세요.')
+      }
+      if (!contractData.residentNumber?.trim()) {
+        throw new Error('주민등록번호를 입력해주세요.')
+      }
+      if (!contractData.employeeAddress?.trim()) {
+        throw new Error('근로자 주소를 입력해주세요.')
+      }
+      if (!contractData.employeePhone?.trim()) {
+        throw new Error('근로자 연락처를 입력해주세요.')
+      }
+      if (!contractData.salaryAmount || parseFloat(contractData.salaryAmount) <= 0) {
+        throw new Error('임금을 올바르게 입력해주세요.')
+      }
+      if (!contractData.employeeSignature) {
+        throw new Error('근로자 서명이 필요합니다.')
+      }
+      if (!contractData.employerSignature) {
+        throw new Error('사업주 서명이 필요합니다.')
+      }
+      if (contractData.paymentMethod === 'bank' && (!contractData.bankName || !contractData.bankAccount)) {
+        throw new Error('계좌입금을 선택한 경우 은행명과 계좌번호를 입력해주세요.')
+      }
+
+      // 1. 날짜 변환 및 검증
       const startDate = new Date(
         parseInt(contractData.startDateYear),
         parseInt(contractData.startDateMonth) - 1,
         parseInt(contractData.startDateDay)
       )
+      if (isNaN(startDate.getTime())) {
+        throw new Error('근로개시일이 올바르지 않습니다.')
+      }
+      
       const endDate = contractData.endDateYear
         ? new Date(
             parseInt(contractData.endDateYear),
@@ -43,11 +73,21 @@ export default function ContractTemplateHandler({ branchId, branch }: ContractTe
             parseInt(contractData.endDateDay || '1')
           )
         : undefined
+      if (endDate && isNaN(endDate.getTime())) {
+        throw new Error('종료일이 올바르지 않습니다.')
+      }
+      if (endDate && endDate <= startDate) {
+        throw new Error('종료일은 근로개시일보다 늦어야 합니다.')
+      }
+      
       const contractDate = new Date(
         parseInt(contractData.contractDateYear),
         parseInt(contractData.contractDateMonth) - 1,
         parseInt(contractData.contractDateDay)
       )
+      if (isNaN(contractDate.getTime())) {
+        throw new Error('계약일자가 올바르지 않습니다.')
+      }
 
       // 2. 근무시간 문자열 생성
       const workStartTime = `${contractData.workStartHour}:${contractData.workStartMinute}`
@@ -73,8 +113,10 @@ export default function ContractTemplateHandler({ branchId, branch }: ContractTe
           workType: '정규직', // 기본값
           workPlace: '청담장어마켓(송파점/동탄점/분당점), 카페드로잉(송파점/홍대점/동탄점), 사업주가 관리하는 신규추가지점',
           workContent: '고객응대 및 서빙, 음료, 음식제조 및 매장관리 등 사업장이 지정한 업무',
+          employmentType: contractData.employmentType || '사업소득', // 고용형태
           salaryType: contractData.salaryType,
           salaryAmount: parseFloat(contractData.salaryAmount),
+          includesWeeklyHoliday: contractData.includesWeeklyHoliday, // 주휴수당 포함 여부
           weeklyWorkHours: parseFloat(contractData.workDaysPerWeek) * 8, // 근사치
           dailyWorkHours: 8, // 근사치
           workDays: contractData.workDaysDetail || `매주 ${contractData.workDaysPerWeek}일`,
@@ -100,25 +142,49 @@ export default function ContractTemplateHandler({ branchId, branch }: ContractTe
         signedAt: contractDate
       }
 
-      // 4. PDF 생성 (화면 캡처 방식)
-      const pdfBlob = await generateContractPdfFromTemplate(contractData, branch)
+      // 4. PDF 생성
+      let pdfBlob: Blob
+      try {
+        pdfBlob = await generateContractPdfFromTemplate(contractData, branch)
+      } catch (error) {
+        console.error('PDF 생성 오류:', error)
+        throw new Error('PDF 생성 중 오류가 발생했습니다. 다시 시도해주세요.')
+      }
 
       // 5. Firebase Storage에 업로드
       const timestamp = Date.now()
       const pdfFileName = `contracts/${branchId}_${timestamp}.pdf`
-      const pdfRef = ref(storage, pdfFileName)
-      await uploadBytes(pdfRef, pdfBlob)
-      const pdfUrl = await getDownloadURL(pdfRef)
+      let pdfUrl: string
+      try {
+        const pdfRef = ref(storage, pdfFileName)
+        await uploadBytes(pdfRef, pdfBlob)
+        pdfUrl = await getDownloadURL(pdfRef)
+      } catch (error) {
+        console.error('Storage 업로드 오류:', error)
+        throw new Error('파일 업로드 중 오류가 발생했습니다. 다시 시도해주세요.')
+      }
 
       // 6. Firestore에 저장
-      const contractId = await saveEmploymentContract({
-        ...contractDataForSave,
-        contractFile: pdfUrl,
-        contractFileName: `근로계약서_${contractData.employeeName}_${timestamp}.pdf`
-      })
+      let contractId: string
+      try {
+        contractId = await saveEmploymentContract({
+          ...contractDataForSave,
+          contractFile: pdfUrl,
+          contractFileName: `근로계약서_${contractData.employeeName}_${timestamp}.pdf`
+        })
+      } catch (error) {
+        console.error('Firestore 저장 오류:', error)
+        throw new Error('계약서 저장 중 오류가 발생했습니다. 다시 시도해주세요.')
+      }
 
       // 7. 직원관리에 자동 업로드
-      await syncToEmployeeManagement(contractDataForSave, contractId, pdfUrl)
+      try {
+        await syncToEmployeeManagement(contractDataForSave, contractId, pdfUrl, contractData)
+      } catch (error) {
+        console.error('직원관리 동기화 오류:', error)
+        // 직원관리 동기화 실패해도 계약서는 저장되었으므로 경고만 표시
+        console.warn('직원관리 동기화에 실패했지만 계약서는 저장되었습니다.')
+      }
 
       // 8. 카카오톡 전송
       try {
@@ -147,22 +213,36 @@ export default function ContractTemplateHandler({ branchId, branch }: ContractTe
       alert('근로계약서가 성공적으로 작성되었습니다!\n직원관리에 자동으로 등록되었습니다.')
     } catch (error) {
       console.error('계약서 저장 중 오류:', error)
-      alert('계약서 저장 중 오류가 발생했습니다. 콘솔을 확인해주세요.')
-      throw error
+      const errorMessage = error instanceof Error ? error.message : '계약서 저장 중 오류가 발생했습니다.'
+      alert(errorMessage)
+      // 에러를 다시 throw하지 않아서 사용자가 다시 시도할 수 있도록 함
     } finally {
       setLoading(false)
     }
   }
 
   const generateContractPdfFromTemplate = async (contractData: ContractData, branch: Branch): Promise<Blob> => {
-    // 화면의 계약서 영역을 캡처하여 PDF 생성
-    // 실제로는 ContractTemplate 컴포넌트의 DOM을 참조해야 하지만,
-    // 여기서는 간단하게 jsPDF로 직접 생성
-    const doc = new jsPDF()
-    
-    // 한글 폰트 문제로 인해 기본 폰트 사용 (실제로는 한글 폰트 추가 필요)
-    doc.setFontSize(16)
-    doc.text('표준근로계약서', 105, 20, { align: 'center' })
+    try {
+      // jsPDF로 PDF 생성
+      const doc = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4'
+      })
+      
+      // 페이지 여백 설정
+      const margin = 20
+      const pageWidth = doc.internal.pageSize.getWidth()
+      const pageHeight = doc.internal.pageSize.getHeight()
+      const contentWidth = pageWidth - (margin * 2)
+      
+      // 한글 폰트 문제로 인해 기본 폰트 사용
+      // TODO: 한글 폰트 추가 시 아래 주석 해제
+      // doc.addFont('/fonts/NotoSansKR-Regular.ttf', 'NotoSansKR', 'normal')
+      // doc.setFont('NotoSansKR')
+      
+      doc.setFontSize(16)
+      doc.text('표준근로계약서', pageWidth / 2, 20, { align: 'center' })
     
     doc.setFontSize(12)
     let y = 30
@@ -312,14 +392,20 @@ export default function ContractTemplateHandler({ branchId, branch }: ContractTe
     y += 7
     doc.text(`주민등록번호: ${contractData.residentNumber}`, 20, y)
     
-    const pdfBlob = doc.output('blob')
-    return pdfBlob
+      // PDF 생성 완료
+      const pdfBlob = doc.output('blob')
+      return pdfBlob
+    } catch (error) {
+      console.error('PDF 생성 오류:', error)
+      throw new Error('PDF 생성 중 오류가 발생했습니다.')
+    }
   }
 
   const syncToEmployeeManagement = async (
     contractData: Omit<EmploymentContract, 'id' | 'createdAt' | 'updatedAt'>,
     contractId: string,
-    contractFileUrl: string
+    contractFileUrl: string,
+    originalContractData: ContractData
   ) => {
     try {
       // 기존 직원이 있는지 확인
@@ -335,6 +421,22 @@ export default function ContractTemplateHandler({ branchId, branch }: ContractTe
       if (employeesSnapshot.empty) {
         // 새 직원 추가
         const employeeRef = doc(collection(db, 'employees'))
+        
+        // 은행 코드 찾기
+        let selectedBankCode = ''
+        if (originalContractData.bankName) {
+          try {
+            const bankCodesSnapshot = await getDocs(
+              query(collection(db, 'bankCodes'), where('name', '==', originalContractData.bankName))
+            )
+            if (!bankCodesSnapshot.empty) {
+              selectedBankCode = bankCodesSnapshot.docs[0].data()?.code || ''
+            }
+          } catch (error) {
+            console.warn('은행 코드 조회 실패:', error)
+          }
+        }
+
         const employeeData = {
           name: contractData.employeeInfo.name,
           phone: contractData.employeeInfo.phone,
@@ -346,6 +448,17 @@ export default function ContractTemplateHandler({ branchId, branch }: ContractTe
           contractFile: contractFileUrl,
           primaryBranchId: branchId,
           primaryBranchName: branch.name,
+          // 계약 정보 동기화
+          employmentType: contractData.contractInfo.employmentType || '사업소득',
+          salaryType: contractData.contractInfo.salaryType,
+          salaryAmount: contractData.contractInfo.salaryAmount,
+          includesWeeklyHolidayInWage: contractData.contractInfo.includesWeeklyHoliday || false,
+          weeklyWorkHours: contractData.contractInfo.weeklyWorkHours,
+          // 은행 정보 (계좌입금인 경우)
+          bankName: originalContractData.bankName || '',
+          bankCode: selectedBankCode,
+          accountNumber: originalContractData.bankAccount || '',
+          // 수습기간
           probationStartDate: contractData.contractInfo.startDate,
           probationEndDate: contractData.contractInfo.probationPeriod
             ? new Date(new Date(contractData.contractInfo.startDate).setMonth(
@@ -385,8 +498,33 @@ export default function ContractTemplateHandler({ branchId, branch }: ContractTe
         const existingEmployee = employeesSnapshot.docs[0]
         const employeeRef = doc(db, 'employees', existingEmployee.id)
         
+        // 은행 코드 찾기
+        let selectedBankCode = ''
+        if (originalContractData.bankName) {
+          try {
+            const bankCodesSnapshot = await getDocs(
+              query(collection(db, 'bankCodes'), where('name', '==', originalContractData.bankName))
+            )
+            if (!bankCodesSnapshot.empty) {
+              selectedBankCode = bankCodesSnapshot.docs[0].data()?.code || ''
+            }
+          } catch (error) {
+            console.warn('은행 코드 조회 실패:', error)
+          }
+        }
+        
         batch.update(employeeRef, {
           contractFile: contractFileUrl,
+          // 계약 정보 업데이트
+          employmentType: contractData.contractInfo.employmentType || existingEmployee.data()?.employmentType || '사업소득',
+          salaryType: contractData.contractInfo.salaryType,
+          salaryAmount: contractData.contractInfo.salaryAmount,
+          includesWeeklyHolidayInWage: contractData.contractInfo.includesWeeklyHoliday || false,
+          weeklyWorkHours: contractData.contractInfo.weeklyWorkHours,
+          // 은행 정보 업데이트 (계좌입금인 경우)
+          bankName: originalContractData.bankName || existingEmployee.data()?.bankName || '',
+          bankCode: selectedBankCode || existingEmployee.data()?.bankCode || '',
+          accountNumber: originalContractData.bankAccount || existingEmployee.data()?.accountNumber || '',
           updatedAt: Timestamp.now()
         })
 

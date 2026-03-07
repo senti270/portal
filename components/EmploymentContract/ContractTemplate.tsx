@@ -58,6 +58,7 @@ export interface ContractData {
   weeklyHolidayDay: string // 주휴일 요일
   
   // 임금
+  employmentType?: string // 고용형태 ('근로소득', '사업소득', '일용직', '외국인')
   salaryType: 'monthly' | 'daily' | 'hourly'
   salaryAmount: string
   includesWeeklyHoliday: boolean // 주휴수당 포함 여부
@@ -107,6 +108,7 @@ export default function ContractTemplate({ branch, onComplete }: ContractTemplat
     workDaysPerWeek: '5',
     selectedWorkDays: ['월', '화', '수', '목', '금'],
     weeklyHolidayDay: '일',
+    employmentType: '사업소득', // 기본값
     salaryType: 'hourly',
     salaryAmount: '',
     includesWeeklyHoliday: false,
@@ -217,6 +219,12 @@ export default function ContractTemplate({ branch, onComplete }: ContractTemplat
       alert('주민등록번호를 입력해주세요.')
       return false
     }
+    // 주민등록번호 형식 검증 (간단한 형식 체크)
+    const residentNumberPattern = /^\d{6}-?\d{7}$/
+    if (!residentNumberPattern.test(formData.residentNumber.replace(/-/g, ''))) {
+      alert('주민등록번호 형식이 올바르지 않습니다. (예: 000000-0000000)')
+      return false
+    }
     if (!formData.employeeAddress.trim()) {
       alert('근로자 주소를 입력해주세요.')
       return false
@@ -225,8 +233,18 @@ export default function ContractTemplate({ branch, onComplete }: ContractTemplat
       alert('근로자 연락처를 입력해주세요.')
       return false
     }
-    if (!formData.salaryAmount) {
-      alert('임금을 입력해주세요.')
+    // 전화번호 형식 검증 (간단한 형식 체크)
+    const phonePattern = /^01[0-9]-?\d{3,4}-?\d{4}$/
+    if (!phonePattern.test(formData.employeePhone.replace(/-/g, ''))) {
+      alert('연락처 형식이 올바르지 않습니다. (예: 010-0000-0000)')
+      return false
+    }
+    if (!formData.salaryAmount || parseFloat(formData.salaryAmount) <= 0) {
+      alert('임금을 올바르게 입력해주세요.')
+      return false
+    }
+    if (formData.paymentMethod === 'bank' && (!formData.bankName || !formData.bankAccount)) {
+      alert('계좌입금을 선택한 경우 은행명과 계좌번호를 입력해주세요.')
       return false
     }
     return true

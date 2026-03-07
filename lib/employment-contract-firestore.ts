@@ -32,8 +32,10 @@ export interface EmploymentContract {
     workType: string
     workPlace: string
     workContent?: string
+    employmentType?: string // 고용형태 ('근로소득', '사업소득', '일용직', '외국인')
     salaryType: 'hourly' | 'monthly' | 'daily'
     salaryAmount: number
+    includesWeeklyHoliday?: boolean // 주휴수당 포함 여부
     weeklyWorkHours?: number
     dailyWorkHours?: number
     workDays?: string

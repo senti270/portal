@@ -2145,23 +2145,20 @@ export default function EmployeeManagement({ userBranch, isManager }: EmployeeMa
   // 파일 다운로드
   const handleFileDownload = (contract: EmploymentContract) => {
     if (contract.contractFile) {
-      const link = document.createElement('a');
-      
       // Base64 데이터인지 확인
       if (contract.contractFile.startsWith('data:')) {
-        // Base64 데이터인 경우
+        // Base64 데이터인 경우 (기존 이미지 파일)
+        const link = document.createElement('a');
         link.href = contract.contractFile;
         link.download = contract.contractFileName || 'contract.pdf';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
       } else {
-        // Firebase Storage URL인 경우
-        link.href = contract.contractFile;
-        link.download = contract.contractFileName || 'contract.pdf';
-        link.target = '_blank';
+        // Firebase Storage URL인 경우 (PDF 파일)
+        // PDF는 새 탭에서 열기
+        window.open(contract.contractFile, '_blank');
       }
-      
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
     }
   };
 
@@ -3940,8 +3937,9 @@ export default function EmployeeManagement({ userBranch, isManager }: EmployeeMa
                                 <button
                                   onClick={() => handleFileDownload(contract)}
                                   className="text-blue-600 hover:text-blue-900 text-sm"
+                                  title={contract.contractFile.startsWith('data:') ? '다운로드' : '새 탭에서 열기'}
                                 >
-                                  근로계약서 다운로드
+                                  {contract.contractFile.startsWith('data:') ? '근로계약서 다운로드' : '근로계약서 보기'}
                                 </button>
                               ) : (
                                 <span className="text-gray-400 text-sm">파일 없음</span>
@@ -4082,9 +4080,9 @@ export default function EmployeeManagement({ userBranch, isManager }: EmployeeMa
                                   <button
                                     onClick={() => handleFileDownload(contract)}
                                     className="text-blue-600 hover:text-blue-900 text-xs"
-                                    title={contract.contractFileName || '파일 다운로드'}
+                                    title={contract.contractFile.startsWith('data:') ? '다운로드' : '새 탭에서 열기'}
                                   >
-                                    근로계약 다운로드
+                                    {contract.contractFile.startsWith('data:') ? '근로계약 다운로드' : '근로계약 보기'}
                                   </button>
                                 ) : (
                                   <span className="text-gray-400 text-xs">파일 없음</span>

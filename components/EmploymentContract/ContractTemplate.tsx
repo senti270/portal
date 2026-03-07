@@ -99,7 +99,7 @@ export default function ContractTemplate({ branch, onComplete }: ContractTemplat
     startDateYear: new Date().getFullYear().toString(),
     startDateMonth: String(new Date().getMonth() + 1).padStart(2, '0'),
     startDateDay: String(new Date().getDate()).padStart(2, '0'),
-    probationPeriod: '3',
+    probationPeriod: '1',
     workStartHour: '09',
     workStartMinute: '00',
     workEndHour: '18',
@@ -783,6 +783,7 @@ export default function ContractTemplate({ branch, onComplete }: ContractTemplat
                 onChange={(e) => handleInputChange('employeeAddress', e.target.value)}
                 className="border-b-2 border-gray-300 px-2 py-1 focus:outline-none focus:border-blue-500 min-w-[300px]"
                 placeholder="근로자 주소"
+                required
               />
             </p>
             <p className="text-base">
@@ -793,6 +794,7 @@ export default function ContractTemplate({ branch, onComplete }: ContractTemplat
                 onChange={(e) => handleInputChange('employeePhone', e.target.value)}
                 className="border-b-2 border-gray-300 px-2 py-1 focus:outline-none focus:border-blue-500"
                 placeholder="010-0000-0000"
+                required
               />
             </p>
             <p className="text-base">
@@ -803,6 +805,7 @@ export default function ContractTemplate({ branch, onComplete }: ContractTemplat
                 onChange={(e) => handleInputChange('employeeName', e.target.value)}
                 className="border-b-2 border-gray-300 px-2 py-1 focus:outline-none focus:border-blue-500"
                 placeholder="근로자 성명"
+                required
               />
               {' '}
               {employeeSignature ? (
@@ -823,6 +826,7 @@ export default function ContractTemplate({ branch, onComplete }: ContractTemplat
                 onChange={(e) => handleInputChange('residentNumber', e.target.value)}
                 className="border-b-2 border-gray-300 px-2 py-1 focus:outline-none focus:border-blue-500"
                 placeholder="000000-0000000"
+                required
               />
             </p>
           </div>

@@ -178,7 +178,11 @@ export default function ContractTemplate({ branch, onComplete }: ContractTemplat
     if (currentSigner === 'employee') {
       setEmployeeSignature(signature)
       handleInputChange('employeeSignature', signature)
-      setCurrentSigner('employer')
+      // 근로자 서명 완료 후 사업주 서명으로 전환
+      setTimeout(() => {
+        setCurrentSigner('employer')
+        // 서명 패드 초기화를 위해 약간의 지연
+      }, 100)
     } else {
       setEmployerSignature(signature)
       handleInputChange('employerSignature', signature)
@@ -234,9 +238,14 @@ export default function ContractTemplate({ branch, onComplete }: ContractTemplat
         <h2 className="text-2xl font-bold text-gray-900 mb-4">
           서명 ({currentSigner === 'employee' ? '근로자' : '사업주'})
         </h2>
+        {currentSigner === 'employee' && employeeSignature && (
+          <div className="mb-4 p-4 bg-green-50 rounded-lg">
+            <p className="text-green-700">✓ 근로자 서명이 완료되었습니다. 이제 사업주 서명을 진행해주세요.</p>
+          </div>
+        )}
         {currentSigner === 'employer' && employeeSignature && (
           <div className="mb-4 p-4 bg-green-50 rounded-lg">
-            <p className="text-green-700">✓ 근로자 서명이 완료되었습니다.</p>
+            <p className="text-green-700">✓ 근로자 서명이 완료되었습니다. 이제 사업주 서명을 진행해주세요.</p>
           </div>
         )}
         {loading && (
@@ -245,6 +254,7 @@ export default function ContractTemplate({ branch, onComplete }: ContractTemplat
           </div>
         )}
         <SignaturePad
+          key={currentSigner}
           onComplete={handleSignatureComplete}
           onClear={() => {
             if (currentSigner === 'employee') {

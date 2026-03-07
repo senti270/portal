@@ -309,7 +309,7 @@ export default function ContractTemplate({ branch, onComplete }: ContractTemplat
               value={formData.employeeName}
               onChange={(e) => handleInputChange('employeeName', e.target.value)}
               placeholder="근로자 성명"
-              className="border-b-2 border-gray-300 px-2 py-1 inline-block focus:outline-none focus:border-blue-500 min-w-[120px] text-center"
+              className="bg-blue-50 border-2 border-blue-300 rounded px-2 py-1 inline-block focus:outline-none focus:border-blue-600 focus:bg-blue-100 focus:shadow-sm min-w-[120px] text-center"
             />
             {' '}(이하 "근로자"라 함)은 다음과 같이 근로계약을 체결한다.
           </p>
@@ -322,7 +322,7 @@ export default function ContractTemplate({ branch, onComplete }: ContractTemplat
             <select
               value={formData.startDateYear}
               onChange={(e) => handleInputChange('startDateYear', e.target.value)}
-              className="border-b-2 border-gray-300 px-2 py-1 focus:outline-none focus:border-blue-500"
+              className="bg-blue-50 border-2 border-blue-300 rounded px-2 py-1 focus:outline-none focus:border-blue-600 focus:bg-blue-100 focus:shadow-sm"
             >
               {years.map(y => <option key={y} value={y}>{y}</option>)}
             </select>
@@ -330,7 +330,7 @@ export default function ContractTemplate({ branch, onComplete }: ContractTemplat
             <select
               value={formData.startDateMonth}
               onChange={(e) => handleInputChange('startDateMonth', e.target.value)}
-              className="border-b-2 border-gray-300 px-2 py-1 focus:outline-none focus:border-blue-500"
+              className="bg-blue-50 border-2 border-blue-300 rounded px-2 py-1 focus:outline-none focus:border-blue-600 focus:bg-blue-100 focus:shadow-sm"
             >
               {months.map(m => <option key={m} value={m}>{m}</option>)}
             </select>
@@ -338,7 +338,7 @@ export default function ContractTemplate({ branch, onComplete }: ContractTemplat
             <select
               value={formData.startDateDay}
               onChange={(e) => handleInputChange('startDateDay', e.target.value)}
-              className="border-b-2 border-gray-300 px-2 py-1 focus:outline-none focus:border-blue-500"
+              className="bg-blue-50 border-2 border-blue-300 rounded px-2 py-1 focus:outline-none focus:border-blue-600 focus:bg-blue-100 focus:shadow-sm"
             >
               {days.map(d => <option key={d} value={d}>{d}</option>)}
             </select>
@@ -350,7 +350,7 @@ export default function ContractTemplate({ branch, onComplete }: ContractTemplat
               <select
                 value={formData.endDateYear}
                 onChange={(e) => handleInputChange('endDateYear', e.target.value)}
-                className="border-b-2 border-gray-300 px-2 py-1 focus:outline-none focus:border-blue-500"
+                className="bg-blue-50 border-2 border-blue-300 rounded px-2 py-1 focus:outline-none focus:border-blue-600 focus:bg-blue-100 focus:shadow-sm"
               >
                 {years.map(y => <option key={y} value={y}>{y}</option>)}
               </select>
@@ -358,7 +358,7 @@ export default function ContractTemplate({ branch, onComplete }: ContractTemplat
               <select
                 value={formData.endDateMonth}
                 onChange={(e) => handleInputChange('endDateMonth', e.target.value)}
-                className="border-b-2 border-gray-300 px-2 py-1 focus:outline-none focus:border-blue-500"
+                className="bg-blue-50 border-2 border-blue-300 rounded px-2 py-1 focus:outline-none focus:border-blue-600 focus:bg-blue-100 focus:shadow-sm"
               >
                 {months.map(m => <option key={m} value={m}>{m}</option>)}
               </select>
@@ -366,7 +366,7 @@ export default function ContractTemplate({ branch, onComplete }: ContractTemplat
               <select
                 value={formData.endDateDay}
                 onChange={(e) => handleInputChange('endDateDay', e.target.value)}
-                className="border-b-2 border-gray-300 px-2 py-1 focus:outline-none focus:border-blue-500"
+                className="bg-blue-50 border-2 border-blue-300 rounded px-2 py-1 focus:outline-none focus:border-blue-600 focus:bg-blue-100 focus:shadow-sm"
               >
                 {days.map(d => <option key={d} value={d}>{d}</option>)}
               </select>
@@ -396,7 +396,7 @@ export default function ContractTemplate({ branch, onComplete }: ContractTemplat
               type="number"
               value={formData.probationPeriod}
               onChange={(e) => handleInputChange('probationPeriod', e.target.value)}
-              className="border-b-2 border-gray-300 px-2 py-1 w-16 text-center focus:outline-none focus:border-blue-500"
+              className="bg-blue-50 border-2 border-blue-300 rounded px-2 py-1 w-16 text-center focus:outline-none focus:border-blue-600 focus:bg-blue-100 focus:shadow-sm"
               min="0"
             />
             {' '}개월은 수습기간임. 수습기간은 임금의 90% 지급함.
@@ -427,7 +427,7 @@ export default function ContractTemplate({ branch, onComplete }: ContractTemplat
             <select
               value={formData.workStartHour}
               onChange={(e) => handleInputChange('workStartHour', e.target.value)}
-              className="border-b-2 border-gray-300 px-2 py-1 focus:outline-none focus:border-blue-500"
+              className="bg-blue-50 border-2 border-blue-300 rounded px-2 py-1 focus:outline-none focus:border-blue-600 focus:bg-blue-100 focus:shadow-sm"
             >
               {hours.map(h => <option key={h} value={h}>{h}</option>)}
             </select>
@@ -435,7 +435,7 @@ export default function ContractTemplate({ branch, onComplete }: ContractTemplat
             <select
               value={formData.workStartMinute}
               onChange={(e) => handleInputChange('workStartMinute', e.target.value)}
-              className="border-b-2 border-gray-300 px-2 py-1 focus:outline-none focus:border-blue-500"
+              className="bg-blue-50 border-2 border-blue-300 rounded px-2 py-1 focus:outline-none focus:border-blue-600 focus:bg-blue-100 focus:shadow-sm"
             >
               {minutes.map(m => <option key={m} value={m}>{m}</option>)}
             </select>
@@ -443,7 +443,7 @@ export default function ContractTemplate({ branch, onComplete }: ContractTemplat
             <select
               value={formData.workEndHour}
               onChange={(e) => handleInputChange('workEndHour', e.target.value)}
-              className="border-b-2 border-gray-300 px-2 py-1 focus:outline-none focus:border-blue-500"
+              className="bg-blue-50 border-2 border-blue-300 rounded px-2 py-1 focus:outline-none focus:border-blue-600 focus:bg-blue-100 focus:shadow-sm"
             >
               {hours.map(h => <option key={h} value={h}>{h}</option>)}
             </select>
@@ -451,7 +451,7 @@ export default function ContractTemplate({ branch, onComplete }: ContractTemplat
             <select
               value={formData.workEndMinute}
               onChange={(e) => handleInputChange('workEndMinute', e.target.value)}
-              className="border-b-2 border-gray-300 px-2 py-1 focus:outline-none focus:border-blue-500"
+              className="bg-blue-50 border-2 border-blue-300 rounded px-2 py-1 focus:outline-none focus:border-blue-600 focus:bg-blue-100 focus:shadow-sm"
             >
               {minutes.map(m => <option key={m} value={m}>{m}</option>)}
             </select>
@@ -461,7 +461,7 @@ export default function ContractTemplate({ branch, onComplete }: ContractTemplat
                 <select
                   value={formData.breakStartHour}
                   onChange={(e) => handleInputChange('breakStartHour', e.target.value)}
-                  className="border-b-2 border-gray-300 px-2 py-1 focus:outline-none focus:border-blue-500"
+                  className="bg-blue-50 border-2 border-blue-300 rounded px-2 py-1 focus:outline-none focus:border-blue-600 focus:bg-blue-100 focus:shadow-sm"
                 >
                   {hours.map(h => <option key={h} value={h}>{h}</option>)}
                 </select>
@@ -469,7 +469,7 @@ export default function ContractTemplate({ branch, onComplete }: ContractTemplat
                 <select
                   value={formData.breakStartMinute}
                   onChange={(e) => handleInputChange('breakStartMinute', e.target.value)}
-                  className="border-b-2 border-gray-300 px-2 py-1 focus:outline-none focus:border-blue-500"
+                  className="bg-blue-50 border-2 border-blue-300 rounded px-2 py-1 focus:outline-none focus:border-blue-600 focus:bg-blue-100 focus:shadow-sm"
                 >
                   {minutes.map(m => <option key={m} value={m}>{m}</option>)}
                 </select>
@@ -477,7 +477,7 @@ export default function ContractTemplate({ branch, onComplete }: ContractTemplat
                 <select
                   value={formData.breakEndHour}
                   onChange={(e) => handleInputChange('breakEndHour', e.target.value)}
-                  className="border-b-2 border-gray-300 px-2 py-1 focus:outline-none focus:border-blue-500"
+                  className="bg-blue-50 border-2 border-blue-300 rounded px-2 py-1 focus:outline-none focus:border-blue-600 focus:bg-blue-100 focus:shadow-sm"
                 >
                   {hours.map(h => <option key={h} value={h}>{h}</option>)}
                 </select>
@@ -485,7 +485,7 @@ export default function ContractTemplate({ branch, onComplete }: ContractTemplat
                 <select
                   value={formData.breakEndMinute}
                   onChange={(e) => handleInputChange('breakEndMinute', e.target.value)}
-                  className="border-b-2 border-gray-300 px-2 py-1 focus:outline-none focus:border-blue-500"
+                  className="bg-blue-50 border-2 border-blue-300 rounded px-2 py-1 focus:outline-none focus:border-blue-600 focus:bg-blue-100 focus:shadow-sm"
                 >
                   {minutes.map(m => <option key={m} value={m}>{m}</option>)}
                 </select>
@@ -619,7 +619,7 @@ export default function ContractTemplate({ branch, onComplete }: ContractTemplat
               type="number"
               value={formData.salaryAmount}
               onChange={(e) => handleInputChange('salaryAmount', e.target.value)}
-              className="border-b-2 border-gray-300 px-2 py-1 focus:outline-none focus:border-blue-500 min-w-[200px]"
+              className="bg-blue-50 border-2 border-blue-300 rounded px-2 py-1 focus:outline-none focus:border-blue-600 focus:bg-blue-100 focus:shadow-sm min-w-[200px]"
               placeholder="임금액"
             />
             {' '}원 (세전)
@@ -674,7 +674,7 @@ export default function ContractTemplate({ branch, onComplete }: ContractTemplat
               <select
                 value={formData.bankName || ''}
                 onChange={(e) => handleInputChange('bankName', e.target.value)}
-                className="border-b-2 border-gray-300 px-2 py-1 focus:outline-none focus:border-blue-500 mr-2"
+                className="bg-blue-50 border-2 border-blue-300 rounded px-2 py-1 focus:outline-none focus:border-blue-600 focus:bg-blue-100 focus:shadow-sm mr-2"
               >
                 <option value="">은행 선택</option>
                 {banks.map(bank => (
@@ -685,7 +685,7 @@ export default function ContractTemplate({ branch, onComplete }: ContractTemplat
                 type="text"
                 value={formData.bankAccount || ''}
                 onChange={(e) => handleInputChange('bankAccount', e.target.value)}
-                className="border-b-2 border-gray-300 px-2 py-1 focus:outline-none focus:border-blue-500 min-w-[200px]"
+                className="bg-blue-50 border-2 border-blue-300 rounded px-2 py-1 focus:outline-none focus:border-blue-600 focus:bg-blue-100 focus:shadow-sm min-w-[200px]"
                 placeholder="계좌번호 입력"
               />
             </p>
@@ -722,7 +722,7 @@ export default function ContractTemplate({ branch, onComplete }: ContractTemplat
             <select
               value={formData.contractDateYear}
               onChange={(e) => handleInputChange('contractDateYear', e.target.value)}
-              className="border-b-2 border-gray-300 px-2 py-1 focus:outline-none focus:border-blue-500"
+              className="bg-blue-50 border-2 border-blue-300 rounded px-2 py-1 focus:outline-none focus:border-blue-600 focus:bg-blue-100 focus:shadow-sm"
             >
               {years.map(y => <option key={y} value={y}>{y}</option>)}
             </select>
@@ -730,7 +730,7 @@ export default function ContractTemplate({ branch, onComplete }: ContractTemplat
             <select
               value={formData.contractDateMonth}
               onChange={(e) => handleInputChange('contractDateMonth', e.target.value)}
-              className="border-b-2 border-gray-300 px-2 py-1 focus:outline-none focus:border-blue-500"
+              className="bg-blue-50 border-2 border-blue-300 rounded px-2 py-1 focus:outline-none focus:border-blue-600 focus:bg-blue-100 focus:shadow-sm"
             >
               {months.map(m => <option key={m} value={m}>{m}</option>)}
             </select>
@@ -738,7 +738,7 @@ export default function ContractTemplate({ branch, onComplete }: ContractTemplat
             <select
               value={formData.contractDateDay}
               onChange={(e) => handleInputChange('contractDateDay', e.target.value)}
-              className="border-b-2 border-gray-300 px-2 py-1 focus:outline-none focus:border-blue-500"
+              className="bg-blue-50 border-2 border-blue-300 rounded px-2 py-1 focus:outline-none focus:border-blue-600 focus:bg-blue-100 focus:shadow-sm"
             >
               {days.map(d => <option key={d} value={d}>{d}</option>)}
             </select>
@@ -781,7 +781,7 @@ export default function ContractTemplate({ branch, onComplete }: ContractTemplat
                 type="text"
                 value={formData.employeeAddress}
                 onChange={(e) => handleInputChange('employeeAddress', e.target.value)}
-                className="border-b-2 border-gray-300 px-2 py-1 focus:outline-none focus:border-blue-500 min-w-[300px]"
+                className="bg-blue-50 border-2 border-blue-300 rounded px-2 py-1 focus:outline-none focus:border-blue-600 focus:bg-blue-100 focus:shadow-sm min-w-[300px]"
                 placeholder="근로자 주소"
                 required
               />
@@ -792,7 +792,7 @@ export default function ContractTemplate({ branch, onComplete }: ContractTemplat
                 type="tel"
                 value={formData.employeePhone}
                 onChange={(e) => handleInputChange('employeePhone', e.target.value)}
-                className="border-b-2 border-gray-300 px-2 py-1 focus:outline-none focus:border-blue-500"
+                className="bg-blue-50 border-2 border-blue-300 rounded px-2 py-1 focus:outline-none focus:border-blue-600 focus:bg-blue-100 focus:shadow-sm"
                 placeholder="010-0000-0000"
                 required
               />
@@ -803,7 +803,7 @@ export default function ContractTemplate({ branch, onComplete }: ContractTemplat
                 type="text"
                 value={formData.employeeName}
                 onChange={(e) => handleInputChange('employeeName', e.target.value)}
-                className="border-b-2 border-gray-300 px-2 py-1 focus:outline-none focus:border-blue-500"
+                className="bg-blue-50 border-2 border-blue-300 rounded px-2 py-1 focus:outline-none focus:border-blue-600 focus:bg-blue-100 focus:shadow-sm"
                 placeholder="근로자 성명"
                 required
               />
@@ -824,7 +824,7 @@ export default function ContractTemplate({ branch, onComplete }: ContractTemplat
                 type="text"
                 value={formData.residentNumber}
                 onChange={(e) => handleInputChange('residentNumber', e.target.value)}
-                className="border-b-2 border-gray-300 px-2 py-1 focus:outline-none focus:border-blue-500"
+                className="bg-blue-50 border-2 border-blue-300 rounded px-2 py-1 focus:outline-none focus:border-blue-600 focus:bg-blue-100 focus:shadow-sm"
                 placeholder="000000-0000000"
                 required
               />

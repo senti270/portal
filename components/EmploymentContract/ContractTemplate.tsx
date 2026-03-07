@@ -654,7 +654,7 @@ export default function ContractTemplate({ branch, onComplete }: ContractTemplat
                 className="w-4 h-4"
               />
             </label>
-            , 근로자 명의 계좌에 입금 {' '}
+            근로자 명의 계좌에 입금 {' '}
             <label className="inline-flex items-center gap-1">
               <input
                 type="checkbox"

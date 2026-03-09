@@ -231,6 +231,11 @@ function CheckOutPageContent() {
       const actualTime = new Date();
       const result = checkAttendanceStatus(scheduledTime, actualTime);
       setCheckResult(result);
+
+      // 출근과 동일하게: 정시가 아니면 바로 사유 입력 화면으로 이동
+      if (result.status === 'late' || result.status === 'early') {
+        setShowReasonInput(true);
+      }
     }
     
     setShowCheckoutInfo(true);

@@ -284,23 +284,186 @@ export default function ContractTemplateHandler({ branchId, branch }: ContractTe
 
   const generateContractPdfFromTemplate = async (contractData: ContractData, branch: Branch): Promise<Blob> => {
     try {
-      // jsPDF로 PDF 생성
-      const doc = new jsPDF({
-        orientation: 'portrait',
-        unit: 'mm',
-        format: 'a4'
+      // html2canvas를 사용하여 HTML을 이미지로 변환 후 PDF 생성 (한글 폰트 문제 해결)
+      const html2canvas = (await import('html2canvas')).default
+      
+      // 계약서 HTML 생성
+      const contractHtml = generateContractHtml(contractData, branch)
+      
+      // 임시 div 생성
+      const element = document.createElement('div')
+      element.innerHTML = contractHtml
+      element.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 210mm;
+        background: white;
+        font-family: 'Malgun Gothic', '맑은 고딕', 'Noto Sans KR', Arial, sans-serif;
+        color: black;
+        z-index: 9999;
+        padding: 20mm;
+        font-size: 12pt;
+        line-height: 1.6;
+      `
+      document.body.appendChild(element)
+      
+      // HTML을 캔버스로 변환
+      const canvas = await html2canvas(element, {
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: '#ffffff',
+        width: 794, // 210mm in pixels at 96dpi
+        height: element.scrollHeight
       })
       
-      // 페이지 여백 설정
-      const margin = 20
-      const pageWidth = doc.internal.pageSize.getWidth()
-      const pageHeight = doc.internal.pageSize.getHeight()
-      const contentWidth = pageWidth - (margin * 2)
+      // 임시 div 제거
+      document.body.removeChild(element)
       
-      // 한글 폰트 문제로 인해 기본 폰트 사용
-      // TODO: 한글 폰트 추가 시 아래 주석 해제
-      // doc.addFont('/fonts/NotoSansKR-Regular.ttf', 'NotoSansKR', 'normal')
-      // doc.setFont('NotoSansKR')
+      // 캔버스를 PDF로 변환
+      const imgData = canvas.toDataURL('image/png')
+      const doc = new jsPDF('p', 'mm', 'a4')
+      
+      const imgWidth = 210 // A4 width in mm
+      const pageHeight = 297 // A4 height in mm
+      const imgHeight = (canvas.height * imgWidth) / canvas.width
+      let heightLeft = imgHeight
+      
+      let position = 0
+      
+      // 첫 페이지 추가
+      doc.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight)
+      heightLeft -= pageHeight
+      
+      // 여러 페이지가 필요한 경우 추가 페이지 생성
+      while (heightLeft >= 0) {
+        position = heightLeft - imgHeight
+        doc.addPage()
+        doc.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight)
+        heightLeft -= pageHeight
+      }
+      
+      const pdfBlob = doc.output('blob')
+      return pdfBlob
+    } catch (error) {
+      console.error('PDF 생성 오류:', error)
+      throw new Error('PDF 생성 중 오류가 발생했습니다.')
+    }
+  }
+
+  const generateContractHtml = (contractData: ContractData, branch: Branch): string => {
+    const startDateStr = `${contractData.startDateYear}년 ${contractData.startDateMonth}월 ${contractData.startDateDay}일`
+    const endDateStr = contractData.endDateYear 
+      ? `${contractData.endDateYear}년 ${contractData.endDateMonth}월 ${contractData.endDateDay}일`
+      : ''
+    const contractDateStr = `${contractData.contractDateYear}년 ${contractData.contractDateMonth}월 ${contractData.contractDateDay}일`
+    const workStartTime = `${contractData.workStartHour}:${contractData.workStartMinute}`
+    const workEndTime = `${contractData.workEndHour}:${contractData.workEndMinute}`
+    const salaryTypeText = contractData.salaryType === 'monthly' ? '월' : contractData.salaryType === 'daily' ? '일' : '시간'
+    const workPlaceText = '청담장어마켓(송파점/동탄점/분당점), 카페드로잉(송파점/홍대점/동탄점), 사업주가 관리하는 신규추가지점'
+    const workContentText = '고객응대 및 서빙, 음료, 음식제조 및 매장관리 등 사업장이 지정한 업무'
+    
+    return `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="UTF-8">
+        <style>
+          body {
+            font-family: 'Malgun Gothic', '맑은 고딕', 'Noto Sans KR', Arial, sans-serif;
+            font-size: 12pt;
+            line-height: 1.6;
+            padding: 0;
+            margin: 0;
+          }
+          .title {
+            text-align: center;
+            font-size: 18pt;
+            font-weight: bold;
+            margin-bottom: 20px;
+          }
+          .section {
+            margin-bottom: 15px;
+          }
+          .section-title {
+            font-weight: bold;
+            margin-bottom: 5px;
+          }
+          .signature-area {
+            display: inline-block;
+            width: 80px;
+            height: 30px;
+            border: 1px solid #ccc;
+            margin-left: 10px;
+            vertical-align: middle;
+          }
+        </style>
+      </head>
+      <body>
+        <div class="title">표준근로계약서</div>
+        
+        <div class="section">
+          <p>${branch.ceoName || '대표자'}(이하 "사업주"라 함)과(와) ${contractData.employeeName}(이하 "근로자"라 함)은 다음과 같이 근로계약을 체결한다.</p>
+        </div>
+        
+        <div class="section">
+          <div class="section-title">1. 근로개시일</div>
+          <p>${startDateStr}</p>
+          ${endDateStr ? `<p>종료일: ${endDateStr}</p>` : ''}
+          <p>수습기간: ${contractData.probationPeriod}개월</p>
+        </div>
+        
+        <div class="section">
+          <div class="section-title">2. 근무장소</div>
+          <p>${workPlaceText}</p>
+        </div>
+        
+        <div class="section">
+          <div class="section-title">3. 업무의 내용</div>
+          <p>${workContentText}</p>
+        </div>
+        
+        <div class="section">
+          <div class="section-title">4. 소정근로시간</div>
+          <p>${workStartTime} ~ ${workEndTime}</p>
+        </div>
+        
+        <div class="section">
+          <div class="section-title">5. 근무일/휴일</div>
+          <p>매주 ${contractData.workDaysPerWeek}일 근무, 주휴일: ${contractData.weeklyHolidayDay}요일</p>
+        </div>
+        
+        <div class="section">
+          <div class="section-title">6. 임금</div>
+          <p>${salaryTypeText}급: ${parseFloat(contractData.salaryAmount).toLocaleString()}원</p>
+          ${contractData.salaryType === 'hourly' ? `<p>주휴수당 포함: ${contractData.includesWeeklyHoliday ? '예' : '아니오'}</p>` : ''}
+          <p>임금지급일: 매월 ${contractData.paymentDay}일</p>
+          <p>지급방법: ${contractData.paymentMethod === 'cash' ? '현금' : '계좌입금'}</p>
+          ${contractData.paymentMethod === 'bank' && contractData.bankAccount ? `<p>계좌번호: ${contractData.bankAccount}</p>` : ''}
+        </div>
+        
+        <div style="text-align: center; margin: 20px 0;">
+          <p>${contractDateStr}</p>
+        </div>
+        
+        <div class="section">
+          <div class="section-title">사업주</div>
+          <p>사업체명: ${branch.companyName || branch.name}</p>
+          <p>주소: ${branch.address || ''}</p>
+          <p>대표자: ${branch.ceoName || ''} ${contractData.employerSignature ? '<img src="' + contractData.employerSignature + '" style="width: 80px; height: 30px; margin-left: 10px; vertical-align: middle;" />' : '<span class="signature-area"></span>'}</p>
+        </div>
+        
+        <div class="section">
+          <div class="section-title">근로자</div>
+          <p>주소: ${contractData.employeeAddress}</p>
+          <p>연락처: ${contractData.employeePhone}</p>
+          <p>성명: ${contractData.employeeName} ${contractData.employeeSignature ? '<img src="' + contractData.employeeSignature + '" style="width: 80px; height: 30px; margin-left: 10px; vertical-align: middle;" />' : '<span class="signature-area"></span>'}</p>
+          <p>주민등록번호: ${contractData.residentNumber}</p>
+        </div>
+      </body>
+      </html>
+    `
       
       doc.setFontSize(16)
       doc.text('표준근로계약서', pageWidth / 2, 20, { align: 'center' })

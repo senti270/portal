@@ -220,15 +220,17 @@ function CheckOutPageContent() {
       hasSchedule: !!(employee as EmployeeScheduleInfo).scheduledEndTime
     };
     
+    const actualTime = new Date();
+
     setSelectedEmployee({
       ...employeeWithSchedule,
-      checkInTime
+      checkInTime,
+      currentTime: actualTime
     });
     
     // 퇴근 시간 확인
     if (employeeWithSchedule.scheduledEndTime) {
       const scheduledTime = parseTimeString(employeeWithSchedule.scheduledEndTime);
-      const actualTime = new Date();
       const result = checkAttendanceStatus(scheduledTime, actualTime);
       setCheckResult(result);
 
@@ -459,6 +461,23 @@ function CheckoutInfoScreen({
     }
   })();
 
+  // 총 근무시간 (출근 시각 ~ 현재 시각)
+  const totalWorkDisplay = (() => {
+    if (!employee.checkInTime || !employee.currentTime) return null;
+    const workMs = employee.currentTime.getTime() - employee.checkInTime.getTime();
+    if (workMs <= 0) return null;
+    const workMinutes = Math.floor(workMs / (1000 * 60));
+    const hours = Math.floor(workMinutes / 60);
+    const minutes = workMinutes % 60;
+    if (hours > 0 && minutes > 0) {
+      return `${hours}시간 ${minutes}분`;
+    } else if (hours > 0) {
+      return `${hours}시간`;
+    } else {
+      return `${minutes}분`;
+    }
+  })();
+
   // 퇴근 시간 차이를 +HH시간MM분 / -HH시간MM분 형식으로 표시
   const diffDisplay = (() => {
     if (checkResult?.minutesDiff === undefined) return null;
@@ -478,11 +497,16 @@ function CheckoutInfoScreen({
       <div className="min-h-screen bg-gradient-to-br from-orange-50 to-red-100 flex items-center justify-center p-6">
         <div className="bg-white rounded-3xl shadow-2xl p-12 max-w-2xl w-full text-center">
           <div className="text-6xl mb-6">✅</div>
-          <p className="text-3xl font-bold text-green-600 mb-8">
+          <p className="text-3xl font-bold text-green-600 mb-4">
             정시 퇴근입니다.
           </p>
-          <p className="text-2xl font-semibold text-gray-700 mb-8">
-            오늘도 수고하셨습니다!
+          {totalWorkDisplay && (
+            <p className="text-2xl font-semibold text-gray-700 mb-2">
+              오늘 총 근무시간: {totalWorkDisplay}
+            </p>
+          )}
+          <p className="text-xl text-gray-600 mb-8">
+            오늘 총 휴게시간: {breakTimeDisplay}
           </p>
           <button
             onClick={onConfirm}
@@ -511,8 +535,16 @@ function CheckoutInfoScreen({
           <h2 className="text-3xl font-bold text-gray-800 mb-4">
             {workTimeDisplay} 더 근무하셨습니다.
           </h2>
-          <p className="text-xl text-gray-600 mb-8">
-            정시퇴근을 권장드립니다.
+          {totalWorkDisplay && (
+            <p className="text-2xl font-semibold text-gray-700 mb-2">
+              오늘 총 근무시간: {totalWorkDisplay}
+            </p>
+          )}
+          <p className="text-xl text-gray-600 mb-4">
+            오늘 총 휴게시간: {breakTimeDisplay}
+          </p>
+          <p className="text-base text-gray-500 mb-6">
+            (정시퇴근을 권장드립니다. 사유를 선택하거나 바로 퇴근 기록을 완료할 수 있습니다.)
           </p>
           <button
             onClick={() => setShowReasonInput(true)}
@@ -534,23 +566,16 @@ function CheckoutInfoScreen({
   // 일찍 퇴근
   if (checkResult?.status === 'early' && !showReasonInput) {
     // 출근 시간부터 현재까지의 근무시간 계산
-    const checkInTime = employee.checkInTime;
-    const now = new Date();
-    const workMs = now.getTime() - checkInTime.getTime();
-    const workMinutes = Math.floor(workMs / (1000 * 60));
-    const workHours = Math.floor(workMinutes / 60);
-    const workMins = workMinutes % 60;
-    const workTimeDisplay = workHours > 0 
-      ? `${workHours}시간 ${workMins}분`
-      : `${workMins}분`;
-
     return (
       <div className="min-h-screen bg-gradient-to-br from-orange-50 to-red-100 flex items-center justify-center p-6">
         <div className="bg-white rounded-3xl shadow-2xl p-12 max-w-2xl w-full text-center">
           <div className="text-6xl mb-6">⚠️</div>
           <h2 className="text-3xl font-bold text-gray-800 mb-4">
-            오늘의 근무시간은 {workTimeDisplay}까지입니다.
+            오늘의 근무시간은 {totalWorkDisplay || '0분'}까지입니다.
           </h2>
+          <p className="text-xl text-gray-600 mb-4">
+            오늘 총 휴게시간: {breakTimeDisplay}
+          </p>
           <p className="text-xl text-gray-600 mb-8">
             일찍 퇴근하시는 사유를 알려주세요.
           </p>

@@ -26,6 +26,7 @@ interface ContractTemplateHandlerProps {
 
 export default function ContractTemplateHandler({ branchId, branch }: ContractTemplateHandlerProps) {
   const [loading, setLoading] = useState(false)
+  const [contractFileUrl, setContractFileUrl] = useState<string | null>(null)
 
   const handleContractComplete = async (contractData: ContractData) => {
     console.log('🚀 계약서 저장 프로세스 시작')
@@ -270,6 +271,7 @@ export default function ContractTemplateHandler({ branchId, branch }: ContractTe
       }
 
       console.log('🎉 모든 작업 완료!')
+      setContractFileUrl(pdfUrl) // PDF URL 저장
       alert('근로계약서가 성공적으로 작성되었습니다!\n직원관리에 자동으로 등록되었습니다.')
     } catch (error) {
       console.error('❌ 계약서 저장 중 오류:', error)
@@ -629,6 +631,7 @@ export default function ContractTemplateHandler({ branchId, branch }: ContractTe
     <ContractTemplate
       branch={branch}
       onComplete={handleContractComplete}
+      contractFileUrl={contractFileUrl}
     />
   )
 }

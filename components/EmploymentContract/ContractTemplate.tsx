@@ -18,6 +18,7 @@ interface Branch {
 interface ContractTemplateProps {
   branch: Branch
   onComplete: (data: ContractData) => void
+  contractFileUrl?: string | null
 }
 
 export interface ContractData {
@@ -83,7 +84,7 @@ interface BankCode {
   code: string
 }
 
-export default function ContractTemplate({ branch, onComplete }: ContractTemplateProps) {
+export default function ContractTemplate({ branch, onComplete, contractFileUrl }: ContractTemplateProps) {
   const [step, setStep] = useState<'form' | 'signature' | 'complete'>('form')
   const [currentSigner, setCurrentSigner] = useState<'employee' | 'employer'>('employee')
   const [employeeSignature, setEmployeeSignature] = useState<string>('')
@@ -320,14 +321,49 @@ export default function ContractTemplate({ branch, onComplete }: ContractTemplat
 
   if (step === 'complete') {
     return (
-      <div className="bg-white rounded-lg shadow-lg p-6 text-center">
-        <div className="text-6xl mb-4">✅</div>
-        <h2 className="text-2xl font-bold text-gray-900 mb-4">
-          근로계약서 작성 완료
-        </h2>
-        <p className="text-gray-600 mb-6">
-          근로계약서가 성공적으로 작성되었고 직원관리에 자동으로 등록되었습니다.
-        </p>
+      <div className="space-y-6">
+        <div className="bg-white rounded-lg shadow-lg p-6 text-center">
+          <div className="text-6xl mb-4">✅</div>
+          <h2 className="text-2xl font-bold text-gray-900 mb-4">
+            근로계약서 작성 완료
+          </h2>
+          <p className="text-gray-600 mb-6">
+            근로계약서가 성공적으로 작성되었고 직원관리에 자동으로 등록되었습니다.
+          </p>
+        </div>
+
+        {contractFileUrl && (
+          <div className="bg-white rounded-lg shadow-lg p-6">
+            <h3 className="text-xl font-bold text-gray-900 mb-4">
+              작성된 근로계약서
+            </h3>
+            <div className="border border-gray-300 rounded-lg overflow-hidden">
+              <iframe
+                src={contractFileUrl}
+                className="w-full"
+                style={{ height: '800px' }}
+                title="근로계약서 PDF"
+              />
+            </div>
+            <div className="mt-4 flex gap-4 justify-center">
+              <a
+                href={contractFileUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+              >
+                새 탭에서 열기
+              </a>
+              <a
+                href={contractFileUrl}
+                download
+                className="px-6 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
+              >
+                PDF 다운로드
+              </a>
+            </div>
+          </div>
+        )}
       </div>
     )
   }

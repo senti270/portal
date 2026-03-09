@@ -186,25 +186,41 @@ export default function ContractTemplate({ branch, onComplete }: ContractTemplat
         // 서명 패드 초기화를 위해 약간의 지연
       }, 100)
     } else {
+      // 사업주 서명 완료
       setEmployerSignature(signature)
       handleInputChange('employerSignature', signature)
-      handleSave()
+      // state 업데이트 후 저장 (약간의 지연)
+      setTimeout(() => {
+        handleSave(signature)
+      }, 50)
     }
   }
 
-  const handleSave = async () => {
+  const handleSave = async (employerSig?: string) => {
     setLoading(true)
     try {
+      // 최신 서명 데이터 사용 (파라미터로 받은 값 우선, 없으면 state 사용)
+      const finalEmployerSignature = employerSig || employerSignature
       const finalData = {
         ...formData,
-        employeeSignature,
-        employerSignature
+        employeeSignature: employeeSignature || formData.employeeSignature,
+        employerSignature: finalEmployerSignature || formData.employerSignature
       }
+      
+      // 서명 검증
+      if (!finalData.employeeSignature) {
+        throw new Error('근로자 서명이 필요합니다.')
+      }
+      if (!finalData.employerSignature) {
+        throw new Error('사업주 서명이 필요합니다.')
+      }
+      
       await onComplete(finalData)
       setStep('complete')
     } catch (error) {
       console.error('계약서 저장 중 오류:', error)
-      alert('계약서 저장 중 오류가 발생했습니다.')
+      const errorMessage = error instanceof Error ? error.message : '계약서 저장 중 오류가 발생했습니다.'
+      alert(errorMessage)
     } finally {
       setLoading(false)
     }

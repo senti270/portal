@@ -18,6 +18,7 @@ function CheckOutPageContent() {
   const [targetBranchId, setTargetBranchId] = useState<string>('');
   const [employeesWithSchedule, setEmployeesWithSchedule] = useState<EmployeeScheduleInfo[]>([]);
   const [employeesWithCheckIn, setEmployeesWithCheckIn] = useState<Array<{employeeId: string; employeeName: string}>>([]);
+  const [todayAttendanceMap, setTodayAttendanceMap] = useState<Map<string, { checkIn?: string; checkOut?: string }>>(new Map());
   const [selectedEmployee, setSelectedEmployee] = useState<any>(null);
   const [showCheckoutInfo, setShowCheckoutInfo] = useState(false);
   const [checkResult, setCheckResult] = useState<any>(null);
@@ -128,33 +129,47 @@ function CheckOutPageContent() {
       
       setEmployeesWithSchedule(Array.from(employeeMap.values()));
       
-      // 오늘 출근 기록이 있는 직원 조회 (스케줄은 없지만)
-      const checkInConstraints = [
+      // 오늘 출근/퇴근 기록 조회 (시각 표시용)
+      const attendanceConstraints = [
         where('date', '==', todayStr),
-        where('type', '==', 'checkin'),
       ];
       if (targetId) {
-        checkInConstraints.push(where('branchId', '==', targetId));
+        attendanceConstraints.push(where('branchId', '==', targetId));
       }
-      const checkInQuery = query(collection(db, 'attendanceRecords'), ...checkInConstraints);
-      
-      const checkInSnapshot = await getDocs(checkInQuery);
-      const checkInEmployeeIds = new Set(
-        Array.from(employeeMap.keys())
-      );
-      
-      const employeesWithCheckInOnly: Array<{employeeId: string; employeeName: string}> = [];
-      
-      checkInSnapshot.docs.forEach(doc => {
+      const attendanceQuery = query(collection(db, 'attendanceRecords'), ...attendanceConstraints);
+      const attendanceSnapshot = await getDocs(attendanceQuery);
+
+      const attendanceMap = new Map<string, { checkIn?: string; checkOut?: string }>();
+      const checkInEmployeeIds = new Set(Array.from(employeeMap.keys()));
+      const employeesWithCheckInOnly: Array<{ employeeId: string; employeeName: string }> = [];
+
+      attendanceSnapshot.docs.forEach(doc => {
         const data = doc.data();
-        if (!checkInEmployeeIds.has(data.employeeId)) {
+        const empId = data.employeeId as string;
+        const actualTime = data.actualTime?.toDate ? data.actualTime.toDate() : (data.actualTime ? new Date(data.actualTime) : null);
+        if (!actualTime) return;
+
+        const timeStr = actualTime.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' });
+        const type = data.type as string;
+
+        const existing = attendanceMap.get(empId) || {};
+        if (type === 'checkin') {
+          existing.checkIn = timeStr;
+        } else if (type === 'checkout') {
+          existing.checkOut = timeStr;
+        }
+        attendanceMap.set(empId, existing);
+
+        // 스케줄에는 없지만 출근 기록이 있는 직원 목록 구성
+        if (type === 'checkin' && !checkInEmployeeIds.has(empId)) {
           employeesWithCheckInOnly.push({
-            employeeId: data.employeeId,
+            employeeId: empId,
             employeeName: data.employeeName || ''
           });
         }
       });
-      
+
+      setTodayAttendanceMap(attendanceMap);
       setEmployeesWithCheckIn(employeesWithCheckInOnly);
     } catch (error) {
       console.error('직원 목록 로드 실패:', error);
@@ -373,15 +388,24 @@ function CheckOutPageContent() {
           <div className="mb-8">
             <h2 className="text-2xl font-semibold text-gray-700 mb-4">오늘 스케줄 있는 직원목록</h2>
             <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-              {employeesWithSchedule.map((emp) => (
-                <button
-                  key={emp.employeeId}
-                  onClick={() => handleEmployeeSelect(emp)}
-                  className="h-24 bg-white rounded-2xl shadow-lg hover:shadow-xl transform transition-all duration-200 hover:scale-105 active:scale-95 flex items-center justify-center text-xl font-semibold text-gray-800"
-                >
-                  {emp.employeeName}
-                </button>
-              ))}
+              {employeesWithSchedule.map((emp) => {
+                const att = todayAttendanceMap.get(emp.employeeId);
+                return (
+                  <button
+                    key={emp.employeeId}
+                    onClick={() => handleEmployeeSelect(emp)}
+                    className="h-24 bg-white rounded-2xl shadow-lg hover:shadow-xl transform transition-all duration-200 hover:scale-105 active:scale-95 flex flex-col items-center justify-center text-xl font-semibold text-gray-800"
+                  >
+                    <div>{emp.employeeName}</div>
+                    {(att?.checkIn || att?.checkOut) && (
+                      <div className="mt-1 text-xs font-normal text-gray-500 space-y-0.5 text-center">
+                        {att.checkIn && <div>출근 {att.checkIn}</div>}
+                        {att.checkOut && <div>퇴근 {att.checkOut}</div>}
+                      </div>
+                    )}
+                  </button>
+                );
+              })}
             </div>
           </div>
         )}
@@ -393,15 +417,24 @@ function CheckOutPageContent() {
               스케줄은 없지만 출근기록이 있는 직원목록
             </h2>
             <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-              {employeesWithCheckIn.map((emp) => (
-                <button
-                  key={emp.employeeId}
-                  onClick={() => handleEmployeeSelect(emp)}
-                  className="h-24 bg-gray-100 rounded-2xl shadow-lg hover:shadow-xl transform transition-all duration-200 hover:scale-105 active:scale-95 flex items-center justify-center text-xl font-semibold text-gray-600"
-                >
-                  {emp.employeeName}
-                </button>
-              ))}
+              {employeesWithCheckIn.map((emp) => {
+                const att = todayAttendanceMap.get(emp.employeeId);
+                return (
+                  <button
+                    key={emp.employeeId}
+                    onClick={() => handleEmployeeSelect(emp)}
+                    className="h-24 bg-gray-100 rounded-2xl shadow-lg hover:shadow-xl transform transition-all duration-200 hover:scale-105 active:scale-95 flex flex-col items-center justify-center text-xl font-semibold text-gray-600"
+                  >
+                    <div>{emp.employeeName}</div>
+                    {(att?.checkIn || att?.checkOut) && (
+                      <div className="mt-1 text-xs font-normal text-gray-500 space-y-0.5 text-center">
+                        {att.checkIn && <div>출근 {att.checkIn}</div>}
+                        {att.checkOut && <div>퇴근 {att.checkOut}</div>}
+                      </div>
+                    )}
+                  </button>
+                );
+              })}
             </div>
           </div>
         )}

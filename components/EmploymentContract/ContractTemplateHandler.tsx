@@ -148,27 +148,34 @@ export default function ContractTemplateHandler({ branchId, branch }: ContractTe
       let pdfBlob: Blob
       try {
         pdfBlob = await generateContractPdfFromTemplate(contractData, branch)
-        console.log('✅ PDF 생성 완료')
+        console.log('✅ PDF 생성 완료, 크기:', pdfBlob.size, 'bytes')
       } catch (error) {
         console.error('❌ PDF 생성 오류:', error)
         throw new Error('PDF 생성 중 오류가 발생했습니다. 다시 시도해주세요.')
       }
 
-      // 5. Firebase Storage에 업로드
-      console.log('☁️ Storage 업로드 시작...')
+      // 5. PDF를 Base64로 변환하여 Firestore에 저장 (CORS 문제 회피)
+      console.log('📤 PDF를 Base64로 변환 중...')
       const timestamp = Date.now()
-      const pdfFileName = `contracts/${branchId}_${timestamp}.pdf`
       let pdfUrl: string
       try {
-        const pdfRef = ref(storage, pdfFileName)
-        console.log('📤 파일 업로드 중...', pdfFileName)
-        await uploadBytes(pdfRef, pdfBlob)
-        console.log('✅ 파일 업로드 완료')
-        pdfUrl = await getDownloadURL(pdfRef)
-        console.log('✅ 다운로드 URL 생성 완료:', pdfUrl)
+        // Blob을 Base64로 변환
+        const reader = new FileReader()
+        const base64Promise = new Promise<string>((resolve, reject) => {
+          reader.onload = () => {
+            const result = reader.result as string
+            console.log('✅ Base64 변환 완료, 길이:', result.length)
+            resolve(result)
+          }
+          reader.onerror = reject
+          reader.readAsDataURL(pdfBlob)
+        })
+        
+        pdfUrl = await base64Promise
+        console.log('✅ Base64 데이터 URL 생성 완료')
       } catch (error) {
-        console.error('❌ Storage 업로드 오류:', error)
-        throw new Error('파일 업로드 중 오류가 발생했습니다. 다시 시도해주세요.')
+        console.error('❌ Base64 변환 오류:', error)
+        throw new Error('파일 변환 중 오류가 발생했습니다. 다시 시도해주세요.')
       }
 
       // 6. Firestore에 저장

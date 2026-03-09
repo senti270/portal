@@ -175,6 +175,12 @@ export default function ContractTemplateHandler({ branchId, branch }: ContractTe
       } catch (error) {
         console.error('❌ Storage 업로드 오류:', error)
         const errorMessage = error instanceof Error ? error.message : String(error)
+        const errorCode = (error as any)?.code || (error as any)?.serverResponse?.status
+        
+        // 403 Forbidden 오류인 경우 (보안 규칙 문제)
+        if (errorCode === 403 || errorMessage.includes('403') || errorMessage.includes('Forbidden')) {
+          throw new Error('파일 업로드 권한이 없습니다. Firebase Storage 보안 규칙을 확인해주세요.\n\nFirebase Console → Storage → Rules에서 업로드 권한을 설정해야 합니다.')
+        }
         
         // CORS 오류인 경우 명확한 메시지
         if (errorMessage.includes('CORS') || errorMessage.includes('cors')) {

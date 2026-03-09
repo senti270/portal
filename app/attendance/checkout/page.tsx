@@ -504,7 +504,6 @@ function CheckoutInfoScreen({
   const isBreakRecalculated =
     actualWorkMinutes != null &&
     !isOnTime &&
-    effectiveBreakMinutes !== scheduledBreakMinutes &&
     effectiveBreakMinutes > 0;
 
   // 총 근무시간 (출근 시각 ~ 현재 시각, 휴게시간 차감 후)

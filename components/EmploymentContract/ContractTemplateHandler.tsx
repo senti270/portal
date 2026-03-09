@@ -180,10 +180,19 @@ export default function ContractTemplateHandler({ branchId, branch }: ContractTe
       // 7. 직원관리에 자동 업로드
       try {
         await syncToEmployeeManagement(contractDataForSave, contractId, pdfUrl, contractData)
+        console.log('✅ 직원관리 동기화 완료')
       } catch (error) {
-        console.error('직원관리 동기화 오류:', error)
+        console.error('❌ 직원관리 동기화 오류:', error)
+        console.error('오류 상세:', {
+          errorMessage: error instanceof Error ? error.message : String(error),
+          errorStack: error instanceof Error ? error.stack : undefined,
+          contractData: {
+            employeeName: contractData.employeeName,
+            residentNumber: contractData.residentNumber
+          }
+        })
         // 직원관리 동기화 실패해도 계약서는 저장되었으므로 경고만 표시
-        console.warn('직원관리 동기화에 실패했지만 계약서는 저장되었습니다.')
+        alert('⚠️ 계약서는 저장되었지만 직원관리 동기화에 실패했습니다.\n직원관리 화면에서 수동으로 확인해주세요.\n\n브라우저 콘솔(F12)에서 오류 내용을 확인할 수 있습니다.')
       }
 
       // 8. 카카오톡 전송
@@ -443,7 +452,7 @@ export default function ContractTemplateHandler({ branchId, branch }: ContractTe
           email: contractData.employeeInfo.email || '',
           residentNumber: contractData.employeeInfo.residentNumber,
           address: contractData.employeeInfo.address,
-          hireDate: contractData.contractInfo.startDate,
+          hireDate: Timestamp.fromDate(contractData.contractInfo.startDate),
           status: 'active' as const,
           contractFile: contractFileUrl,
           primaryBranchId: branchId,
@@ -459,13 +468,13 @@ export default function ContractTemplateHandler({ branchId, branch }: ContractTe
           bankCode: selectedBankCode,
           accountNumber: originalContractData.bankAccount || '',
           // 수습기간
-          probationStartDate: contractData.contractInfo.startDate,
+          probationStartDate: Timestamp.fromDate(contractData.contractInfo.startDate),
           probationEndDate: contractData.contractInfo.probationPeriod
-            ? new Date(new Date(contractData.contractInfo.startDate).setMonth(
+            ? Timestamp.fromDate(new Date(new Date(contractData.contractInfo.startDate).setMonth(
                 new Date(contractData.contractInfo.startDate).getMonth() + contractData.contractInfo.probationPeriod
-              ))
-            : undefined,
-          probationPeriod: contractData.contractInfo.probationPeriod || 3,
+              )))
+            : null,
+          probationPeriod: contractData.contractInfo.probationPeriod || 1,
           isOnProbation: true,
           createdAt: Timestamp.now(),
           updatedAt: Timestamp.now()
@@ -479,7 +488,7 @@ export default function ContractTemplateHandler({ branchId, branch }: ContractTe
           branchId: branchId,
           branchName: branch.name,
           role: 'main' as const,
-          startDate: contractData.contractInfo.startDate,
+          startDate: Timestamp.fromDate(contractData.contractInfo.startDate),
           isActive: true,
           createdAt: Timestamp.now(),
           updatedAt: Timestamp.now()
@@ -492,7 +501,11 @@ export default function ContractTemplateHandler({ branchId, branch }: ContractTe
         })
 
         await batch.commit()
-        console.log('새 직원이 직원관리에 추가되었습니다:', employeeRef.id)
+        console.log('✅ 새 직원이 직원관리에 추가되었습니다:', {
+          employeeId: employeeRef.id,
+          employeeName: contractData.employeeInfo.name,
+          residentNumber: contractData.employeeInfo.residentNumber
+        })
       } else {
         // 기존 직원 업데이트
         const existingEmployee = employeesSnapshot.docs[0]
@@ -535,11 +548,24 @@ export default function ContractTemplateHandler({ branchId, branch }: ContractTe
         })
 
         await batch.commit()
-        console.log('기존 직원 정보가 업데이트되었습니다:', existingEmployee.id)
+        console.log('✅ 기존 직원 정보가 업데이트되었습니다:', {
+          employeeId: existingEmployee.id,
+          employeeName: contractData.employeeInfo.name,
+          residentNumber: contractData.employeeInfo.residentNumber
+        })
       }
     } catch (error) {
-      console.error('직원관리 동기화 중 오류:', error)
-      // 오류가 발생해도 계약서는 저장되었으므로 계속 진행
+      console.error('❌ 직원관리 동기화 중 오류:', error)
+      console.error('오류 상세:', {
+        errorMessage: error instanceof Error ? error.message : String(error),
+        errorStack: error instanceof Error ? error.stack : undefined,
+        contractData: {
+          employeeName: contractData.employeeInfo.name,
+          residentNumber: contractData.employeeInfo.residentNumber
+        }
+      })
+      // 오류를 다시 throw하여 상위에서 처리할 수 있도록 함
+      throw error
     }
   }
 

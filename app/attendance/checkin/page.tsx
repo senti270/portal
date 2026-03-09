@@ -765,8 +765,14 @@ function ScheduleInfoScreen({
     );
   }
 
-  // 정시 출근
-  if (checkResult?.status === 'on_time' && !showReasonInput) {
+  // 정시 출근 (스케줄이 있는 경우에만 사용)
+  if (
+    employee.scheduledStartTime &&
+    employee.scheduledEndTime &&
+    checkResult?.status === 'on_time' &&
+    !showReasonInput &&
+    !showManualTimeInput
+  ) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-6">
         <div className="bg-white rounded-3xl shadow-2xl p-12 max-w-2xl w-full text-center">

@@ -724,29 +724,75 @@ function CheckoutInfoScreen({
     );
   }
 
-  // 스케줄 없는 경우
+  // 스케줄이 없는 직원의 퇴근 화면 (스케줄 직원 UI와 유사하게, 스케줄/차이/사유 없이)
   if (!employee.scheduledEndTime && !showReasonInput) {
+    const checkInTimeDisplay =
+      employee.checkInTime instanceof Date
+        ? employee.checkInTime.toLocaleTimeString('ko-KR', {
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: false,
+          })
+        : '';
+    const checkOutTimeDisplay =
+      employee.currentTime instanceof Date
+        ? employee.currentTime.toLocaleTimeString('ko-KR', {
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: false,
+          })
+        : '';
+
     return (
       <div className="min-h-screen bg-gradient-to-br from-orange-50 to-red-100 flex items-center justify-center p-6">
-        <div className="bg-white rounded-3xl shadow-2xl p-12 max-w-2xl w-full text-center">
-          <h2 className="text-3xl font-bold text-gray-800 mb-8">
-            {employee.employeeName} 님
+        <div className="bg-white rounded-3xl shadow-2xl p-12 max-w-2xl w-full">
+          <h2 className="text-3xl font-bold text-gray-800 mb-4 text-center">
+            금일 {employee.employeeName} 님은 스케줄이 없습니다.
           </h2>
-          <p className="text-2xl text-gray-700 mb-8">
-            스케줄이 없지만 출근 기록이 있습니다.
-          </p>
-          <button
-            onClick={onConfirm}
-            className="w-full h-16 bg-green-500 hover:bg-green-600 text-white text-2xl font-bold rounded-2xl shadow-lg transform transition-all duration-200 hover:scale-105 active:scale-95 mb-4"
-          >
-            퇴근 기록하기 - 오늘도 감사합니다.
-          </button>
-          <button
-            onClick={onBack}
-            className="w-full h-16 bg-gray-300 hover:bg-gray-400 text-gray-800 text-xl font-bold rounded-2xl shadow-lg"
-          >
-            뒤로
-          </button>
+
+          {/* 근무 정보 카드 (실근무시간만 표시) */}
+          <div className="mb-8 text-center">
+            <div className="inline-flex flex-col items-start bg-gray-50 border border-gray-200 rounded-2xl px-5 py-4 text-base text-gray-700">
+              <p className="mb-1">
+                <span className="font-semibold text-gray-600">실근무시간</span>
+                <span className="ml-2 tabular-nums">
+                  {checkInTimeDisplay} - {checkOutTimeDisplay}
+                </span>
+                <span className="ml-3 text-sm text-gray-500">
+                  휴게시간 {effectiveBreakDisplay}
+                  {totalWorkDisplay && ` (총 ${totalWorkDisplay})`}
+                </span>
+              </p>
+              <p className="mt-1 text-xs text-red-500 text-left">
+                * 참고 : 법정기준휴게시간 4시간마다 30분
+              </p>
+            </div>
+          </div>
+
+          {/* 전달사항 입력만 */}
+          <div className="mb-6">
+            <textarea
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              placeholder="전달사항 (선택사항)"
+              className="w-full h-24 p-4 border-2 border-gray-300 rounded-xl text-lg resize-none focus:outline-none focus:border-blue-500"
+            />
+          </div>
+
+          <div className="flex space-x-4">
+            <button
+              onClick={onBack}
+              className="flex-1 h-14 bg-gray-300 hover:bg-gray-400 text-gray-800 text-xl font-bold rounded-xl shadow-lg"
+            >
+              뒤로
+            </button>
+            <button
+              onClick={onConfirm}
+              className="flex-1 h-14 bg-green-500 hover:bg-green-600 text-white text-xl font-bold rounded-xl shadow-lg"
+            >
+              확인 - 오늘도 감사합니다.
+            </button>
+          </div>
         </div>
       </div>
     );

@@ -651,6 +651,14 @@ function CheckoutInfoScreen({
                   </>
                 )}
               </div>
+              {totalWorkDisplay && (
+                <p className="text-sm text-gray-600 mt-3">
+                  오늘 총 근무시간: {totalWorkDisplay}
+                </p>
+              )}
+              <p className="text-sm text-gray-500 mt-1">
+                오늘 총 휴게시간: {breakTimeDisplay}
+              </p>
             </div>
           )}
 

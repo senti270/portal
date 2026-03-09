@@ -296,8 +296,8 @@ function CheckOutPageContent() {
         }
       }
 
-      // 퇴근 기록 저장
-      const attendanceRecord: Omit<AttendanceRecord, 'id'> = {
+      // 퇴근 기록 저장 (undefined 필드는 Firestore에 넣지 않도록 조건부로 추가)
+      const attendanceRecord: any = {
         employeeId: selectedEmployee.employeeId,
         employeeName: selectedEmployee.employeeName,
         // URL 파라미터가 없을 때도 실제 지점 ID를 사용하도록 targetBranchId 우선
@@ -310,13 +310,24 @@ function CheckOutPageContent() {
         scheduledBreakTime: selectedEmployee.scheduledBreakTime,
         actualTime: actualTime,
         status,
-        lateMinutes: status === 'late' ? lateMinutes : undefined,
-        earlyMinutes: status === 'early' ? earlyMinutes : undefined,
-        reason: selectedReason || undefined,
-        reasonOther: reasonOther || undefined,
-        note: note || undefined,
         createdAt: actualTime
       };
+
+      if (status === 'late' && lateMinutes > 0) {
+        attendanceRecord.lateMinutes = lateMinutes;
+      }
+      if (status === 'early' && earlyMinutes > 0) {
+        attendanceRecord.earlyMinutes = earlyMinutes;
+      }
+      if (selectedReason) {
+        attendanceRecord.reason = selectedReason;
+      }
+      if (reasonOther) {
+        attendanceRecord.reasonOther = reasonOther;
+      }
+      if (note) {
+        attendanceRecord.note = note;
+      }
 
       await addDoc(collection(db, 'attendanceRecords'), {
         ...attendanceRecord,

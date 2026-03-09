@@ -101,9 +101,21 @@ export async function POST(request: NextRequest) {
       )
     }
   } catch (error) {
-    console.error('카카오톡 전송 오류:', error)
+    console.error('❌ 카카오톡 전송 API 오류:', error)
+    const errorMessage = error instanceof Error ? error.message : '알 수 없는 오류'
+    const errorStack = error instanceof Error ? error.stack : undefined
+    
+    console.error('오류 상세:', {
+      errorMessage,
+      errorStack
+    })
+    
     return NextResponse.json(
-      { success: false, error: '카카오톡 전송 중 오류가 발생했습니다.' },
+      { 
+        success: false, 
+        error: '카카오톡 전송 중 오류가 발생했습니다.',
+        details: process.env.NODE_ENV === 'development' ? errorMessage : undefined
+      },
       { status: 500 }
     )
   }

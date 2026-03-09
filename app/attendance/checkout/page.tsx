@@ -246,12 +246,26 @@ function CheckOutPageContent() {
     // 퇴근 시간 확인
     if (employeeWithSchedule.scheduledEndTime) {
       const scheduledTime = parseTimeString(employeeWithSchedule.scheduledEndTime);
-      const result = checkAttendanceStatus(scheduledTime, actualTime);
-      setCheckResult(result);
 
-      // 출근과 동일하게: 정시가 아니면 바로 사유 입력 화면으로 이동
-      if (result.status === 'late' || result.status === 'early') {
-        setShowReasonInput(true);
+      // 실제 차이(분) 계산: +면 늦게, -면 일찍
+      const rawDiffMinutes =
+        (actualTime.getTime() - scheduledTime.getTime()) / (1000 * 60);
+      const absDiffMinutes = Math.abs(rawDiffMinutes);
+
+      // ±30분 이내면 사유 입력 없이 정시 처리
+      if (absDiffMinutes <= 30) {
+        setCheckResult({
+          status: 'on_time',
+          minutesDiff: Math.round(rawDiffMinutes)
+        });
+      } else {
+        const result = checkAttendanceStatus(scheduledTime, actualTime);
+        setCheckResult(result);
+
+        // ±30분 초과인 지각/조퇴만 사유 입력 화면으로 이동
+        if (result.status === 'late' || result.status === 'early') {
+          setShowReasonInput(true);
+        }
       }
     }
     

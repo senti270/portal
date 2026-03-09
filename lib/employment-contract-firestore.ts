@@ -126,7 +126,9 @@ export async function saveEmploymentContract(
         startDate: Timestamp.fromDate(contract.contractInfo.startDate),
         endDate: contract.contractInfo.endDate ? Timestamp.fromDate(contract.contractInfo.endDate) : null,
         // salaryAmount가 제대로 포함되도록 명시적으로 설정
-        salaryAmount: contract.contractInfo.salaryAmount || 0,
+        salaryAmount: contract.contractInfo.salaryAmount !== undefined && contract.contractInfo.salaryAmount !== null 
+          ? Number(contract.contractInfo.salaryAmount) 
+          : 0,
         salaryType: contract.contractInfo.salaryType,
         employmentType: contract.contractInfo.employmentType
       },

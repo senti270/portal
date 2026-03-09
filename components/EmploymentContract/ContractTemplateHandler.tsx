@@ -320,16 +320,18 @@ export default function ContractTemplateHandler({ branchId, branch }: ContractTe
       `
       document.body.appendChild(element)
       
-      // HTML을 캔버스로 변환 (A4 한 장에 맞게)
+      // HTML을 캔버스로 변환 (A4 한 장에 맞게, 서명 품질 향상)
       const canvas = await html2canvas(element, {
-        scale: 1.5,
+        scale: 2, // 서명 품질 향상을 위해 scale 증가
         useCORS: true,
         allowTaint: true,
         backgroundColor: '#ffffff',
         width: 794, // 210mm in pixels at 96dpi
         height: 1123, // 297mm in pixels at 96dpi (A4 height)
         windowWidth: 794,
-        windowHeight: 1123
+        windowHeight: 1123,
+        logging: false,
+        imageTimeout: 0
       })
       
       // 임시 div 제거
@@ -522,7 +524,7 @@ export default function ContractTemplateHandler({ branchId, branch }: ContractTe
           <div class="signature-info">
             <p>사업체명: ${branch.companyName || branch.name}</p>
             <p>주소: ${branch.address || ''}</p>
-            <p>대표자: ${branch.ceoName || ''} ${contractData.employerSignature ? '<img src="' + contractData.employerSignature + '" style="width: 60px; height: 25px; margin-left: 8px; vertical-align: middle;" />' : '<span class="signature-area"></span>'}</p>
+            <p>대표자: ${branch.ceoName || ''} ${contractData.employerSignature ? '<img src="' + contractData.employerSignature + '" style="width: 100px; height: 40px; margin-left: 8px; vertical-align: middle; image-rendering: -webkit-optimize-contrast; image-rendering: crisp-edges;" />' : '<span class="signature-area"></span>'}</p>
           </div>
         </div>
         
@@ -531,7 +533,7 @@ export default function ContractTemplateHandler({ branchId, branch }: ContractTe
           <div class="signature-info">
             <p>주소: ${contractData.employeeAddress}</p>
             <p>연락처: ${contractData.employeePhone}</p>
-            <p>성명: ${contractData.employeeName} ${contractData.employeeSignature ? '<img src="' + contractData.employeeSignature + '" style="width: 60px; height: 25px; margin-left: 8px; vertical-align: middle;" />' : '<span class="signature-area"></span>'}</p>
+            <p>성명: ${contractData.employeeName} ${contractData.employeeSignature ? '<img src="' + contractData.employeeSignature + '" style="width: 100px; height: 40px; margin-left: 8px; vertical-align: middle; image-rendering: -webkit-optimize-contrast; image-rendering: crisp-edges;" />' : '<span class="signature-area"></span>'}</p>
             <p>주민등록번호: ${contractData.residentNumber}</p>
           </div>
         </div>

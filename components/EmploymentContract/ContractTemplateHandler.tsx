@@ -238,14 +238,29 @@ export default function ContractTemplateHandler({ branchId, branch }: ContractTe
             employeeName: contractData.employeeName
           })
         })
-        const kakaoResult = await kakaoResponse.json()
-        if (kakaoResult.success) {
-          console.log('✅ 카카오톡 전송 성공')
+        
+        if (!kakaoResponse.ok) {
+          const errorText = await kakaoResponse.text()
+          console.error('❌ 카카오톡 전송 API 오류:', {
+            status: kakaoResponse.status,
+            statusText: kakaoResponse.statusText,
+            body: errorText
+          })
+          // 카카오톡 전송 실패해도 계약서 저장은 완료되었으므로 계속 진행
         } else {
-          console.warn('⚠️ 카카오톡 전송 실패:', kakaoResult.error)
+          const kakaoResult = await kakaoResponse.json()
+          if (kakaoResult.success) {
+            console.log('✅ 카카오톡 전송 성공:', kakaoResult.message)
+          } else {
+            console.warn('⚠️ 카카오톡 전송 실패:', kakaoResult.error)
+          }
         }
       } catch (error) {
         console.error('❌ 카카오톡 전송 중 오류:', error)
+        console.error('오류 상세:', {
+          errorMessage: error instanceof Error ? error.message : String(error),
+          errorStack: error instanceof Error ? error.stack : undefined
+        })
         // 카카오톡 전송 실패해도 계약서 저장은 완료되었으므로 계속 진행
       }
 

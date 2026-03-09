@@ -625,6 +625,7 @@ function CheckoutInfoScreen({
         ? employee.checkInTime.toLocaleTimeString('ko-KR', {
             hour: '2-digit',
             minute: '2-digit',
+            hour12: false,
           })
         : '';
     const checkOutTimeDisplay =
@@ -632,6 +633,7 @@ function CheckoutInfoScreen({
         ? employee.currentTime.toLocaleTimeString('ko-KR', {
             hour: '2-digit',
             minute: '2-digit',
+            hour12: false,
           })
         : '';
 
@@ -644,17 +646,26 @@ function CheckoutInfoScreen({
               <h3 className="text-2xl font-bold text-gray-800 mb-4">
                 금일 {employee.employeeName} 님 근무 정보
               </h3>
-              <p className="text-base text-gray-700 mb-1">
-                근무스케줄 {employee.scheduledStartTime} - {employee.scheduledEndTime}{' '}
-                휴게시간 {breakTimeDisplay}
-              </p>
-              <p className="text-base text-gray-700 mb-1">
-                실근무시간 {checkInTimeDisplay} - {checkOutTimeDisplay}{' '}
-                휴게시간 {breakTimeDisplay}
-              </p>
-              <p className="text-base text-red-500 mt-1">
-                스케줄과의 시간차이: {diffDisplay || '0분'}
-              </p>
+              <div className="inline-flex flex-col items-start bg-gray-50 border border-gray-200 rounded-2xl px-5 py-4 text-base text-gray-700">
+                <p className="mb-1">
+                  <span className="font-semibold text-gray-600">근무스케줄</span>
+                  <span className="ml-2 tabular-nums">
+                    {employee.scheduledStartTime} - {employee.scheduledEndTime}
+                  </span>
+                  <span className="ml-3 text-sm text-gray-500">휴게시간 {breakTimeDisplay}</span>
+                </p>
+                <p className="mb-1">
+                  <span className="font-semibold text-gray-600">실근무시간</span>
+                  <span className="ml-2 tabular-nums">
+                    {checkInTimeDisplay} - {checkOutTimeDisplay}
+                  </span>
+                  <span className="ml-3 text-sm text-gray-500">휴게시간 {breakTimeDisplay}</span>
+                </p>
+                <p className="mt-1">
+                  <span className="font-semibold text-gray-600">스케줄과의 시간차이</span>
+                  <span className="ml-2 text-red-500 tabular-nums">{diffDisplay || '0분'}</span>
+                </p>
+              </div>
             </div>
           )}
 

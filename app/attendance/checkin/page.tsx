@@ -650,25 +650,36 @@ function ScheduleInfoScreen({
         <div className="bg-white rounded-3xl shadow-2xl p-12 max-w-2xl w-full">
           {/* 스케줄 정보 표시 (있는 경우) */}
           {employee.scheduledStartTime && employee.scheduledEndTime && (
-            <div className="mb-6 text-center">
-              <h3 className="text-2xl font-bold text-gray-800 mb-2">
-                금일 {employee.employeeName} 님
+            <div className="mb-8 text-center">
+              <h3 className="text-2xl font-bold text-gray-800 mb-4">
+                금일 {employee.employeeName} 님 근무 정보
               </h3>
-              <p className="text-xl text-gray-600">
-                {employee.scheduledStartTime} - {employee.scheduledEndTime} 근무스케줄
-              </p>
-              <p className="text-lg text-gray-500 mt-1">
-                휴게시간: {breakTimeDisplay}
-              </p>
-              <p className="text-sm text-gray-500 mt-1">
+              <div className="inline-flex flex-col sm:flex-row items-stretch justify-center gap-3 sm:gap-6 bg-gray-50 border border-gray-200 rounded-2xl px-4 py-3 text-base text-gray-700">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
+                  <span className="text-sm font-semibold text-gray-500">근무스케줄</span>
+                  <span className="font-medium">
+                    {employee.scheduledStartTime} - {employee.scheduledEndTime}
+                  </span>
+                </div>
+                <div className="h-px sm:h-8 sm:w-px bg-gray-200 mx-6 sm:mx-0 sm:my-0" />
+                <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
+                  <span className="text-sm font-semibold text-gray-500">휴게시간</span>
+                  <span className="font-medium">{breakTimeDisplay}</span>
+                </div>
+                {diffDisplay && (
+                  <>
+                    <div className="h-px sm:h-8 sm:w-px bg-gray-200 mx-6 sm:mx-0 sm:my-0" />
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
+                      <span className="text-sm font-semibold text-gray-500">시간 차이</span>
+                      <span className="font-semibold text-red-500">{diffDisplay}</span>
+                    </div>
+                  </>
+                )}
+              </div>
+              <p className="text-sm text-gray-500 mt-3">
                 ⚠️ 휴게시간은 반드시 지켜주시고, 매장 상황상 휴게가 불가한 경우에는
                 사장님께 사전에 꼭 동의를 구해주세요.
               </p>
-              {diffDisplay && (
-                <p className="text-lg text-red-500 mt-1">
-                  출근 예정 시간과 현재 시간 차이: {diffDisplay}
-                </p>
-              )}
             </div>
           )}
           

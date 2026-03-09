@@ -1023,28 +1023,64 @@ function ScheduleInfoScreen({
     );
   }
 
-  // 스케줄 정보만 표시 (스케줄 없는 경우)
+  // 스케줄이 없는 직원의 출근 사유 선택 화면
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-6">
       <div className="bg-white rounded-3xl shadow-2xl p-12 max-w-2xl w-full text-center">
-        <h2 className="text-3xl font-bold text-gray-800 mb-8">
-          금일 {employee.employeeName} 님은
+        <h2 className="text-3xl font-bold text-gray-800 mb-4">
+          금일 {employee.employeeName} 님은 스케쥴이 없습니다.
         </h2>
-        <p className="text-2xl text-gray-700 mb-8">
-          스케줄이 없습니다.
-        </p>
-        <div className="space-y-4">
-          <button
-            onClick={onConfirm}
-            className="w-full h-16 bg-green-500 hover:bg-green-600 text-white text-2xl font-bold rounded-2xl shadow-lg transform transition-all duration-200 hover:scale-105 active:scale-95"
-          >
-            출근 기록하기
-          </button>
+
+        <div className="mt-6 mb-6 text-left">
+          <h3 className="text-xl font-bold text-gray-800 mb-4 text-center">
+            출근 사유 선택
+          </h3>
+          <div className="grid grid-cols-2 gap-3 mb-4">
+            {['사장님 요청', '기타'].map((reason) => (
+              <button
+                key={reason}
+                onClick={() => setSelectedReason(reason)}
+                className={`h-14 rounded-xl font-semibold text-lg transition-all duration-200 ${
+                  selectedReason === reason
+                    ? 'bg-blue-600 text-white shadow-lg'
+                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                }`}
+              >
+                {reason}
+              </button>
+            ))}
+          </div>
+          {selectedReason === '기타' && (
+            <textarea
+              value={reasonOther}
+              onChange={(e) => setReasonOther(e.target.value)}
+              placeholder="사유를 입력하세요"
+              className="w-full h-24 p-4 border-2 border-gray-300 rounded-xl text-lg resize-none focus:outline-none focus:border-blue-500 mb-3"
+            />
+          )}
+          <textarea
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
+            placeholder="전달사항 (선택사항)"
+            className="w-full h-24 p-4 border-2 border-gray-300 rounded-xl text-lg resize-none focus:outline-none focus:border-blue-500 mb-3"
+          />
+          <p className="text-sm text-gray-500 mt-1 text-center">
+            휴게시간은 4시간마다 30분으로 자동계산됩니다.
+          </p>
+        </div>
+
+        <div className="flex space-x-4 mt-6">
           <button
             onClick={onBack}
-            className="w-full h-16 bg-gray-300 hover:bg-gray-400 text-gray-800 text-xl font-bold rounded-2xl shadow-lg transform transition-all duration-200 hover:scale-105 active:scale-95"
+            className="flex-1 h-14 bg-gray-300 hover:bg-gray-400 text-gray-800 text-xl font-bold rounded-2xl shadow-lg transition-all duration-200 hover:scale-105 active:scale-95"
           >
             뒤로
+          </button>
+          <button
+            onClick={onConfirm}
+            className="flex-1 h-14 bg-green-500 hover:bg-green-600 text-white text-xl font-bold rounded-2xl shadow-lg transition-all duration-200 hover:scale-105 active:scale-95"
+          >
+            확인
           </button>
         </div>
       </div>

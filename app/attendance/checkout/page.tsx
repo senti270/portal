@@ -286,8 +286,9 @@ function CheckOutPageContent() {
       const attendanceRecord: Omit<AttendanceRecord, 'id'> = {
         employeeId: selectedEmployee.employeeId,
         employeeName: selectedEmployee.employeeName,
-        branchId: branchId || 'unknown',
-        branchName: '',
+        // URL 파라미터가 없을 때도 실제 지점 ID를 사용하도록 targetBranchId 우선
+        branchId: targetBranchId || branchId || 'unknown',
+        branchName: branchName || '',
         date: todayStr as any,
         type: 'checkout',
         scheduledStartTime: selectedEmployee.scheduledStartTime,
@@ -312,9 +313,9 @@ function CheckOutPageContent() {
 
       alert('퇴근 기록이 완료되었습니다.\n오늘도 감사합니다.');
       router.push('/attendance');
-    } catch (error) {
+    } catch (error: any) {
       console.error('퇴근 기록 저장 실패:', error);
-      alert('퇴근 기록 저장 중 오류가 발생했습니다.');
+      alert(`퇴근 기록 저장 중 오류가 발생했습니다.\n${error?.message || ''}`);
     }
   };
 

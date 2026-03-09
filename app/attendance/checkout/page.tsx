@@ -444,13 +444,39 @@ function CheckoutInfoScreen({
   showReasonInput: boolean;
   setShowReasonInput: (show: boolean) => void;
 }) {
-  // 휴게시간 표시 (출근 화면과 동일한 포맷)
-  const breakTimeDisplay = (() => {
-    if (!employee.scheduledBreakTime || employee.scheduledBreakTime === 0) {
-      return '0시간';
-    }
-    const hours = Math.floor(employee.scheduledBreakTime);
-    const minutes = Math.round((employee.scheduledBreakTime - hours) * 60);
+  // 스케줄 기준 휴게시간(분)
+  const scheduledBreakMinutes = (() => {
+    if (!employee.scheduledBreakTime || employee.scheduledBreakTime === 0) return 0;
+    return Math.round(employee.scheduledBreakTime * 60);
+  })();
+
+  // 실제 근무시간(분) - 출근 시각 ~ 현재 시각
+  const actualWorkMinutes = (() => {
+    if (!employee.checkInTime || !employee.currentTime) return null;
+    const workMs = employee.currentTime.getTime() - employee.checkInTime.getTime();
+    if (workMs <= 0) return null;
+    return Math.floor(workMs / (1000 * 60));
+  })();
+
+  const isOnTime = checkResult?.status === 'on_time';
+
+  // 실제 적용 휴게시간(분)
+  const effectiveBreakMinutes = (() => {
+    if (actualWorkMinutes == null) return scheduledBreakMinutes;
+
+    // ±30분 이내(정시)면 스케줄 휴게시간 그대로
+    if (isOnTime) return scheduledBreakMinutes;
+
+    // 그 이외에는 법정 휴게시간 기준: 4시간마다 30분
+    const legalUnits = Math.floor(actualWorkMinutes / 240); // 240분 = 4시간
+    const legalBreak = legalUnits * 30;
+    return legalBreak;
+  })();
+
+  const scheduledBreakDisplay = (() => {
+    if (!scheduledBreakMinutes || scheduledBreakMinutes === 0) return '0시간';
+    const hours = Math.floor(scheduledBreakMinutes / 60);
+    const minutes = scheduledBreakMinutes % 60;
 
     if (hours > 0 && minutes > 0) {
       return `${hours}시간 ${minutes}분`;
@@ -461,14 +487,32 @@ function CheckoutInfoScreen({
     }
   })();
 
-  // 총 근무시간 (출근 시각 ~ 현재 시각)
+  const effectiveBreakDisplay = (() => {
+    if (!effectiveBreakMinutes || effectiveBreakMinutes === 0) return '0시간';
+    const hours = Math.floor(effectiveBreakMinutes / 60);
+    const minutes = effectiveBreakMinutes % 60;
+
+    if (hours > 0 && minutes > 0) {
+      return `${hours}시간 ${minutes}분`;
+    } else if (hours > 0) {
+      return `${hours}시간`;
+    } else {
+      return `${minutes}분`;
+    }
+  })();
+
+  const isBreakRecalculated =
+    actualWorkMinutes != null &&
+    !isOnTime &&
+    effectiveBreakMinutes !== scheduledBreakMinutes &&
+    effectiveBreakMinutes > 0;
+
+  // 총 근무시간 (출근 시각 ~ 현재 시각, 휴게시간 차감 후)
   const totalWorkDisplay = (() => {
-    if (!employee.checkInTime || !employee.currentTime) return null;
-    const workMs = employee.currentTime.getTime() - employee.checkInTime.getTime();
-    if (workMs <= 0) return null;
-    const workMinutes = Math.floor(workMs / (1000 * 60));
-    const hours = Math.floor(workMinutes / 60);
-    const minutes = workMinutes % 60;
+    if (actualWorkMinutes == null) return null;
+    const netMinutes = Math.max(0, actualWorkMinutes - (effectiveBreakMinutes || 0));
+    const hours = Math.floor(netMinutes / 60);
+    const minutes = netMinutes % 60;
     if (hours > 0 && minutes > 0) {
       return `${hours}시간 ${minutes}분`;
     } else if (hours > 0) {
@@ -487,8 +531,8 @@ function CheckoutInfoScreen({
     const start = new Date(today.getFullYear(), today.getMonth(), today.getDate(), startH, startM, 0);
     const end = new Date(today.getFullYear(), today.getMonth(), today.getDate(), endH, endM, 0);
     let minutes = Math.floor((end.getTime() - start.getTime()) / (1000 * 60));
-    if (employee.scheduledBreakTime) {
-      minutes -= Math.round(employee.scheduledBreakTime * 60);
+    if (scheduledBreakMinutes) {
+      minutes -= scheduledBreakMinutes;
     }
     if (minutes <= 0) return null;
     const hours = Math.floor(minutes / 60);
@@ -529,9 +573,14 @@ function CheckoutInfoScreen({
               오늘 총 근무시간: {totalWorkDisplay}
             </p>
           )}
-          <p className="text-xl text-gray-600 mb-8">
-            오늘 총 휴게시간: {breakTimeDisplay}
+          <p className="text-xl text-gray-600 mb-2">
+            오늘 총 휴게시간: {effectiveBreakDisplay}
           </p>
+          {isBreakRecalculated && (
+            <p className="text-sm text-red-500 mb-6">
+              * 법정 휴게시간인 4시간에 30분으로 재계산되었습니다.
+            </p>
+          )}
           {/* 전달사항 (선택사항)만 입력 가능 */}
           <div className="mb-8 text-left">
             <textarea
@@ -573,9 +622,14 @@ function CheckoutInfoScreen({
               오늘 총 근무시간: {totalWorkDisplay}
             </p>
           )}
-          <p className="text-xl text-gray-600 mb-4">
-            오늘 총 휴게시간: {breakTimeDisplay}
+          <p className="text-xl text-gray-600 mb-2">
+            오늘 총 휴게시간: {effectiveBreakDisplay}
           </p>
+          {isBreakRecalculated && (
+            <p className="text-sm text-red-500 mb-6">
+              * 법정 휴게시간인 4시간에 30분으로 재계산되었습니다.
+            </p>
+          )}
           <p className="text-base text-gray-500 mb-6">
             (정시퇴근을 권장드립니다. 사유를 선택하거나 바로 퇴근 기록을 완료할 수 있습니다.)
           </p>
@@ -606,9 +660,14 @@ function CheckoutInfoScreen({
           <h2 className="text-3xl font-bold text-gray-800 mb-4">
             오늘의 근무시간은 {totalWorkDisplay || '0분'}까지입니다.
           </h2>
-          <p className="text-xl text-gray-600 mb-4">
-            오늘 총 휴게시간: {breakTimeDisplay}
+          <p className="text-xl text-gray-600 mb-2">
+            오늘 총 휴게시간: {effectiveBreakDisplay}
           </p>
+          {isBreakRecalculated && (
+            <p className="text-sm text-red-500 mb-6">
+              * 법정 휴게시간인 4시간에 30분으로 재계산되었습니다.
+            </p>
+          )}
           <p className="text-xl text-gray-600 mb-8">
             일찍 퇴근하시는 사유를 알려주세요.
           </p>
@@ -686,7 +745,7 @@ function CheckoutInfoScreen({
                     {employee.scheduledStartTime} - {employee.scheduledEndTime}
                   </span>
                   <span className="ml-3 text-sm text-gray-500">
-                    휴게시간 {breakTimeDisplay}
+                    휴게시간 {scheduledBreakDisplay}
                     {scheduleTotalDisplay && ` (총 ${scheduleTotalDisplay})`}
                   </span>
                 </p>
@@ -696,10 +755,15 @@ function CheckoutInfoScreen({
                     {checkInTimeDisplay} - {checkOutTimeDisplay}
                   </span>
                   <span className="ml-3 text-sm text-gray-500">
-                    휴게시간 {breakTimeDisplay}
+                    휴게시간 {effectiveBreakDisplay}
                     {totalWorkDisplay && ` (총 ${totalWorkDisplay})`}
                   </span>
                 </p>
+                {isBreakRecalculated && (
+                  <p className="mt-1 text-xs text-red-500">
+                    * 법정 휴게시간인 4시간에 30분으로 재계산되었습니다.
+                  </p>
+                )}
                 <p className="mt-1">
                   <span className="font-semibold text-gray-600">스케줄과의 시간차이</span>
                   <span className="ml-2 text-red-500 tabular-nums">{diffDisplay || '0분'}</span>

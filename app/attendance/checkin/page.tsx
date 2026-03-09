@@ -242,12 +242,12 @@ function CheckInPageContent() {
     if (employee.scheduledStartTime) {
       const scheduledTime = parseTimeString(employee.scheduledStartTime);
       const actualTime = new Date();
-      const diffMinutes = Math.abs(
-        (actualTime.getTime() - scheduledTime.getTime()) / (1000 * 60)
-      );
+      const rawDiffMinutes =
+        (actualTime.getTime() - scheduledTime.getTime()) / (1000 * 60); // +면 늦게, -면 일찍
+      const absDiffMinutes = Math.abs(rawDiffMinutes);
 
       // ±30분 이내이면 바로 출근 처리 (사유 입력 없이)
-      if (diffMinutes <= 30) {
+      if (absDiffMinutes <= 30) {
         setSelectedEmployee(employee);
         setAutoCheckInMode(true);
         await handleConfirmCheckIn();
@@ -259,7 +259,7 @@ function CheckInPageContent() {
       setSelectedEmployee(employee);
       setCheckResult({
         ...statusResult,
-        diffMinutes: Math.round(diffMinutes)
+        diffMinutes: Math.round(rawDiffMinutes) // 부호 포함 분 차이
       });
       setShowScheduleInfo(true);
       setShowReasonInput(true);
@@ -630,6 +630,19 @@ function ScheduleInfoScreen({
     }
   })();
 
+  // 분 차이를 +HH시간MM분 / -HH시간MM분 형식으로 변환
+  const diffDisplay = (() => {
+    if (checkResult?.diffMinutes === undefined) return null;
+    const diff = checkResult.diffMinutes as number;
+    const sign = diff >= 0 ? '+' : '-';
+    const absMinutes = Math.abs(diff);
+    const hours = Math.floor(absMinutes / 60);
+    const minutes = absMinutes % 60;
+    const hoursPart = hours > 0 ? `${hours}시간` : '';
+    const minutesPart = minutes > 0 ? `${minutes}분` : hours === 0 ? `${minutes}분` : '';
+    return `${sign}${hoursPart}${minutesPart || ''}`.trim();
+  })();
+
   // 사유 입력 화면 (수동 시간 입력 후 또는 지각/일찍 출근 후)
   if (showReasonInput && !showManualTimeInput) {
     return (
@@ -651,9 +664,9 @@ function ScheduleInfoScreen({
                 휴게시간은 반드시 지켜주시고, 매장 상황상 휴게가 불가한 경우에는
                 사장님께 사전에 꼭 동의를 구해주세요.
               </p>
-              {checkResult?.diffMinutes !== undefined && (
+              {diffDisplay && (
                 <p className="text-lg text-red-500 mt-1">
-                  출근 예정 시간과 현재 시간 차이: {checkResult.diffMinutes}분
+                  출근 예정 시간과 현재 시간 차이: {diffDisplay}
                 </p>
               )}
             </div>

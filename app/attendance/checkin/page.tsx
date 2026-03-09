@@ -680,7 +680,7 @@ function ScheduleInfoScreen({
             note={note}
             setNote={setNote}
             onConfirm={onConfirm}
-            onBack={() => setShowReasonInput(false)}
+            onBack={onBack}
           />
         </div>
       </div>

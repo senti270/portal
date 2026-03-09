@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef, useState } from 'react'
+import { useRef, useState, useEffect } from 'react'
 import SignatureCanvas from 'react-signature-canvas'
 
 interface SignaturePadProps {
@@ -10,7 +10,35 @@ interface SignaturePadProps {
 
 export default function SignaturePad({ onComplete, onClear }: SignaturePadProps) {
   const canvasRef = useRef<SignatureCanvas>(null)
+  const containerRef = useRef<HTMLDivElement>(null)
   const [isEmpty, setIsEmpty] = useState(true)
+  const [canvasSize, setCanvasSize] = useState({ width: 800, height: 300 })
+
+  // 컨테이너 크기에 맞춰 캔버스 크기 조정
+  useEffect(() => {
+    const updateCanvasSize = () => {
+      if (containerRef.current && canvasRef.current) {
+        const container = containerRef.current
+        const width = container.clientWidth - 32 // padding 제외
+        const height = Math.max(300, Math.min(400, width * 0.375)) // 최소 300px, 최대 400px, 비율 유지
+        
+        setCanvasSize({ width, height })
+        
+        // 캔버스 크기 조정 후 좌표 재계산
+        const canvas = canvasRef.current.getCanvas()
+        canvas.width = width
+        canvas.height = height
+        canvasRef.current.clear() // 크기 변경 시 초기화
+      }
+    }
+
+    updateCanvasSize()
+    window.addEventListener('resize', updateCanvasSize)
+    
+    return () => {
+      window.removeEventListener('resize', updateCanvasSize)
+    }
+  }, [])
 
   const handleClear = () => {
     canvasRef.current?.clear()
@@ -33,7 +61,11 @@ export default function SignaturePad({ onComplete, onClear }: SignaturePadProps)
 
   return (
     <div className="space-y-4">
-      <div className="border-2 border-gray-300 rounded-lg p-4 bg-white">
+      <div 
+        ref={containerRef}
+        className="border-2 border-gray-300 rounded-lg p-4 bg-white"
+        style={{ minHeight: '300px' }}
+      >
         <SignatureCanvas
           ref={canvasRef}
           onEnd={() => {
@@ -43,11 +75,12 @@ export default function SignaturePad({ onComplete, onClear }: SignaturePadProps)
             }
           }}
           canvasProps={{
-            width: 800,
-            height: 300,
-            className: 'signature-canvas w-full border border-gray-200 rounded'
+            width: canvasSize.width,
+            height: canvasSize.height,
+            className: 'signature-canvas border border-gray-200 rounded'
           }}
           backgroundColor="#ffffff"
+          clearOnResize={false}
         />
       </div>
       

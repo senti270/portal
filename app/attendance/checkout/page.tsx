@@ -25,6 +25,7 @@ function CheckOutPageContent() {
   const [selectedReason, setSelectedReason] = useState('');
   const [reasonOther, setReasonOther] = useState('');
   const [note, setNote] = useState('');
+  const [currentTime, setCurrentTime] = useState<Date>(new Date());
 
   useEffect(() => {
     // 초기 로딩
@@ -38,6 +39,14 @@ function CheckOutPageContent() {
     // 컴포넌트 언마운트 시 인터벌 정리
     return () => clearInterval(refreshInterval);
   }, [branchId]);
+
+  // 현재 시간 표시 (출근/퇴근 메인과 동일 형식)
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
 
   const loadEmployees = async () => {
     try {
@@ -332,8 +341,24 @@ function CheckOutPageContent() {
           >
             ← 뒤로
           </button>
-          <h1 className="text-4xl font-bold text-gray-800">퇴근 기록</h1>
-          <div className="w-20"></div>
+          <div className="flex-1 text-center">
+            <h1 className="text-4xl font-bold text-gray-800">퇴근 기록</h1>
+            {branchName && (
+              <div className="text-2xl font-semibold text-orange-600 mt-2">
+                {branchName}
+              </div>
+            )}
+          </div>
+          <div className="text-right w-56 text-sm text-gray-600 hidden md:block">
+            {currentTime.toLocaleString('ko-KR', {
+              year: 'numeric',
+              month: 'long',
+              day: 'numeric',
+              hour: '2-digit',
+              minute: '2-digit',
+              second: '2-digit',
+            })}
+          </div>
         </div>
 
         {/* 오늘 스케줄 있는 직원 */}
@@ -412,6 +437,36 @@ function CheckoutInfoScreen({
   showReasonInput: boolean;
   setShowReasonInput: (show: boolean) => void;
 }) {
+  // 휴게시간 표시 (출근 화면과 동일한 포맷)
+  const breakTimeDisplay = (() => {
+    if (!employee.scheduledBreakTime || employee.scheduledBreakTime === 0) {
+      return '0시간';
+    }
+    const hours = Math.floor(employee.scheduledBreakTime);
+    const minutes = Math.round((employee.scheduledBreakTime - hours) * 60);
+
+    if (hours > 0 && minutes > 0) {
+      return `${hours}시간 ${minutes}분`;
+    } else if (hours > 0) {
+      return `${hours}시간`;
+    } else {
+      return `${minutes}분`;
+    }
+  })();
+
+  // 퇴근 시간 차이를 +HH시간MM분 / -HH시간MM분 형식으로 표시
+  const diffDisplay = (() => {
+    if (checkResult?.minutesDiff === undefined) return null;
+    const diff = checkResult.minutesDiff as number;
+    const sign = diff >= 0 ? '+' : '-';
+    const absMinutes = Math.abs(diff);
+    const hours = Math.floor(absMinutes / 60);
+    const minutes = absMinutes % 60;
+    const hoursPart = hours > 0 ? `${hours}시간` : '';
+    const minutesPart = minutes > 0 ? `${minutes}분` : hours === 0 ? `${minutes}분` : '';
+    return `${sign}${hoursPart}${minutesPart || ''}`.trim();
+  })();
+
   // 정시 퇴근
   if (checkResult?.status === 'on_time' && !showReasonInput) {
     return (
@@ -535,20 +590,46 @@ function CheckoutInfoScreen({
 
   // 사유 입력 화면
   if (showReasonInput) {
-    const reasons = [
-      '매장이 바빠서',
-      '사장님 요청',
-      '개인사정',
-      '교통사고',
-      '기타'
-    ];
-
     return (
       <div className="min-h-screen bg-gradient-to-br from-orange-50 to-red-100 flex items-center justify-center p-6">
         <div className="bg-white rounded-3xl shadow-2xl p-12 max-w-2xl w-full">
-          <h3 className="text-2xl font-bold text-gray-800 mb-6 text-center">사유 선택</h3>
+          {/* 스케줄 정보 카드 (출근 화면과 유사) */}
+          {employee.scheduledStartTime && employee.scheduledEndTime && (
+            <div className="mb-8 text-center">
+              <h3 className="text-2xl font-bold text-gray-800 mb-4">
+                금일 {employee.employeeName} 님 근무 정보
+              </h3>
+              <div className="inline-flex flex-col sm:flex-row items-stretch justify-center gap-3 sm:gap-6 bg-gray-50 border border-gray-200 rounded-2xl px-4 py-3 text-base text-gray-700">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
+                  <span className="text-sm font-semibold text-gray-500">근무스케줄</span>
+                  <span className="font-medium">
+                    {employee.scheduledStartTime} - {employee.scheduledEndTime}
+                  </span>
+                </div>
+                <div className="h-px sm:h-8 sm:w-px bg-gray-200 mx-6 sm:mx-0 sm:my-0" />
+                <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
+                  <span className="text-sm font-semibold text-gray-500">휴게시간</span>
+                  <span className="font-medium">{breakTimeDisplay}</span>
+                </div>
+                {diffDisplay && (
+                  <>
+                    <div className="h-px sm:h-8 sm:w-px bg-gray-200 mx-6 sm:mx-0 sm:my-0" />
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
+                      <span className="text-sm font-semibold text-gray-500">시간 차이</span>
+                      <span className="font-semibold text-red-500">{diffDisplay}</span>
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* 사유 선택 영역 */}
+          <h3 className="text-2xl font-bold text-gray-800 mb-6 text-center">
+            스케줄과 다른 사유 선택
+          </h3>
           <div className="grid grid-cols-2 gap-3 mb-6">
-            {reasons.map((reason) => (
+            {['사장님 요청', '매장이 바빠서', '개인사정', '기타'].map((reason) => (
               <button
                 key={reason}
                 onClick={() => setSelectedReason(reason)}
@@ -578,7 +659,7 @@ function CheckoutInfoScreen({
           />
           <div className="flex space-x-4">
             <button
-              onClick={() => setShowReasonInput(false)}
+              onClick={onBack}
               className="flex-1 h-14 bg-gray-300 hover:bg-gray-400 text-gray-800 text-xl font-bold rounded-xl shadow-lg"
             >
               뒤로

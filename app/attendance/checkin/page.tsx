@@ -31,6 +31,7 @@ function CheckInPageContent() {
   const [note, setNote] = useState('');
   const [showManualTimeInput, setShowManualTimeInput] = useState(false);
   const [manualCheckInTime, setManualCheckInTime] = useState('');
+  const [currentTime, setCurrentTime] = useState<Date>(new Date());
 
   useEffect(() => {
     // 초기 로딩
@@ -44,6 +45,14 @@ function CheckInPageContent() {
     // 컴포넌트 언마운트 시 인터벌 정리
     return () => clearInterval(refreshInterval);
   }, [branchId]);
+
+  // 현재 시간 표시 (출근/퇴근 메인과 동일 형식)
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
 
   const loadEmployees = async () => {
     try {
@@ -484,7 +493,7 @@ function CheckInPageContent() {
           >
             ← 뒤로
           </button>
-          <div className="text-center">
+          <div className="flex-1 text-center">
             <h1 className="text-4xl font-bold text-gray-800">출근 기록</h1>
             {branchName && (
               <div className="text-2xl font-semibold text-blue-600 mt-2">
@@ -492,7 +501,16 @@ function CheckInPageContent() {
               </div>
             )}
           </div>
-          <div className="w-20"></div>
+          <div className="text-right w-56 text-sm text-gray-600 hidden md:block">
+            {currentTime.toLocaleString('ko-KR', {
+              year: 'numeric',
+              month: 'long',
+              day: 'numeric',
+              hour: '2-digit',
+              minute: '2-digit',
+              second: '2-digit',
+            })}
+          </div>
         </div>
 
         {/* 오늘 스케줄 있는 직원 */}

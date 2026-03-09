@@ -117,7 +117,7 @@ export default function ContractTemplateHandler({ branchId, branch }: ContractTe
           workContent: '고객응대 및 서빙, 음료, 음식제조 및 매장관리 등 사업장이 지정한 업무',
           employmentType: contractData.employmentType || '사업소득', // 고용형태
           salaryType: contractData.salaryType,
-          salaryAmount: parseFloat(contractData.salaryAmount) || 0, // 시급/일급/월급 금액
+          salaryAmount: contractData.salaryAmount ? parseFloat(String(contractData.salaryAmount)) : 0, // 시급/일급/월급 금액
           includesWeeklyHoliday: contractData.includesWeeklyHoliday, // 주휴수당 포함 여부
           weeklyWorkHours: parseFloat(contractData.workDaysPerWeek) * 8, // 근사치
           dailyWorkHours: 8, // 근사치
@@ -365,6 +365,7 @@ export default function ContractTemplateHandler({ branchId, branch }: ContractTe
     const salaryTypeText = contractData.salaryType === 'monthly' ? '월' : contractData.salaryType === 'daily' ? '일' : '시간'
     const workPlaceText = '청담장어마켓(송파점/동탄점/분당점), 카페드로잉(송파점/홍대점/동탄점), 사업주가 관리하는 신규추가지점'
     const workContentText = '고객응대 및 서빙, 음료, 음식제조 및 매장관리 등 사업장이 지정한 업무'
+    const salaryAmount = contractData.salaryAmount ? parseFloat(String(contractData.salaryAmount)) : 0
     
     return `
       <!DOCTYPE html>
@@ -372,33 +373,64 @@ export default function ContractTemplateHandler({ branchId, branch }: ContractTe
       <head>
         <meta charset="UTF-8">
         <style>
+          * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+          }
           body {
             font-family: 'Malgun Gothic', '맑은 고딕', 'Noto Sans KR', Arial, sans-serif;
-            font-size: 12pt;
-            line-height: 1.6;
-            padding: 0;
+            font-size: 11pt;
+            line-height: 1.5;
+            padding: 15mm;
             margin: 0;
+            width: 210mm;
+            background: white;
           }
           .title {
             text-align: center;
-            font-size: 18pt;
+            font-size: 16pt;
             font-weight: bold;
-            margin-bottom: 20px;
+            margin-bottom: 12px;
           }
           .section {
-            margin-bottom: 15px;
+            margin-bottom: 10px;
           }
           .section-title {
             font-weight: bold;
-            margin-bottom: 5px;
+            margin-bottom: 3px;
+            font-size: 11pt;
+          }
+          .section-content {
+            font-size: 10pt;
+            line-height: 1.4;
+            margin-left: 0;
           }
           .signature-area {
             display: inline-block;
-            width: 80px;
-            height: 30px;
+            width: 60px;
+            height: 25px;
             border: 1px solid #ccc;
-            margin-left: 10px;
+            margin-left: 8px;
             vertical-align: middle;
+          }
+          .contract-date {
+            text-align: center;
+            margin: 12px 0;
+            font-size: 11pt;
+          }
+          .signature-section {
+            margin-top: 15px;
+          }
+          .signature-section-title {
+            font-weight: bold;
+            margin-bottom: 5px;
+            font-size: 11pt;
+          }
+          .signature-info {
+            font-size: 10pt;
+            line-height: 1.4;
+            margin-bottom: 2px;
           }
         </style>
       </head>
@@ -406,62 +438,103 @@ export default function ContractTemplateHandler({ branchId, branch }: ContractTe
         <div class="title">표준근로계약서</div>
         
         <div class="section">
-          <p>${branch.ceoName || '대표자'}(이하 "사업주"라 함)과(와) ${contractData.employeeName}(이하 "근로자"라 함)은 다음과 같이 근로계약을 체결한다.</p>
+          <p class="section-content">${branch.ceoName || '대표자'}(이하 "사업주"라 함)과(와) ${contractData.employeeName}(이하 "근로자"라 함)은 다음과 같이 근로계약을 체결한다.</p>
         </div>
         
         <div class="section">
           <div class="section-title">1. 근로개시일</div>
-          <p>${startDateStr}</p>
-          ${endDateStr ? `<p>종료일: ${endDateStr}</p>` : ''}
-          <p>수습기간: ${contractData.probationPeriod}개월</p>
+          <div class="section-content">
+            <p>${startDateStr}${endDateStr ? ` (필요시 종료일 기재: ${endDateStr})` : ''}</p>
+            <p>최초 ${contractData.probationPeriod}개월은 수습기간임. 수습기간은 임금의 90% 지급함.</p>
+            <p>단, 수습기간 중 업무평가결과에 따라 계약을 해지할 수 있음</p>
+          </div>
         </div>
         
         <div class="section">
           <div class="section-title">2. 근무장소</div>
-          <p>${workPlaceText}</p>
+          <div class="section-content">
+            <p>${workPlaceText}</p>
+          </div>
         </div>
         
         <div class="section">
           <div class="section-title">3. 업무의 내용</div>
-          <p>${workContentText}</p>
+          <div class="section-content">
+            <p>${workContentText}</p>
+          </div>
         </div>
         
         <div class="section">
           <div class="section-title">4. 소정근로시간</div>
-          <p>${workStartTime} ~ ${workEndTime}</p>
+          <div class="section-content">
+            <p>${workStartTime} ~ ${workEndTime}</p>
+            <p>(휴게시간: ${contractData.breakStartHour && contractData.breakStartMinute ? `${contractData.breakStartHour}:${contractData.breakStartMinute} ~ ${contractData.breakEndHour}:${contractData.breakEndMinute}` : '법정휴게시간 준수'})</p>
+            <p>- (법정휴게시간 준수: 4시간 근무시마다 30분)</p>
+            <p>- (흡연, 식사, 차량출차 같은 업무에 해당하지 않는 시간은 휴게시간으로 본다)</p>
+          </div>
         </div>
         
         <div class="section">
           <div class="section-title">5. 근무일/휴일</div>
-          <p>매주 ${contractData.workDaysPerWeek}일 근무, 주휴일: ${contractData.weeklyHolidayDay}요일</p>
+          <div class="section-content">
+            <p>매주 ${contractData.workDaysPerWeek}일 근무${contractData.workDaysDetail ? `(필요시, 근무요일: ${contractData.workDaysDetail})` : ''}, 주휴일 매주 ${contractData.weeklyHolidayDay}요일</p>
+            <p>사업장의 상황이나 근로자 요청에 따라 근무일 또는 휴무일이 변경될 수 있으며, 이 경우 상호 협의하여 조정함</p>
+          </div>
         </div>
         
         <div class="section">
           <div class="section-title">6. 임금</div>
-          <p>${salaryTypeText}급: ${parseFloat(contractData.salaryAmount).toLocaleString()}원</p>
-          ${contractData.salaryType === 'hourly' ? `<p>주휴수당 포함: ${contractData.includesWeeklyHoliday ? '예' : '아니오'}</p>` : ''}
-          <p>임금지급일: 매월 ${contractData.paymentDay}일</p>
-          <p>지급방법: ${contractData.paymentMethod === 'cash' ? '현금' : '계좌입금'}</p>
-          ${contractData.paymentMethod === 'bank' && contractData.bankAccount ? `<p>계좌번호: ${contractData.bankAccount}</p>` : ''}
+          <div class="section-content">
+            <p>${salaryTypeText}(일, 시간)급: ${salaryAmount.toLocaleString()}원(세전)</p>
+            ${contractData.salaryType === 'hourly' ? `<p>시급인 경우 확인: 주휴수당 포함 [${contractData.includesWeeklyHoliday ? '✓' : ' '}]</p>` : ''}
+            <p>임금지급일: 매월(매주 또는 매일) ${contractData.paymentDay}일(휴일의 경우는 익일 지급)</p>
+            <p>지급방법: 근로자에게 직접(현금)지급 [${contractData.paymentMethod === 'cash' ? '✓' : ' '}], 근로자 명의 계좌에 입금 [${contractData.paymentMethod === 'bank' ? '✓' : ' '}]</p>
+            ${contractData.paymentMethod === 'bank' && contractData.bankAccount ? `<p>계좌번호: ${contractData.bankAccount}</p>` : '<p>계좌번호: </p>'}
+          </div>
         </div>
         
-        <div style="text-align: center; margin: 20px 0;">
+        <div class="section">
+          <div class="section-title">7. 근로계약서 교부</div>
+          <div class="section-content">
+            <p>사업주는 근로계약을 체결함과 동시에 본 계약서를 사본하여 근로자의 교부 요구와 관계없이 근로자에게 교부함(근로기준법 제17조 이행)</p>
+          </div>
+        </div>
+        
+        <div class="section">
+          <div class="section-title">8. 근로계약, 취업규칙 등의 성실한 이행의무</div>
+          <div class="section-content">
+            <p>사업주와 근로자는 각자가 근로계약, 취업규칙, 단체협약을 지키고 성실하게 이행하여야 함</p>
+          </div>
+        </div>
+        
+        <div class="section">
+          <div class="section-title">9. 그 밖의 사항</div>
+          <div class="section-content">
+            <p>이 계약에 정함이 없는 사항은 근로관계법령에 따름</p>
+          </div>
+        </div>
+        
+        <div class="contract-date">
           <p>${contractDateStr}</p>
         </div>
         
-        <div class="section">
-          <div class="section-title">사업주</div>
-          <p>사업체명: ${branch.companyName || branch.name}</p>
-          <p>주소: ${branch.address || ''}</p>
-          <p>대표자: ${branch.ceoName || ''} ${contractData.employerSignature ? '<img src="' + contractData.employerSignature + '" style="width: 80px; height: 30px; margin-left: 10px; vertical-align: middle;" />' : '<span class="signature-area"></span>'}</p>
+        <div class="signature-section">
+          <div class="signature-section-title">(사업주)</div>
+          <div class="signature-info">
+            <p>사업체명: ${branch.companyName || branch.name}</p>
+            <p>주소: ${branch.address || ''}</p>
+            <p>대표자: ${branch.ceoName || ''} ${contractData.employerSignature ? '<img src="' + contractData.employerSignature + '" style="width: 60px; height: 25px; margin-left: 8px; vertical-align: middle;" />' : '<span class="signature-area"></span>'}</p>
+          </div>
         </div>
         
-        <div class="section">
-          <div class="section-title">근로자</div>
-          <p>주소: ${contractData.employeeAddress}</p>
-          <p>연락처: ${contractData.employeePhone}</p>
-          <p>성명: ${contractData.employeeName} ${contractData.employeeSignature ? '<img src="' + contractData.employeeSignature + '" style="width: 80px; height: 30px; margin-left: 10px; vertical-align: middle;" />' : '<span class="signature-area"></span>'}</p>
-          <p>주민등록번호: ${contractData.residentNumber}</p>
+        <div class="signature-section">
+          <div class="signature-section-title">(근로자)</div>
+          <div class="signature-info">
+            <p>주소: ${contractData.employeeAddress}</p>
+            <p>연락처: ${contractData.employeePhone}</p>
+            <p>성명: ${contractData.employeeName} ${contractData.employeeSignature ? '<img src="' + contractData.employeeSignature + '" style="width: 60px; height: 25px; margin-left: 8px; vertical-align: middle;" />' : '<span class="signature-area"></span>'}</p>
+            <p>주민등록번호: ${contractData.residentNumber}</p>
+          </div>
         </div>
       </body>
       </html>

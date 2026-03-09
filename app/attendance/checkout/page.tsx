@@ -545,10 +545,30 @@ function CheckoutInfoScreen({
     }
   })();
 
-  // 퇴근 시간 차이를 +HH시간MM분 / -HH시간MM분 형식으로 표시
+  // 스케줄과의 근무시간 차이 = (실제 근무시간 - 스케줄 기준 근무시간)
   const diffDisplay = (() => {
-    if (checkResult?.minutesDiff === undefined) return null;
-    const diff = checkResult.minutesDiff as number;
+    if (actualWorkMinutes == null || !employee.scheduledStartTime || !employee.scheduledEndTime) {
+      return null;
+    }
+
+    // 실제 근무시간(분) - 휴게시간 차감
+    const netActualMinutes = Math.max(0, actualWorkMinutes - (effectiveBreakMinutes || 0));
+
+    // 스케줄 근무시간(분) - 스케줄 휴게시간 차감
+    const [sH, sM] = employee.scheduledStartTime.split(':').map(Number);
+    const [eH, eM] = employee.scheduledEndTime.split(':').map(Number);
+    const today = new Date();
+    const s = new Date(today.getFullYear(), today.getMonth(), today.getDate(), sH, sM, 0);
+    const e = new Date(today.getFullYear(), today.getMonth(), today.getDate(), eH, eM, 0);
+    let scheduledMinutes = Math.floor((e.getTime() - s.getTime()) / (1000 * 60));
+    if (scheduledBreakMinutes) {
+      scheduledMinutes -= scheduledBreakMinutes;
+    }
+    if (scheduledMinutes < 0) scheduledMinutes = 0;
+
+    const diff = netActualMinutes - scheduledMinutes;
+    if (diff === 0) return '0분';
+
     const sign = diff >= 0 ? '+' : '-';
     const absMinutes = Math.abs(diff);
     const hours = Math.floor(absMinutes / 60);
@@ -754,7 +774,7 @@ function CheckoutInfoScreen({
                   </p>
                 )}
                 <p className="mt-1">
-                  <span className="font-semibold text-gray-600">스케줄과의 시간차이</span>
+                  <span className="font-semibold text-gray-600">스케줄과의 근무시간차이</span>
                   <span className="ml-2 text-red-500 tabular-nums">{diffDisplay || '0분'}</span>
                 </p>
               </div>

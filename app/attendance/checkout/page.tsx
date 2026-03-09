@@ -577,7 +577,7 @@ function CheckoutInfoScreen({
           </p>
           {isBreakRecalculated && (
             <p className="text-sm text-red-500 mb-6">
-              * 법정 휴게시간인 4시간에 30분으로 재계산되었습니다.
+              * 참고 : 법정기준휴게시간 4시간마다 30분
             </p>
           )}
           {/* 전달사항 (선택사항)만 입력 가능 */}
@@ -624,11 +624,6 @@ function CheckoutInfoScreen({
           <p className="text-xl text-gray-600 mb-2">
             오늘 총 휴게시간: {effectiveBreakDisplay}
           </p>
-          {isBreakRecalculated && (
-            <p className="text-sm text-red-500 mb-6">
-              * 법정 휴게시간인 4시간에 30분으로 재계산되었습니다.
-            </p>
-          )}
           <p className="text-base text-gray-500 mb-6">
             (정시퇴근을 권장드립니다. 사유를 선택하거나 바로 퇴근 기록을 완료할 수 있습니다.)
           </p>
@@ -662,11 +657,6 @@ function CheckoutInfoScreen({
           <p className="text-xl text-gray-600 mb-2">
             오늘 총 휴게시간: {effectiveBreakDisplay}
           </p>
-          {isBreakRecalculated && (
-            <p className="text-sm text-red-500 mb-6">
-              * 법정 휴게시간인 4시간에 30분으로 재계산되었습니다.
-            </p>
-          )}
           <p className="text-xl text-gray-600 mb-8">
             일찍 퇴근하시는 사유를 알려주세요.
           </p>
@@ -760,7 +750,7 @@ function CheckoutInfoScreen({
                 </p>
                 {isBreakRecalculated && (
                   <p className="mt-1 text-xs text-red-500">
-                    * 법정 휴게시간인 4시간에 30분으로 재계산되었습니다.
+                    * 참고 : 법정기준휴게시간 4시간마다 30분
                   </p>
                 )}
                 <p className="mt-1">

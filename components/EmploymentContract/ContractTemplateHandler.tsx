@@ -117,7 +117,15 @@ export default function ContractTemplateHandler({ branchId, branch }: ContractTe
           workContent: '고객응대 및 서빙, 음료, 음식제조 및 매장관리 등 사업장이 지정한 업무',
           employmentType: contractData.employmentType || '사업소득', // 고용형태
           salaryType: contractData.salaryType,
-          salaryAmount: contractData.salaryAmount ? parseFloat(String(contractData.salaryAmount)) : 0, // 시급/일급/월급 금액
+          salaryAmount: (() => {
+            const amount = contractData.salaryAmount ? parseFloat(String(contractData.salaryAmount).replace(/,/g, '')) : 0
+            console.log('💰 시급 금액 변환:', {
+              원본값: contractData.salaryAmount,
+              변환값: amount,
+              타입: typeof contractData.salaryAmount
+            })
+            return isNaN(amount) ? 0 : amount
+          })(), // 시급/일급/월급 금액
           includesWeeklyHoliday: contractData.includesWeeklyHoliday, // 주휴수당 포함 여부
           weeklyWorkHours: parseFloat(contractData.workDaysPerWeek) * 8, // 근사치
           dailyWorkHours: 8, // 근사치

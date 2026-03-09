@@ -661,7 +661,7 @@ function ScheduleInfoScreen({
                 휴게시간: {breakTimeDisplay}
               </p>
               <p className="text-sm text-gray-500 mt-1">
-                휴게시간은 반드시 지켜주시고, 매장 상황상 휴게가 불가한 경우에는
+                ⚠️ 휴게시간은 반드시 지켜주시고, 매장 상황상 휴게가 불가한 경우에는
                 사장님께 사전에 꼭 동의를 구해주세요.
               </p>
               {diffDisplay && (

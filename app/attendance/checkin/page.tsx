@@ -19,8 +19,10 @@ function CheckInPageContent() {
   const [targetBranchId, setTargetBranchId] = useState<string>('');
   const [employeesWithSchedule, setEmployeesWithSchedule] = useState<EmployeeScheduleInfo[]>([]);
   const [employeesWithoutSchedule, setEmployeesWithoutSchedule] = useState<EmployeeScheduleInfo[]>([]);
-  // 이미 출근한 직원 정보 (직원 ID -> 출근 시간)
-  const [checkedInEmployees, setCheckedInEmployees] = useState<Map<string, string>>(new Map());
+  // 오늘자 출근/퇴근 시각 정보 (직원 ID -> { checkIn, checkOut })
+  const [checkedInEmployees, setCheckedInEmployees] = useState<
+    Map<string, { checkIn?: string; checkOut?: string }>
+  >(new Map());
   const [selectedEmployee, setSelectedEmployee] = useState<EmployeeScheduleInfo | null>(null);
   const [showScheduleInfo, setShowScheduleInfo] = useState(false);
   const [autoCheckInMode, setAutoCheckInMode] = useState(false); // ±30분 자동 출근 처리 여부
@@ -232,6 +234,44 @@ function CheckInPageContent() {
       });
       
       setEmployeesWithoutSchedule(withoutSchedule);
+
+      // 오늘 출근/퇴근 기록 조회해서 카드에 시간 표시
+      const attendanceConstraints = [
+        where('date', '==', todayStr)
+      ];
+      if (targetBranchId) {
+        attendanceConstraints.push(where('branchId', '==', targetBranchId));
+      }
+      const attendanceQuery = query(collection(db, 'attendanceRecords'), ...attendanceConstraints);
+      const attendanceSnapshot = await getDocs(attendanceQuery);
+
+      const attendanceMap = new Map<string, { checkIn?: string; checkOut?: string }>();
+      attendanceSnapshot.docs.forEach(doc => {
+        const data = doc.data();
+        const empId = data.employeeId as string;
+        const actualTime = data.actualTime?.toDate
+          ? data.actualTime.toDate()
+          : data.actualTime
+          ? new Date(data.actualTime)
+          : null;
+        if (!actualTime) return;
+
+        const timeStr = actualTime.toLocaleTimeString('ko-KR', {
+          hour: '2-digit',
+          minute: '2-digit',
+        });
+        const type = data.type as string;
+
+        const existing = attendanceMap.get(empId) || {};
+        if (type === 'checkin') {
+          existing.checkIn = timeStr;
+        } else if (type === 'checkout') {
+          existing.checkOut = timeStr;
+        }
+        attendanceMap.set(empId, existing);
+      });
+
+      setCheckedInEmployees(attendanceMap);
     } catch (error) {
       console.error('직원 목록 로드 실패:', error);
       alert('직원 목록을 불러오는 중 오류가 발생했습니다.');
@@ -408,9 +448,16 @@ function CheckInPageContent() {
       console.log('출근 기록 저장 성공');
 
       // 출근 기록 업데이트 후 목록 상태 업데이트
-      const checkInTimeStr = actualCheckInTime.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' });
+      const checkInTimeStr = actualCheckInTime.toLocaleTimeString('ko-KR', {
+        hour: '2-digit',
+        minute: '2-digit',
+      });
       const updatedCheckedIn = new Map(checkedInEmployees);
-      updatedCheckedIn.set(selectedEmployee.employeeId, checkInTimeStr);
+      const prev = updatedCheckedIn.get(selectedEmployee.employeeId) || {};
+      updatedCheckedIn.set(selectedEmployee.employeeId, {
+        ...prev,
+        checkIn: checkInTimeStr,
+      });
       setCheckedInEmployees(updatedCheckedIn);
 
       // 자동 출근 처리인 경우: 알림 후 10초 뒤 첫 화면으로 이동
@@ -519,8 +566,8 @@ function CheckInPageContent() {
             <h2 className="text-2xl font-semibold text-gray-700 mb-4">오늘 스케줄에 있는 직원목록</h2>
             <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
               {employeesWithSchedule.map((emp) => {
-                const checkInTime = checkedInEmployees.get(emp.employeeId);
-                const isCheckedIn = !!checkInTime;
+                const att = checkedInEmployees.get(emp.employeeId);
+                const isCheckedIn = !!att?.checkIn;
                 
                 return (
                   <button
@@ -537,9 +584,10 @@ function CheckInPageContent() {
                       {isCheckedIn && <span className="text-2xl">✓</span>}
                       <span>{emp.employeeName}</span>
                     </div>
-                    {isCheckedIn && (
-                      <div className="text-sm font-normal text-gray-500 mt-1">
-                        {checkInTime} 출근
+                    {(att?.checkIn || att?.checkOut) && (
+                      <div className="text-xs font-normal text-gray-500 mt-1 text-center space-y-0.5">
+                        {att.checkIn && <div>출근 {att.checkIn}</div>}
+                        {att.checkOut && <div>퇴근 {att.checkOut}</div>}
                       </div>
                     )}
                   </button>
@@ -555,8 +603,8 @@ function CheckInPageContent() {
             <h2 className="text-2xl font-semibold text-gray-700 mb-4">오늘 스케줄 없는 직원목록</h2>
             <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
               {employeesWithoutSchedule.map((emp) => {
-                const checkInTime = checkedInEmployees.get(emp.employeeId);
-                const isCheckedIn = !!checkInTime;
+                const att = checkedInEmployees.get(emp.employeeId);
+                const isCheckedIn = !!att?.checkIn;
                 
                 return (
                   <button
@@ -573,9 +621,10 @@ function CheckInPageContent() {
                       {isCheckedIn && <span className="text-2xl">✓</span>}
                       <span>{emp.employeeName}</span>
                     </div>
-                    {isCheckedIn && (
-                      <div className="text-sm font-normal text-gray-500 mt-1">
-                        {checkInTime} 출근
+                    {(att?.checkIn || att?.checkOut) && (
+                      <div className="text-xs font-normal text-gray-500 mt-1 text-center space-y-0.5">
+                        {att.checkIn && <div>출근 {att.checkIn}</div>}
+                        {att.checkOut && <div>퇴근 {att.checkOut}</div>}
                       </div>
                     )}
                   </button>

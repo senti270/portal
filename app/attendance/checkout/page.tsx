@@ -773,7 +773,7 @@ function CheckoutInfoScreen({
       <div className="min-h-screen bg-gradient-to-br from-orange-50 to-red-100 flex items-center justify-center p-6">
         <div className="bg-white rounded-3xl shadow-2xl p-12 max-w-2xl w-full">
           <h2 className="text-3xl font-bold text-gray-800 mb-4 text-center">
-            금일 {employee.employeeName} 님은 스케줄이 없습니다.
+            금일 {employee.employeeName} 님 근무 정보
           </h2>
 
           {/* 근무 정보 카드 (실근무시간만 표시) */}

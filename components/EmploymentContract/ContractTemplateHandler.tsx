@@ -239,10 +239,11 @@ export default function ContractTemplateHandler({ branchId, branch }: ContractTe
       console.log('🎉 모든 작업 완료!')
       alert('근로계약서가 성공적으로 작성되었습니다!\n직원관리에 자동으로 등록되었습니다.')
     } catch (error) {
-      console.error('계약서 저장 중 오류:', error)
+      console.error('❌ 계약서 저장 중 오류:', error)
       const errorMessage = error instanceof Error ? error.message : '계약서 저장 중 오류가 발생했습니다.'
-      alert(errorMessage)
-      // 에러를 다시 throw하지 않아서 사용자가 다시 시도할 수 있도록 함
+      alert(`❌ ${errorMessage}\n\n브라우저 콘솔(F12)에서 상세 오류 내용을 확인할 수 있습니다.`)
+      // 에러를 다시 throw하여 ContractTemplate에서도 에러를 감지할 수 있도록 함
+      throw error
     } finally {
       setLoading(false)
     }

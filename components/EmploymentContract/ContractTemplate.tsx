@@ -216,11 +216,13 @@ export default function ContractTemplate({ branch, onComplete }: ContractTemplat
       }
       
       await onComplete(finalData)
+      // 성공한 경우에만 complete 단계로 이동
       setStep('complete')
     } catch (error) {
       console.error('계약서 저장 중 오류:', error)
-      const errorMessage = error instanceof Error ? error.message : '계약서 저장 중 오류가 발생했습니다.'
-      alert(errorMessage)
+      // 에러는 이미 ContractTemplateHandler에서 alert로 표시했으므로 여기서는 다시 표시하지 않음
+      // step을 'complete'로 변경하지 않아서 사용자가 다시 시도할 수 있도록 함
+      setStep('signature') // 서명 단계로 되돌림
     } finally {
       setLoading(false)
     }

@@ -647,6 +647,10 @@ function ScheduleInfoScreen({
               <p className="text-lg text-gray-500 mt-1">
                 휴게시간: {breakTimeDisplay}
               </p>
+              <p className="text-sm text-gray-500 mt-1">
+                휴게시간은 반드시 지켜주시고, 매장 상황상 휴게가 불가한 경우에는
+                사장님께 사전에 꼭 동의를 구해주세요.
+              </p>
               {checkResult?.diffMinutes !== undefined && (
                 <p className="text-lg text-red-500 mt-1">
                   출근 예정 시간과 현재 시간 차이: {checkResult.diffMinutes}분
@@ -1050,10 +1054,9 @@ function ReasonInputForm({
   onBack: () => void;
 }) {
   const reasons = [
-    '매장이 바빠서',
     '사장님 요청',
+    '매장이 바빠서',
     '개인사정',
-    '교통사고',
     '기타'
   ];
 

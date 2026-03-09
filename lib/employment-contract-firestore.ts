@@ -107,6 +107,18 @@ export async function saveEmploymentContract(
     const contractsRef = collection(db, COLLECTION_NAME)
     const now = Timestamp.now()
     
+    // Base64 데이터 크기 확인 (Firestore 문서 크기 제한: 1MB)
+    if (contract.contractFile && contract.contractFile.startsWith('data:')) {
+      const base64Size = contract.contractFile.length
+      const sizeInMB = base64Size / (1024 * 1024)
+      console.log(`📊 Base64 데이터 크기: ${sizeInMB.toFixed(2)}MB (${base64Size} bytes)`)
+      
+      if (sizeInMB > 0.9) {
+        console.warn('⚠️ Base64 데이터가 1MB에 가깝습니다. Firestore 저장이 실패할 수 있습니다.')
+        throw new Error(`파일 크기가 너무 큽니다 (${sizeInMB.toFixed(2)}MB). 1MB 이하로 줄여주세요.`)
+      }
+    }
+    
     const contractData = {
       ...contract,
       contractInfo: {
@@ -133,10 +145,18 @@ export async function saveEmploymentContract(
       updatedAt: now
     }
     
+    console.log('💾 Firestore에 저장할 데이터 준비 완료')
     const docRef = await addDoc(contractsRef, contractData)
+    console.log('✅ Firestore 저장 성공, document ID:', docRef.id)
     return docRef.id
   } catch (error) {
-    console.error('Error saving employment contract:', error)
+    console.error('❌ Error saving employment contract:', error)
+    console.error('오류 상세:', {
+      errorMessage: error instanceof Error ? error.message : String(error),
+      errorCode: (error as any)?.code,
+      errorStack: error instanceof Error ? error.stack : undefined,
+      contractFileSize: contract.contractFile?.length || 0
+    })
     throw error
   }
 }

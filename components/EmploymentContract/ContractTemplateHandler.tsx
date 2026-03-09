@@ -2,7 +2,8 @@
 
 import { useState } from 'react'
 import { collection, addDoc, getDocs, query, where, Timestamp, writeBatch, doc } from 'firebase/firestore'
-import { db } from '@/lib/firebase'
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage'
+import { db, storage } from '@/lib/firebase'
 import { generateContractPdf } from '@/lib/contract-docx'
 import { saveEmploymentContract, EmploymentContract } from '@/lib/employment-contract-firestore'
 import ContractTemplate, { ContractData } from './ContractTemplate'
@@ -153,28 +154,34 @@ export default function ContractTemplateHandler({ branchId, branch }: ContractTe
         throw new Error('PDF 생성 중 오류가 발생했습니다. 다시 시도해주세요.')
       }
 
-      // 5. PDF를 Base64로 변환하여 Firestore에 저장 (CORS 문제 회피)
-      console.log('📤 PDF를 Base64로 변환 중...')
+      // 5. Firebase Storage에 업로드
+      console.log('☁️ Storage 업로드 시작...')
       const timestamp = Date.now()
+      const pdfFileName = `contracts/${branchId}_${timestamp}.pdf`
       let pdfUrl: string
       try {
-        // Blob을 Base64로 변환
-        const reader = new FileReader()
-        const base64Promise = new Promise<string>((resolve, reject) => {
-          reader.onload = () => {
-            const result = reader.result as string
-            console.log('✅ Base64 변환 완료, 길이:', result.length)
-            resolve(result)
-          }
-          reader.onerror = reject
-          reader.readAsDataURL(pdfBlob)
-        })
+        const pdfRef = ref(storage, pdfFileName)
+        console.log('📤 파일 업로드 중...', pdfFileName, '크기:', (pdfBlob.size / 1024 / 1024).toFixed(2), 'MB')
         
-        pdfUrl = await base64Promise
-        console.log('✅ Base64 데이터 URL 생성 완료')
+        // PDF Blob을 Storage에 업로드
+        await uploadBytes(pdfRef, pdfBlob, {
+          contentType: 'application/pdf'
+        })
+        console.log('✅ 파일 업로드 완료')
+        
+        // 다운로드 URL 생성
+        pdfUrl = await getDownloadURL(pdfRef)
+        console.log('✅ 다운로드 URL 생성 완료:', pdfUrl)
       } catch (error) {
-        console.error('❌ Base64 변환 오류:', error)
-        throw new Error('파일 변환 중 오류가 발생했습니다. 다시 시도해주세요.')
+        console.error('❌ Storage 업로드 오류:', error)
+        const errorMessage = error instanceof Error ? error.message : String(error)
+        
+        // CORS 오류인 경우 명확한 메시지
+        if (errorMessage.includes('CORS') || errorMessage.includes('cors')) {
+          throw new Error('파일 업로드 중 CORS 오류가 발생했습니다. Firebase Storage 설정을 확인해주세요.')
+        }
+        
+        throw new Error(`파일 업로드 중 오류가 발생했습니다: ${errorMessage}`)
       }
 
       // 6. Firestore에 저장

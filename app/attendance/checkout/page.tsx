@@ -14,6 +14,8 @@ function CheckOutPageContent() {
   const branchId = searchParams.get('branchId') || '';
   
   const [loading, setLoading] = useState(true);
+  const [branchName, setBranchName] = useState<string>('');
+  const [targetBranchId, setTargetBranchId] = useState<string>('');
   const [employeesWithSchedule, setEmployeesWithSchedule] = useState<EmployeeScheduleInfo[]>([]);
   const [employeesWithCheckIn, setEmployeesWithCheckIn] = useState<Array<{employeeId: string; employeeName: string}>>([]);
   const [selectedEmployee, setSelectedEmployee] = useState<any>(null);
@@ -42,14 +44,54 @@ function CheckOutPageContent() {
       setLoading(true);
       const today = new Date();
       const todayStr = formatDate(today);
+
+      // 지점 정보 로드 (지점명 표시 및 필터링용)
+      let targetId = branchId;
+      let targetName = '';
+
+      if (targetId) {
+        // URL로 넘어온 branchId가 있으면 해당 지점명 조회
+        try {
+          const branchSnapshot = await getDocs(
+            query(collection(db, 'branches'), where('__name__', '==', targetId))
+          );
+          if (!branchSnapshot.empty) {
+            targetName = branchSnapshot.docs[0].data().name || '';
+          }
+        } catch (e) {
+          // 실패 시 전체 지점에서 찾아봄
+          const branchesSnapshot = await getDocs(collection(db, 'branches'));
+          const branch = branchesSnapshot.docs.find((doc) => doc.id === targetId);
+          if (branch) {
+            targetName = branch.data().name || '';
+          }
+        }
+      } else {
+        // 테스트용 기본 지점: 청담장어마켓 동탄점
+        const branchesSnapshot = await getDocs(collection(db, 'branches'));
+        const testBranch = branchesSnapshot.docs.find((doc) =>
+          doc.data().name?.includes('동탄')
+        );
+        if (testBranch) {
+          targetId = testBranch.id;
+          targetName = testBranch.data().name || '';
+        } else if (branchesSnapshot.docs.length > 0) {
+          // fallback: 첫 번째 지점
+          targetId = branchesSnapshot.docs[0].id;
+          targetName = branchesSnapshot.docs[0].data().name || '';
+        }
+      }
+
+      setBranchName(targetName);
+      setTargetBranchId(targetId);
       
-      // 모든 스케줄 조회 후 클라이언트에서 필터링
+      // 모든 스케줄 조회 후 (오늘 날짜 + 지점) 클라이언트에서 필터링
       const schedulesQuery = collection(db, 'schedules');
       const schedulesSnapshot = await getDocs(schedulesQuery);
       
       const employeeMap = new Map<string, EmployeeScheduleInfo>();
       
-      // 오늘 날짜 필터링 (클라이언트 사이드)
+      // 오늘 날짜 + 지점 필터링 (클라이언트 사이드)
       schedulesSnapshot.docs.forEach(doc => {
         const data = doc.data();
         const scheduleDate = toLocalDate(data.date);
@@ -57,6 +99,9 @@ function CheckOutPageContent() {
         
         // 오늘 날짜인 스케줄만 포함
         if (scheduleDateStr !== todayStr) return;
+
+        // 지점 필터링
+        if (targetId && data.branchId !== targetId) return;
         
         const employeeId = data.employeeId;
         
@@ -75,11 +120,14 @@ function CheckOutPageContent() {
       setEmployeesWithSchedule(Array.from(employeeMap.values()));
       
       // 오늘 출근 기록이 있는 직원 조회 (스케줄은 없지만)
-      const checkInQuery = query(
-        collection(db, 'attendanceRecords'),
+      const checkInConstraints = [
         where('date', '==', todayStr),
-        where('type', '==', 'checkin')
-      );
+        where('type', '==', 'checkin'),
+      ];
+      if (targetId) {
+        checkInConstraints.push(where('branchId', '==', targetId));
+      }
+      const checkInQuery = query(collection(db, 'attendanceRecords'), ...checkInConstraints);
       
       const checkInSnapshot = await getDocs(checkInQuery);
       const checkInEmployeeIds = new Set(
@@ -112,12 +160,15 @@ function CheckOutPageContent() {
     const todayStr = formatDate(today);
     
     // 이미 퇴근 기록이 있는지 확인
-    const checkoutQuery = query(
-      collection(db, 'attendanceRecords'),
+    const checkoutConstraints = [
       where('employeeId', '==', employee.employeeId),
       where('date', '==', todayStr),
-      where('type', '==', 'checkout')
-    );
+      where('type', '==', 'checkout'),
+    ];
+    if (targetBranchId) {
+      checkoutConstraints.push(where('branchId', '==', targetBranchId));
+    }
+    const checkoutQuery = query(collection(db, 'attendanceRecords'), ...checkoutConstraints);
     
     const checkoutSnapshot = await getDocs(checkoutQuery);
     
@@ -130,12 +181,15 @@ function CheckOutPageContent() {
     }
     
     // 출근 기록 조회
-    const checkInQuery = query(
-      collection(db, 'attendanceRecords'),
+    const checkInConstraints = [
       where('employeeId', '==', employee.employeeId),
       where('date', '==', todayStr),
-      where('type', '==', 'checkin')
-    );
+      where('type', '==', 'checkin'),
+    ];
+    if (targetBranchId) {
+      checkInConstraints.push(where('branchId', '==', targetBranchId));
+    }
+    const checkInQuery = query(collection(db, 'attendanceRecords'), ...checkInConstraints);
     
     const checkInSnapshot = await getDocs(checkInQuery);
     

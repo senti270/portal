@@ -620,6 +620,21 @@ function CheckoutInfoScreen({
 
   // 사유 입력 화면
   if (showReasonInput) {
+    const checkInTimeDisplay =
+      employee.checkInTime instanceof Date
+        ? employee.checkInTime.toLocaleTimeString('ko-KR', {
+            hour: '2-digit',
+            minute: '2-digit',
+          })
+        : '';
+    const checkOutTimeDisplay =
+      employee.currentTime instanceof Date
+        ? employee.currentTime.toLocaleTimeString('ko-KR', {
+            hour: '2-digit',
+            minute: '2-digit',
+          })
+        : '';
+
     return (
       <div className="min-h-screen bg-gradient-to-br from-orange-50 to-red-100 flex items-center justify-center p-6">
         <div className="bg-white rounded-3xl shadow-2xl p-12 max-w-2xl w-full">
@@ -629,42 +644,23 @@ function CheckoutInfoScreen({
               <h3 className="text-2xl font-bold text-gray-800 mb-4">
                 금일 {employee.employeeName} 님 근무 정보
               </h3>
-              <div className="inline-flex flex-col sm:flex-row items-stretch justify-center gap-3 sm:gap-6 bg-gray-50 border border-gray-200 rounded-2xl px-4 py-3 text-base text-gray-700">
-                <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
-                  <span className="text-sm font-semibold text-gray-500">근무스케줄</span>
-                  <span className="font-medium">
-                    {employee.scheduledStartTime} - {employee.scheduledEndTime}
-                  </span>
-                </div>
-                <div className="h-px sm:h-8 sm:w-px bg-gray-200 mx-6 sm:mx-0 sm:my-0" />
-                <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
-                  <span className="text-sm font-semibold text-gray-500">휴게시간</span>
-                  <span className="font-medium">{breakTimeDisplay}</span>
-                </div>
-                {diffDisplay && (
-                  <>
-                    <div className="h-px sm:h-8 sm:w-px bg-gray-200 mx-6 sm:mx-0 sm:my-0" />
-                    <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
-                      <span className="text-sm font-semibold text-gray-500">시간 차이</span>
-                      <span className="font-semibold text-red-500">{diffDisplay}</span>
-                    </div>
-                  </>
-                )}
-              </div>
-              {totalWorkDisplay && (
-                <p className="text-sm text-gray-600 mt-3">
-                  오늘 총 근무시간: {totalWorkDisplay}
-                </p>
-              )}
-              <p className="text-sm text-gray-500 mt-1">
-                오늘 총 휴게시간: {breakTimeDisplay}
+              <p className="text-base text-gray-700 mb-1">
+                근무스케줄 {employee.scheduledStartTime} - {employee.scheduledEndTime}{' '}
+                휴게시간 {breakTimeDisplay}
+              </p>
+              <p className="text-base text-gray-700 mb-1">
+                실근무시간 {checkInTimeDisplay} - {checkOutTimeDisplay}{' '}
+                휴게시간 {breakTimeDisplay}
+              </p>
+              <p className="text-base text-red-500 mt-1">
+                스케줄과의 시간차이: {diffDisplay || '0분'}
               </p>
             </div>
           )}
 
           {/* 사유 선택 영역 */}
           <h3 className="text-2xl font-bold text-gray-800 mb-6 text-center">
-            스케줄과 다른 사유 선택
+            퇴근 시각이 스케줄과 다른 사유 선택
           </h3>
           <div className="grid grid-cols-2 gap-3 mb-6">
             {['사장님 요청', '매장이 바빠서', '개인사정', '기타'].map((reason) => (

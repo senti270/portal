@@ -2,8 +2,7 @@
 
 import { useState } from 'react'
 import { collection, addDoc, getDocs, query, where, Timestamp, writeBatch, doc } from 'firebase/firestore'
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage'
-import { db, storage } from '@/lib/firebase'
+import { db } from '@/lib/firebase'
 import { generateContractPdf } from '@/lib/contract-docx'
 import { saveEmploymentContract, EmploymentContract } from '@/lib/employment-contract-firestore'
 import ContractTemplate, { ContractData } from './ContractTemplate'

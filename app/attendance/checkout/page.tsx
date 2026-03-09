@@ -508,6 +508,15 @@ function CheckoutInfoScreen({
           <p className="text-xl text-gray-600 mb-8">
             오늘 총 휴게시간: {breakTimeDisplay}
           </p>
+          {/* 전달사항 (선택사항)만 입력 가능 */}
+          <div className="mb-8 text-left">
+            <textarea
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              placeholder="전달사항 (선택사항)"
+              className="w-full h-24 p-4 border-2 border-gray-300 rounded-xl text-lg resize-none focus:outline-none focus:border-green-500"
+            />
+          </div>
           <button
             onClick={onConfirm}
             className="w-full h-16 bg-green-500 hover:bg-green-600 text-white text-2xl font-bold rounded-2xl shadow-lg transform transition-all duration-200 hover:scale-105 active:scale-95"

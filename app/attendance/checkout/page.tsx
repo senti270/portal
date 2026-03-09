@@ -478,6 +478,30 @@ function CheckoutInfoScreen({
     }
   })();
 
+  // 근무스케줄 기준 총 근무시간 (시작~종료 - 휴게시간)
+  const scheduleTotalDisplay = (() => {
+    if (!employee.scheduledStartTime || !employee.scheduledEndTime) return null;
+    const [startH, startM] = employee.scheduledStartTime.split(':').map(Number);
+    const [endH, endM] = employee.scheduledEndTime.split(':').map(Number);
+    const today = new Date();
+    const start = new Date(today.getFullYear(), today.getMonth(), today.getDate(), startH, startM, 0);
+    const end = new Date(today.getFullYear(), today.getMonth(), today.getDate(), endH, endM, 0);
+    let minutes = Math.floor((end.getTime() - start.getTime()) / (1000 * 60));
+    if (employee.scheduledBreakTime) {
+      minutes -= Math.round(employee.scheduledBreakTime * 60);
+    }
+    if (minutes <= 0) return null;
+    const hours = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+    if (hours > 0 && mins > 0) {
+      return `${hours}시간 ${mins}분`;
+    } else if (hours > 0) {
+      return `${hours}시간`;
+    } else {
+      return `${mins}분`;
+    }
+  })();
+
   // 퇴근 시간 차이를 +HH시간MM분 / -HH시간MM분 형식으로 표시
   const diffDisplay = (() => {
     if (checkResult?.minutesDiff === undefined) return null;
@@ -661,14 +685,20 @@ function CheckoutInfoScreen({
                   <span className="ml-2 tabular-nums">
                     {employee.scheduledStartTime} - {employee.scheduledEndTime}
                   </span>
-                  <span className="ml-3 text-sm text-gray-500">휴게시간 {breakTimeDisplay}</span>
+                  <span className="ml-3 text-sm text-gray-500">
+                    휴게시간 {breakTimeDisplay}
+                    {scheduleTotalDisplay && ` (총 ${scheduleTotalDisplay})`}
+                  </span>
                 </p>
                 <p className="mb-1">
                   <span className="font-semibold text-gray-600">실근무시간</span>
                   <span className="ml-2 tabular-nums">
                     {checkInTimeDisplay} - {checkOutTimeDisplay}
                   </span>
-                  <span className="ml-3 text-sm text-gray-500">휴게시간 {breakTimeDisplay}</span>
+                  <span className="ml-3 text-sm text-gray-500">
+                    휴게시간 {breakTimeDisplay}
+                    {totalWorkDisplay && ` (총 ${totalWorkDisplay})`}
+                  </span>
                 </p>
                 <p className="mt-1">
                   <span className="font-semibold text-gray-600">스케줄과의 시간차이</span>

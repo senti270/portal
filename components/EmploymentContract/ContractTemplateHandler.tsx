@@ -192,6 +192,11 @@ export default function ContractTemplateHandler({ branchId, branch }: ContractTe
 
       // 6. Firestore에 저장
       console.log('💾 Firestore 저장 시작...')
+      console.log('📊 저장할 계약서 데이터:', {
+        salaryType: contractDataForSave.contractInfo.salaryType,
+        salaryAmount: contractDataForSave.contractInfo.salaryAmount,
+        employmentType: contractDataForSave.contractInfo.employmentType
+      })
       let contractId: string
       try {
         contractId = await saveEmploymentContract({

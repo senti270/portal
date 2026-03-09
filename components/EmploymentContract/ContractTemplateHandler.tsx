@@ -204,7 +204,9 @@ export default function ContractTemplateHandler({ branchId, branch }: ContractTe
       console.log('📊 저장할 계약서 데이터:', {
         salaryType: contractDataForSave.contractInfo.salaryType,
         salaryAmount: contractDataForSave.contractInfo.salaryAmount,
-        employmentType: contractDataForSave.contractInfo.employmentType
+        salaryAmountType: typeof contractDataForSave.contractInfo.salaryAmount,
+        employmentType: contractDataForSave.contractInfo.employmentType,
+        전체contractInfo: contractDataForSave.contractInfo
       })
       let contractId: string
       try {

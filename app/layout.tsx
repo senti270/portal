@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import './globals.css'
 import { AdminProvider } from '@/contexts/AdminContext'
 import Script from 'next/script'
+import Footer from '@/components/Footer'
 
 export const metadata: Metadata = {
   title: '카페드로잉&청담장어마켓',
@@ -51,9 +52,12 @@ export default function RootLayout({
           `}
         </Script>
       </head>
-      <body>
+      <body className="flex flex-col min-h-screen">
         <AdminProvider>
-          {children}
+          <div className="flex-1">
+            {children}
+          </div>
+          <Footer />
         </AdminProvider>
       </body>
     </html>

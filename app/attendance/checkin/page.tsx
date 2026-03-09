@@ -23,6 +23,7 @@ function CheckInPageContent() {
   const [checkedInEmployees, setCheckedInEmployees] = useState<Map<string, string>>(new Map());
   const [selectedEmployee, setSelectedEmployee] = useState<EmployeeScheduleInfo | null>(null);
   const [showScheduleInfo, setShowScheduleInfo] = useState(false);
+  const [autoCheckInMode, setAutoCheckInMode] = useState(false); // ±30분 자동 출근 처리 여부
   const [checkResult, setCheckResult] = useState<any>(null);
   const [showReasonInput, setShowReasonInput] = useState(false);
   const [selectedReason, setSelectedReason] = useState('');
@@ -236,17 +237,36 @@ function CheckInPageContent() {
     if (hasExisting) {
       return; // 이미 출근 기록이 있으면 종료
     }
-    
-    setSelectedEmployee(employee);
-    setShowScheduleInfo(true);
-    
-    // 출근 시간 확인
+
+    // 출근 스케줄과 현재 시간 차이 계산
     if (employee.scheduledStartTime) {
       const scheduledTime = parseTimeString(employee.scheduledStartTime);
       const actualTime = new Date();
-      const result = checkAttendanceStatus(scheduledTime, actualTime);
-      setCheckResult(result);
+      const diffMinutes = Math.abs(
+        (actualTime.getTime() - scheduledTime.getTime()) / (1000 * 60)
+      );
+
+      // ±30분 이내이면 바로 출근 처리 (사유 입력 없이)
+      if (diffMinutes <= 30) {
+        setSelectedEmployee(employee);
+        setAutoCheckInMode(true);
+        await handleConfirmCheckIn();
+        return;
+      }
+
+      // 30분 초과 시: 스케줄 정보 + 차이 + 사유 입력 화면으로 이동
+      const statusResult = checkAttendanceStatus(scheduledTime, actualTime);
+      setSelectedEmployee(employee);
+      setCheckResult({
+        ...statusResult,
+        diffMinutes: Math.round(diffMinutes)
+      });
+      setShowScheduleInfo(true);
+      setShowReasonInput(true);
     } else {
+      // 스케줄이 없는 경우에는 기존 로직 그대로 사용
+      setSelectedEmployee(employee);
+      setShowScheduleInfo(true);
       setCheckResult({
         status: 'on_time',
         minutesDiff: 0,
@@ -383,9 +403,18 @@ function CheckInPageContent() {
       const updatedCheckedIn = new Map(checkedInEmployees);
       updatedCheckedIn.set(selectedEmployee.employeeId, checkInTimeStr);
       setCheckedInEmployees(updatedCheckedIn);
-      
-      alert('출근 기록이 완료되었습니다.');
-      router.push('/attendance');
+
+      // 자동 출근 처리인 경우: 알림 후 10초 뒤 첫 화면으로 이동
+      if (autoCheckInMode) {
+        alert('출근기록이 완료되었습니다!');
+        setTimeout(() => {
+          router.push('/attendance');
+          setAutoCheckInMode(false);
+        }, 10000);
+      } else {
+        alert('출근 기록이 완료되었습니다.');
+        router.push('/attendance');
+      }
     } catch (error: any) {
       console.error('출근 기록 저장 실패:', error);
       const today = new Date();
@@ -618,6 +647,11 @@ function ScheduleInfoScreen({
               <p className="text-lg text-gray-500 mt-1">
                 휴게시간: {breakTimeDisplay}
               </p>
+              {checkResult?.diffMinutes !== undefined && (
+                <p className="text-lg text-red-500 mt-1">
+                  출근 예정 시간과 현재 시간 차이: {checkResult.diffMinutes}분
+                </p>
+              )}
             </div>
           )}
           

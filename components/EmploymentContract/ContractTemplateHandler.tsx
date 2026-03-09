@@ -28,6 +28,7 @@ export default function ContractTemplateHandler({ branchId, branch }: ContractTe
   const [loading, setLoading] = useState(false)
 
   const handleContractComplete = async (contractData: ContractData) => {
+    console.log('🚀 계약서 저장 프로세스 시작')
     setLoading(true)
     try {
       // 0. 데이터 검증
@@ -143,28 +144,35 @@ export default function ContractTemplateHandler({ branchId, branch }: ContractTe
       }
 
       // 4. PDF 생성
+      console.log('📄 PDF 생성 시작...')
       let pdfBlob: Blob
       try {
         pdfBlob = await generateContractPdfFromTemplate(contractData, branch)
+        console.log('✅ PDF 생성 완료')
       } catch (error) {
-        console.error('PDF 생성 오류:', error)
+        console.error('❌ PDF 생성 오류:', error)
         throw new Error('PDF 생성 중 오류가 발생했습니다. 다시 시도해주세요.')
       }
 
       // 5. Firebase Storage에 업로드
+      console.log('☁️ Storage 업로드 시작...')
       const timestamp = Date.now()
       const pdfFileName = `contracts/${branchId}_${timestamp}.pdf`
       let pdfUrl: string
       try {
         const pdfRef = ref(storage, pdfFileName)
+        console.log('📤 파일 업로드 중...', pdfFileName)
         await uploadBytes(pdfRef, pdfBlob)
+        console.log('✅ 파일 업로드 완료')
         pdfUrl = await getDownloadURL(pdfRef)
+        console.log('✅ 다운로드 URL 생성 완료:', pdfUrl)
       } catch (error) {
-        console.error('Storage 업로드 오류:', error)
+        console.error('❌ Storage 업로드 오류:', error)
         throw new Error('파일 업로드 중 오류가 발생했습니다. 다시 시도해주세요.')
       }
 
       // 6. Firestore에 저장
+      console.log('💾 Firestore 저장 시작...')
       let contractId: string
       try {
         contractId = await saveEmploymentContract({
@@ -172,12 +180,14 @@ export default function ContractTemplateHandler({ branchId, branch }: ContractTe
           contractFile: pdfUrl,
           contractFileName: `근로계약서_${contractData.employeeName}_${timestamp}.pdf`
         })
+        console.log('✅ Firestore 저장 완료, contractId:', contractId)
       } catch (error) {
-        console.error('Firestore 저장 오류:', error)
+        console.error('❌ Firestore 저장 오류:', error)
         throw new Error('계약서 저장 중 오류가 발생했습니다. 다시 시도해주세요.')
       }
 
       // 7. 직원관리에 자동 업로드
+      console.log('👤 직원관리 동기화 시작...')
       try {
         await syncToEmployeeManagement(contractDataForSave, contractId, pdfUrl, contractData)
         console.log('✅ 직원관리 동기화 완료')
@@ -196,6 +206,7 @@ export default function ContractTemplateHandler({ branchId, branch }: ContractTe
       }
 
       // 8. 카카오톡 전송
+      console.log('📱 카카오톡 전송 시작...')
       try {
         const kakaoResponse = await fetch('/api/employment-contract/send-kakao', {
           method: 'POST',
@@ -210,15 +221,16 @@ export default function ContractTemplateHandler({ branchId, branch }: ContractTe
         })
         const kakaoResult = await kakaoResponse.json()
         if (kakaoResult.success) {
-          console.log('카카오톡 전송 성공')
+          console.log('✅ 카카오톡 전송 성공')
         } else {
-          console.warn('카카오톡 전송 실패:', kakaoResult.error)
+          console.warn('⚠️ 카카오톡 전송 실패:', kakaoResult.error)
         }
       } catch (error) {
-        console.error('카카오톡 전송 중 오류:', error)
+        console.error('❌ 카카오톡 전송 중 오류:', error)
         // 카카오톡 전송 실패해도 계약서 저장은 완료되었으므로 계속 진행
       }
 
+      console.log('🎉 모든 작업 완료!')
       alert('근로계약서가 성공적으로 작성되었습니다!\n직원관리에 자동으로 등록되었습니다.')
     } catch (error) {
       console.error('계약서 저장 중 오류:', error)

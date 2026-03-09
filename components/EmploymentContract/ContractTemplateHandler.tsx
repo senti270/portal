@@ -300,51 +300,42 @@ export default function ContractTemplateHandler({ branchId, branch }: ContractTe
         top: 0;
         left: 0;
         width: 210mm;
+        max-width: 210mm;
         background: white;
         font-family: 'Malgun Gothic', '맑은 고딕', 'Noto Sans KR', Arial, sans-serif;
         color: black;
         z-index: 9999;
-        padding: 20mm;
-        font-size: 12pt;
-        line-height: 1.6;
+        padding: 15mm;
+        font-size: 11pt;
+        line-height: 1.5;
+        overflow: hidden;
       `
       document.body.appendChild(element)
       
-      // HTML을 캔버스로 변환
+      // HTML을 캔버스로 변환 (A4 한 장에 맞게)
       const canvas = await html2canvas(element, {
-        scale: 2,
+        scale: 1.5,
         useCORS: true,
         allowTaint: true,
         backgroundColor: '#ffffff',
         width: 794, // 210mm in pixels at 96dpi
-        height: element.scrollHeight
+        height: 1123, // 297mm in pixels at 96dpi (A4 height)
+        windowWidth: 794,
+        windowHeight: 1123
       })
       
       // 임시 div 제거
       document.body.removeChild(element)
       
-      // 캔버스를 PDF로 변환
+      // 캔버스를 PDF로 변환 (A4 한 장)
       const imgData = canvas.toDataURL('image/png')
       const doc = new jsPDF('p', 'mm', 'a4')
       
       const imgWidth = 210 // A4 width in mm
-      const pageHeight = 297 // A4 height in mm
-      const imgHeight = (canvas.height * imgWidth) / canvas.width
-      let heightLeft = imgHeight
+      const imgHeight = 297 // A4 height in mm (한 장에 맞춤)
       
-      let position = 0
-      
-      // 첫 페이지 추가
-      doc.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight)
-      heightLeft -= pageHeight
-      
-      // 여러 페이지가 필요한 경우 추가 페이지 생성
-      while (heightLeft >= 0) {
-        position = heightLeft - imgHeight
-        doc.addPage()
-        doc.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight)
-        heightLeft -= pageHeight
-      }
+      // A4 한 장에 맞게 이미지 추가
+      doc.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight)
       
       const pdfBlob = doc.output('blob')
       return pdfBlob

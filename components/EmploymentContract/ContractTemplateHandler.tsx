@@ -492,7 +492,7 @@ export default function ContractTemplateHandler({ branchId, branch }: ContractTe
             ${contractData.salaryType === 'hourly' ? `<p>시급인 경우 확인: 주휴수당 포함 [${contractData.includesWeeklyHoliday ? '✓' : ' '}]</p>` : ''}
             <p>임금지급일: 매월(매주 또는 매일) ${contractData.paymentDay}일(휴일의 경우는 익일 지급)</p>
             <p>지급방법: 근로자에게 직접(현금)지급 [${contractData.paymentMethod === 'cash' ? '✓' : ' '}], 근로자 명의 계좌에 입금 [${contractData.paymentMethod === 'bank' ? '✓' : ' '}]</p>
-            ${contractData.paymentMethod === 'bank' && contractData.bankAccount ? `<p>계좌번호: ${contractData.bankAccount}</p>` : '<p>계좌번호: </p>'}
+            ${contractData.paymentMethod === 'bank' ? `<p>계좌번호: ${contractData.bankName || ''} ${contractData.bankAccount || ''}</p>` : '<p>계좌번호: </p>'}
           </div>
         </div>
         
@@ -526,7 +526,7 @@ export default function ContractTemplateHandler({ branchId, branch }: ContractTe
           <div class="signature-info">
             <p>사업체명: ${branch.companyName || branch.name}</p>
             <p>주소: ${branch.address || ''}</p>
-            <p>대표자: ${branch.ceoName || ''} ${contractData.employerSignature ? '<img src="' + contractData.employerSignature + '" style="width: 100px; height: 40px; margin-left: 8px; vertical-align: middle; image-rendering: -webkit-optimize-contrast; image-rendering: crisp-edges;" />' : '<span class="signature-area"></span>'}</p>
+            <p>대표자: <span style="display: inline-block; min-width: 80px;">${branch.ceoName || ''}</span> ${contractData.employerSignature ? '<img src="' + contractData.employerSignature + '" style="width: 100px; height: 40px; margin-left: 10px; vertical-align: middle; image-rendering: -webkit-optimize-contrast; image-rendering: crisp-edges; display: inline-block;" />' : '<span class="signature-area"></span>'}</p>
           </div>
         </div>
         
@@ -535,7 +535,7 @@ export default function ContractTemplateHandler({ branchId, branch }: ContractTe
           <div class="signature-info">
             <p>주소: ${contractData.employeeAddress}</p>
             <p>연락처: ${contractData.employeePhone}</p>
-            <p>성명: ${contractData.employeeName} ${contractData.employeeSignature ? '<img src="' + contractData.employeeSignature + '" style="width: 100px; height: 40px; margin-left: 8px; vertical-align: middle; image-rendering: -webkit-optimize-contrast; image-rendering: crisp-edges;" />' : '<span class="signature-area"></span>'}</p>
+            <p>성명: <span style="display: inline-block; min-width: 80px;">${contractData.employeeName}</span> ${contractData.employeeSignature ? '<img src="' + contractData.employeeSignature + '" style="width: 100px; height: 40px; margin-left: 10px; vertical-align: middle; image-rendering: -webkit-optimize-contrast; image-rendering: crisp-edges; display: inline-block;" />' : '<span class="signature-area"></span>'}</p>
             <p>주민등록번호: ${contractData.residentNumber}</p>
           </div>
         </div>

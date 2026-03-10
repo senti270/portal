@@ -1160,9 +1160,9 @@ export default function Dashboard({ user }: DashboardProps) {
                     ) : (
                       <div className="p-6 text-center text-gray-500">
                         아직 코멘트가 없습니다.
-                  </div>
+                      </div>
                     )}
-                    
+
                     {/* 더보기 버튼 */}
                     {comments.length > 10 && !showAllComments && (
                       <div className="p-4 text-center border-t border-gray-200">
@@ -1172,9 +1172,9 @@ export default function Dashboard({ user }: DashboardProps) {
                         >
                           더보기 ({comments.length - 10}개 더)
                         </button>
-                  </div>
+                      </div>
                     )}
-                    
+
                     {/* 접기 버튼 */}
                     {showAllComments && comments.length > 10 && (
                       <div className="p-4 text-center border-t border-gray-200">
@@ -1184,7 +1184,7 @@ export default function Dashboard({ user }: DashboardProps) {
                         >
                           접기
                         </button>
-                  </div>
+                      </div>
                     )}
                   </div>
                 </div>

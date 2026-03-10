@@ -675,72 +675,8 @@ export default function Dashboard({ user }: DashboardProps) {
       <main className="max-w-7xl mx-auto py-4 sm:py-6 px-4 sm:px-6 lg:px-8">
         <div>
           {activeTab === 'home' && (
-            <div className="bg-white overflow-hidden shadow rounded-lg">
-              <div className="p-4 sm:p-6">
-                <h3 className="text-lg leading-6 font-medium text-gray-900">
-                  환영합니다!
-                </h3>
-                <p className="mt-2 text-sm text-gray-700 font-medium">
-                  근무 스케줄 관리 시스템에 오신 것을 환영합니다.
-                </p>
-                <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                  <p className="text-sm text-blue-800 text-center">
-                    💻 본 시스템은 PC화면에서 최적화되어있습니다
-                  </p>
-                  </div>
-                <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
-                  {!isManager && (
-                    <button 
-                      onClick={() => setActiveTab('branches')}
-                      className="bg-gray-50 p-4 rounded-lg hover:bg-gray-100 transition-colors duration-200 cursor-pointer text-left w-full"
-                    >
-                      <h4 className="font-medium text-gray-900">지점 관리</h4>
-                      <p className="text-gray-600 text-sm">지점 정보를 관리합니다</p>
-                    </button>
-                  )}
-                  <button 
-                    onClick={() => setActiveTab('employees')}
-                    className="bg-gray-50 p-4 rounded-lg hover:bg-gray-100 transition-colors duration-200 cursor-pointer text-left w-full"
-                  >
-                    <h4 className="font-medium text-gray-900">직원 관리</h4>
-                    <p className="text-gray-600 text-sm">직원 정보를 관리합니다</p>
-                  </button>
-                  <button 
-                    onClick={() => setActiveTab('schedule')}
-                    className="bg-gray-50 p-4 rounded-lg hover:bg-gray-100 transition-colors duration-200 cursor-pointer text-left w-full"
-                  >
-                    <h4 className="font-medium text-gray-900">스케줄 관리</h4>
-                    <p className="text-gray-600 text-sm">근무 스케줄을 관리합니다</p>
-                  </button>
-                  {!isManager && (
-                    <button 
-                      onClick={() => setActiveTab('payroll')}
-                      className="bg-gray-50 p-4 rounded-lg hover:bg-gray-100 transition-colors duration-200 cursor-pointer text-left w-full"
-                    >
-                      <h4 className="font-medium text-gray-900">급여작업</h4>
-                      <p className="text-gray-600 text-sm">급여 관련 작업을 수행합니다</p>
-                    </button>
-                  )}
-                  {!isManager && (
-                    <button 
-                      onClick={() => setActiveTab('reports')}
-                      className="bg-gray-50 p-4 rounded-lg hover:bg-gray-100 transition-colors duration-200 cursor-pointer text-left w-full"
-                    >
-                      <h4 className="font-medium text-gray-900">보고서</h4>
-                      <p className="text-gray-600 text-sm">근무 현황을 확인합니다</p>
-                    </button>
-                  )}
-                  <button 
-                    onClick={() => setActiveTab('forms')}
-                    className="bg-gray-50 p-4 rounded-lg hover:bg-gray-100 transition-colors duration-200 cursor-pointer text-left w-full"
-                  >
-                    <h4 className="font-medium text-gray-900">서식관리</h4>
-                    <p className="text-gray-600 text-sm">지점별 서식을 관리합니다</p>
-                  </button>
-                  </div>
-                
-                {/* 코멘트 섹션 */}
-                <div className="mt-8 bg-white shadow rounded-lg overflow-hidden">
+            // 홈 탭에서는 코멘트 섹션만 표시
+            <div className="bg-white shadow rounded-lg overflow-hidden">
                   <div className="px-6 py-4 border-b border-gray-200">
                     <h3 className="text-lg font-medium text-gray-900">코멘트</h3>
                     <p className="text-sm text-gray-600 mt-1">중요한 공지사항이나 메모를 남겨보세요</p>

@@ -52,6 +52,11 @@ export default function AttendanceMainPage() {
           storedId = newId;
         }
 
+        // 여기까지 오면 storedId는 항상 string
+        if (!storedId) {
+          return;
+        }
+
         setDeviceId(storedId);
 
         const ref = doc(db, 'attendanceDevices', storedId);

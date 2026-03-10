@@ -259,6 +259,11 @@ const TransferFileGeneration: React.FC = () => {
     ? transferDataAll.filter(item => item.branchId === selectedBranchId)
     : transferDataAll;
 
+  // 현재 보기(지점 필터 적용 후)에 대한 합계
+  const totalNetPay = transferData.reduce((sum, item) => sum + (item.netPay || 0), 0);
+  const totalDeposits = transferData.reduce((sum, item) => sum + (item.totalDeposits || 0), 0);
+  const totalDifference = transferData.reduce((sum, item) => sum + (item.difference || 0), 0);
+
   // 행 펼치기/접기
   const toggleRow = (employeeId: string) => {
     setExpandedRows(prev => {
@@ -437,6 +442,17 @@ const TransferFileGeneration: React.FC = () => {
             <h3 className="text-lg font-medium text-gray-900">
               계좌이체 데이터 ({transferData.length}건)
             </h3>
+            {transferData.length > 0 && (
+              <p className="mt-1 text-sm text-gray-600">
+                입금액 합계: <span className="font-semibold">{totalNetPay.toLocaleString()}원</span>{' '}
+                | 기입금액 합계: <span className="font-semibold">{totalDeposits.toLocaleString()}원</span>{' '}
+                | 차액 합계: <span className={`font-semibold ${
+                  totalDifference > 0 ? 'text-red-600' : totalDifference < 0 ? 'text-blue-600' : 'text-gray-700'
+                }`}>
+                  {totalDifference.toLocaleString()}원
+                </span>
+              </p>
+            )}
           </div>
           
           {loading ? (

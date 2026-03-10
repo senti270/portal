@@ -48,7 +48,7 @@ export default function AttendanceRegisterDevicePage() {
           storedId = newId;
         }
 
-        setDeviceId(storedId);
+        setDeviceId(storedId || '');
 
         const branchesSnap = await getDocs(collection(db, 'branches'));
         const list: Branch[] = branchesSnap.docs.map((d) => ({

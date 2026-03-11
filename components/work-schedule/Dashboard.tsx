@@ -10,6 +10,7 @@ import EmployeeManagement from '@/components/work-schedule/EmployeeManagement';
 import ScheduleManagement from '@/components/work-schedule/ScheduleManagement';
 import BranchManagement from '@/components/work-schedule/BranchManagement';
 import ReportManagement from '@/components/work-schedule/ReportManagement';
+import AttendanceReport from '@/components/work-schedule/AttendanceReport';
 import ManagerAccountManagement from '@/components/work-schedule/ManagerAccountManagement';
 import FormManagement from '@/components/work-schedule/FormManagement';
 import EmployeePayrollProcessing from '@/components/work-schedule/EmployeePayrollProcessing';
@@ -1294,6 +1295,16 @@ export default function Dashboard({ user }: DashboardProps) {
                     >
                       현시점예상급여
                     </button>
+                    <button
+                      onClick={() => handleSubTabChange('attendance-report')}
+                      className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                        activeSubTab === 'attendance-report'
+                          ? 'border-blue-500 text-blue-600'
+                          : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                      }`}
+                    >
+                      근태보고서
+                    </button>
                   </nav>
                 </div>
               </div>
@@ -1323,6 +1334,10 @@ export default function Dashboard({ user }: DashboardProps) {
 
               {activeSubTab === 'current-expected-payroll' && (
                 <CurrentExpectedPayroll />
+              )}
+
+              {activeSubTab === 'attendance-report' && (
+                <AttendanceReport />
               )}
             </div>
           )}

@@ -255,9 +255,14 @@ const TransferFileGeneration: React.FC = () => {
   
   // 지점 필터 적용: 대표지점(branchId)을 기준으로 필터링
   const transferDataAll: TransferData[] = Array.from(transferDataMap.values());
-  const transferData: TransferData[] = selectedBranchId
+  let transferData: TransferData[] = selectedBranchId
     ? transferDataAll.filter(item => item.branchId === selectedBranchId)
     : transferDataAll;
+
+  // 직원명 기준 정렬 (가나다 순)
+  transferData = [...transferData].sort((a, b) =>
+    (a.employeeName || '').localeCompare(b.employeeName || '', 'ko')
+  );
 
   // 현재 보기(지점 필터 적용 후)에 대한 합계
   const totalNetPay = transferData.reduce((sum, item) => sum + (item.netPay || 0), 0);

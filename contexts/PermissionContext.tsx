@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { User } from 'firebase/auth';
-import { doc, getDoc, onSnapshot } from 'firebase/firestore';
+import { doc, getDoc, onSnapshot, collection, getDocs } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { UserPermission, SystemId, PermissionLevel, hasPermission, UserRole } from '@/lib/permissions';
 
@@ -45,42 +45,59 @@ export function PermissionProvider({ children, user }: PermissionProviderProps) 
       return;
     }
 
-    // Firestore에서 사용자 권한 로드
-    const userPermissionRef = doc(db, 'userPermissions', user.uid);
-    
-    const unsubscribe = onSnapshot(
-      userPermissionRef,
-      (snapshot) => {
-        if (snapshot.exists()) {
-          const data = snapshot.data();
-          // drawing555@naver.com은 항상 master 권한
-          const userRole = user.email === 'drawing555@naver.com' ? 'master' : (data.role || 'user');
-          setPermissions({
-            userId: user.uid,
-            email: user.email || undefined,
-            name: data.name || undefined,
-            permissions: data.permissions || {},
-            role: userRole,
-            allowedBranches: data.allowedBranches || [],
-            createdAt: data.createdAt?.toDate() || new Date(),
-            updatedAt: data.updatedAt?.toDate() || new Date(),
-          } as UserPermission);
-        } else {
-          // drawing555@naver.com은 항상 master 권한
-          const defaultRole = user.email === 'drawing555@naver.com' ? 'master' : 'user';
-          const defaultPermission: UserPermission = {
-            userId: user.uid,
-            email: user.email || undefined,
-            permissions: {},
-            role: defaultRole,
-            allowedBranches: [],
-            createdAt: new Date(),
-            updatedAt: new Date(),
-          };
-          setPermissions(defaultPermission);
+    let unsubscribe: (() => void) | null = null;
+    let isMounted = true;
+
+    // 매니저 계정에서 마스터 권한 확인
+    const checkManagerAccount = async () => {
+      try {
+        const managerAccountsSnapshot = await getDocs(collection(db, 'managerAccounts'));
+        const managerAccount = managerAccountsSnapshot.docs.find(doc => {
+          const data = doc.data();
+          // userId가 jh4308이고 branchId가 master인 경우
+          if (data.userId === 'jh4308' && data.branchId === 'master' && data.isActive) {
+            return true;
+          }
+          // 이메일에서 userId 추출 (jh4308@... 형식)
+          if (user.email && user.email.startsWith('jh4308@')) {
+            return data.userId === 'jh4308' && data.branchId === 'master' && data.isActive;
+          }
+          return false;
+        });
+        
+        if (managerAccount && isMounted) {
+          // jh4308이 마스터 권한을 가진 경우
+          const userPermissionRef = doc(db, 'userPermissions', user.uid);
+          const snapshot = await getDoc(userPermissionRef);
           
-          // drawing555@naver.com이면 자동으로 권한 문서 생성
-          if (user.email === 'drawing555@naver.com') {
+          if (!isMounted) return;
+          
+          if (snapshot.exists()) {
+            const data = snapshot.data();
+            setPermissions({
+              userId: user.uid,
+              email: user.email || undefined,
+              name: data.name || undefined,
+              permissions: data.permissions || {},
+              role: 'master',
+              allowedBranches: data.allowedBranches || [],
+              createdAt: data.createdAt?.toDate() || new Date(),
+              updatedAt: data.updatedAt?.toDate() || new Date(),
+            } as UserPermission);
+          } else {
+            // 권한 문서가 없으면 마스터 권한으로 생성
+            const defaultPermission: UserPermission = {
+              userId: user.uid,
+              email: user.email || undefined,
+              permissions: {},
+              role: 'master',
+              allowedBranches: [],
+              createdAt: new Date(),
+              updatedAt: new Date(),
+            };
+            setPermissions(defaultPermission);
+            
+            // Firestore에 권한 문서 생성
             import('firebase/firestore').then(({ setDoc }) => {
               setDoc(userPermissionRef, {
                 userId: user.uid,
@@ -94,17 +111,86 @@ export function PermissionProvider({ children, user }: PermissionProviderProps) 
               });
             }).catch(console.error);
           }
+          setLoading(false);
+          return;
         }
-        setLoading(false);
-      },
-      (error) => {
-        console.error('권한 로드 오류:', error);
-        setPermissions(null);
-        setLoading(false);
+      } catch (error) {
+        console.error('매니저 계정 확인 오류:', error);
       }
-    );
+      
+      if (!isMounted) return;
+      
+      // 일반 권한 로드
+      const userPermissionRef = doc(db, 'userPermissions', user.uid);
+      
+      unsubscribe = onSnapshot(
+        userPermissionRef,
+        (snapshot) => {
+          if (!isMounted) return;
+          
+          if (snapshot.exists()) {
+            const data = snapshot.data();
+            // drawing555@naver.com은 항상 master 권한
+            const userRole = user.email === 'drawing555@naver.com' ? 'master' : (data.role || 'user');
+            setPermissions({
+              userId: user.uid,
+              email: user.email || undefined,
+              name: data.name || undefined,
+              permissions: data.permissions || {},
+              role: userRole,
+              allowedBranches: data.allowedBranches || [],
+              createdAt: data.createdAt?.toDate() || new Date(),
+              updatedAt: data.updatedAt?.toDate() || new Date(),
+            } as UserPermission);
+          } else {
+            // drawing555@naver.com은 항상 master 권한
+            const defaultRole = user.email === 'drawing555@naver.com' ? 'master' : 'user';
+            const defaultPermission: UserPermission = {
+              userId: user.uid,
+              email: user.email || undefined,
+              permissions: {},
+              role: defaultRole,
+              allowedBranches: [],
+              createdAt: new Date(),
+              updatedAt: new Date(),
+            };
+            setPermissions(defaultPermission);
+            
+            // drawing555@naver.com이면 자동으로 권한 문서 생성
+            if (user.email === 'drawing555@naver.com') {
+              import('firebase/firestore').then(({ setDoc }) => {
+                setDoc(userPermissionRef, {
+                  userId: user.uid,
+                  email: user.email,
+                  name: '마스터',
+                  permissions: {},
+                  role: 'master',
+                  allowedBranches: [],
+                  createdAt: new Date(),
+                  updatedAt: new Date(),
+                });
+              }).catch(console.error);
+            }
+          }
+          setLoading(false);
+        },
+        (error) => {
+          if (!isMounted) return;
+          console.error('권한 로드 오류:', error);
+          setPermissions(null);
+          setLoading(false);
+        }
+      );
+    };
 
-    return () => unsubscribe();
+    checkManagerAccount();
+
+    return () => {
+      isMounted = false;
+      if (unsubscribe) {
+        unsubscribe();
+      }
+    };
   }, [user]);
 
   const hasSystemPermission = (

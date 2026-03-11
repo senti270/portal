@@ -9,7 +9,8 @@ export type SystemId =
   | 'manual-management'
   | 'chatbot-management'
   | 'system-login'
-  | 'permission-management';
+  | 'permission-management'
+  | 'employment-contract';
 
 export type PermissionLevel = 'none' | 'read' | 'write' | 'admin';
 
@@ -82,6 +83,11 @@ export const systemPermissions: Record<SystemId, SystemPermission> = {
     systemId: 'permission-management',
     defaultPermission: 'none',
     requiredPermission: 'admin',
+  },
+  'employment-contract': {
+    systemId: 'employment-contract',
+    defaultPermission: 'none',
+    requiredPermission: 'read',
   },
 };
 

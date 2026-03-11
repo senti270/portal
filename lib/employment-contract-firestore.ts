@@ -119,6 +119,26 @@ export async function saveEmploymentContract(
       }
     }
     
+    // salaryAmount 값 확인 및 변환
+    const originalSalaryAmount = contract.contractInfo.salaryAmount
+    const salaryAmountValue = (() => {
+      if (originalSalaryAmount === undefined || originalSalaryAmount === null) {
+        console.warn('⚠️ salaryAmount가 undefined 또는 null입니다.')
+        return 0
+      }
+      const numValue = typeof originalSalaryAmount === 'string' 
+        ? parseFloat(String(originalSalaryAmount).replace(/,/g, ''))
+        : Number(originalSalaryAmount)
+      console.log('💰 salaryAmount 변환:', {
+        원본값: originalSalaryAmount,
+        원본타입: typeof originalSalaryAmount,
+        변환값: numValue,
+        변환타입: typeof numValue,
+        isNaN: isNaN(numValue)
+      })
+      return isNaN(numValue) ? 0 : numValue
+    })()
+    
     const contractData = {
       ...contract,
       contractInfo: {
@@ -126,11 +146,26 @@ export async function saveEmploymentContract(
         startDate: Timestamp.fromDate(contract.contractInfo.startDate),
         endDate: contract.contractInfo.endDate ? Timestamp.fromDate(contract.contractInfo.endDate) : null,
         // salaryAmount가 제대로 포함되도록 명시적으로 설정
-        salaryAmount: contract.contractInfo.salaryAmount !== undefined && contract.contractInfo.salaryAmount !== null 
-          ? Number(contract.contractInfo.salaryAmount) 
-          : 0,
-        salaryType: contract.contractInfo.salaryType,
-        employmentType: contract.contractInfo.employmentType
+        salaryAmount: salaryAmountValue,
+        // salaryType과 employmentType이 제대로 포함되도록 명시적으로 설정
+        salaryType: contract.contractInfo.salaryType || 'monthly',
+        employmentType: contract.contractInfo.employmentType,
+        // 주휴수당 포함 여부 명시적으로 설정 (undefined일 경우 false)
+        includesWeeklyHoliday: contract.contractInfo.includesWeeklyHoliday !== undefined 
+          ? Boolean(contract.contractInfo.includesWeeklyHoliday)
+          : false,
+        // 나머지 필드들도 명시적으로 포함
+        workType: contract.contractInfo.workType,
+        workPlace: contract.contractInfo.workPlace,
+        workContent: contract.contractInfo.workContent,
+        weeklyWorkHours: contract.contractInfo.weeklyWorkHours,
+        dailyWorkHours: contract.contractInfo.dailyWorkHours,
+        workDays: contract.contractInfo.workDays,
+        workStartTime: contract.contractInfo.workStartTime,
+        workEndTime: contract.contractInfo.workEndTime,
+        breakTime: contract.contractInfo.breakTime,
+        probationPeriod: contract.contractInfo.probationPeriod,
+        notes: contract.contractInfo.notes
       },
       signatures: {
         employee: {
@@ -152,6 +187,13 @@ export async function saveEmploymentContract(
     }
     
     console.log('💾 Firestore에 저장할 데이터 준비 완료')
+    console.log('📊 contractInfo 확인:', {
+      salaryType: contractData.contractInfo.salaryType,
+      salaryAmount: contractData.contractInfo.salaryAmount,
+      employmentType: contractData.contractInfo.employmentType,
+      includesWeeklyHoliday: contractData.contractInfo.includesWeeklyHoliday,
+      전체contractInfo: contractData.contractInfo
+    })
     const docRef = await addDoc(contractsRef, contractData)
     console.log('✅ Firestore 저장 성공, document ID:', docRef.id)
     return docRef.id

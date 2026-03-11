@@ -789,11 +789,11 @@ export default function Dashboard({ user }: DashboardProps) {
                                 >
                                   ✕
                                 </button>
-                  </div>
+                              </div>
                             ))}
-                </div>
+                          </div>
                         )}
-              </div>
+                      </div>
                       
                       {/* 코멘트 옵션 체크박스 */}
                       <div className="flex flex-wrap gap-4 text-sm">
@@ -1010,14 +1010,16 @@ export default function Dashboard({ user }: DashboardProps) {
                                   
                                   {/* 지점 태그 표시 */}
                                   {comment.branchTags && comment.branchTags.length > 0 && (
-                                    comment.branchTags.map(branchId => {
-                                      const branch = branches.find(b => b.id === branchId);
-                                      return branch ? (
-                                        <span key={branchId} className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
-                                          🏢 {branch.name}
-                                        </span>
-                                      ) : null;
-                                    })
+                                    <>
+                                      {comment.branchTags.map(branchId => {
+                                        const branch = branches.find(b => b.id === branchId);
+                                        return branch ? (
+                                          <span key={branchId} className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
+                                            🏢 {branch.name}
+                                          </span>
+                                        ) : null;
+                                      })}
+                                    </>
                                   )}
                                 </div>
                                 <p className={`text-sm whitespace-pre-wrap ${comment.isCompleted ? 'text-gray-400 line-through' : 'text-gray-800'}`}>
@@ -1082,12 +1084,12 @@ export default function Dashboard({ user }: DashboardProps) {
                                                       </html>
                                                     `);
                                                     newWindow.document.close();
-                                                  } else {
+                                                } else {
                                                     alert('팝업이 차단되었습니다. 팝업 허용 후 다시 시도해주세요.');
-                                                  }
-                                                } else if (!attachment.isBase64 && attachment.fileUrl.startsWith('http')) {
-                                                  // Firebase Storage URL의 경우
-                                                  window.open(attachment.fileUrl, '_blank');
+                                                }
+                                              } else if (!attachment.isBase64 && attachment.fileUrl.startsWith('http')) {
+                                                // Firebase Storage URL의 경우
+                                                window.open(attachment.fileUrl, '_blank');
                                               } else {
                                                 // 다운로드 링크로 처리
                                                 const link = document.createElement('a');
@@ -1130,7 +1132,7 @@ export default function Dashboard({ user }: DashboardProps) {
                                 {(comment.authorId === currentUserId || user.email === 'drawing555@naver.com') && (
                                   <>
                                     <button
-                                      onClick={() =>                                       setEditingComment({
+                                      onClick={() => setEditingComment({
                                         id: comment.id,
                                         content: comment.content,
                                         options: {
@@ -1188,8 +1190,6 @@ export default function Dashboard({ user }: DashboardProps) {
                     )}
                   </div>
                 </div>
-              </div>
-            </div>
           )}
           
           {activeTab === 'branches' && (

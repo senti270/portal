@@ -95,43 +95,19 @@ export default function AttendanceReport() {
       const startDateStr = formatDate(startDate);
       const endDateStr = formatDate(endDate);
       
-      // 쿼리 조건 구성
-      const constraints: any[] = [];
-      
-      // 날짜 범위 필터링 (월별)
-      // Firestore에서 문자열 비교로 날짜 범위 필터링
-      constraints.push(where('date', '>=', startDateStr));
-      constraints.push(where('date', '<=', endDateStr));
-      
-      // 지점 필터링
-      if (selectedBranchId) {
-        constraints.push(where('branchId', '==', selectedBranchId));
-      }
-      
-      // 직원 필터링
-      if (selectedEmployeeId) {
-        constraints.push(where('employeeId', '==', selectedEmployeeId));
-      }
-      
-      // 쿼리 실행
-      // orderBy는 where와 함께 사용할 때 인덱스가 필요할 수 있으므로
-      // 가능한 한 간단한 쿼리로 구성
-      let attendanceQuery;
-      if (constraints.length === 2) {
-        // 날짜 필터만 있는 경우
-        attendanceQuery = query(
-          collection(db, 'attendanceRecords'),
-          ...constraints,
-          orderBy('date', 'desc')
-        );
-      } else {
-        // 다른 필터가 있는 경우 orderBy 없이 조회 후 클라이언트에서 정렬
-        attendanceQuery = query(
-          collection(db, 'attendanceRecords'),
-          ...constraints
-        );
-      }
-      
+      // 쿼리 조건 구성 (월별만 서버에서 필터링, 지점/직원은 클라이언트에서 필터링)
+      const constraints: any[] = [
+        where('date', '>=', startDateStr),
+        where('date', '<=', endDateStr)
+      ];
+
+      // 쿼리 실행 (날짜 기준 정렬)
+      const attendanceQuery = query(
+        collection(db, 'attendanceRecords'),
+        ...constraints,
+        orderBy('date', 'desc')
+      );
+
       const snapshot = await getDocs(attendanceQuery);
       
       const recordsData: AttendanceRecord[] = [];
@@ -161,15 +137,26 @@ export default function AttendanceReport() {
         });
       });
       
+      // 지점 / 직원별 필터링은 클라이언트에서 수행
+      const filtered = recordsData.filter(record => {
+        if (selectedBranchId && record.branchId !== selectedBranchId) {
+          return false;
+        }
+        if (selectedEmployeeId && record.employeeId !== selectedEmployeeId) {
+          return false;
+        }
+        return true;
+      });
+
       // 클라이언트에서 정렬 (날짜 내림차순, 시간 내림차순)
-      recordsData.sort((a, b) => {
+      filtered.sort((a, b) => {
         if (a.date !== b.date) {
           return b.date.localeCompare(a.date);
         }
         return b.actualTime.getTime() - a.actualTime.getTime();
       });
       
-      setRecords(recordsData);
+      setRecords(filtered);
     } catch (error) {
       console.error('근태 기록 로드 실패:', error);
       alert('근태 기록을 불러오는 중 오류가 발생했습니다.');

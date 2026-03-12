@@ -770,7 +770,7 @@ function ScheduleInfoScreen({
     );
   }
 
-  // 정시 출근 (스케줄이 있는 경우에만 사용)
+  // 정시 출근 (스케줄이 있는 경우, 지각/일찍 화면과 동일한 UI 레이아웃 + 전달사항만)
   if (
     employee.scheduledStartTime &&
     employee.scheduledEndTime &&
@@ -780,34 +780,54 @@ function ScheduleInfoScreen({
   ) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-6">
-        <div className="bg-white rounded-3xl shadow-2xl p-12 max-w-2xl w-full text-center">
-          <div className="text-6xl mb-6">✅</div>
-          <h2 className="text-3xl font-bold text-gray-800 mb-8">
-            금일 {employee.employeeName} 님은
-          </h2>
-          {employee.scheduledStartTime && employee.scheduledEndTime ? (
-            <>
-              <p className="text-2xl text-gray-700 mb-4">
-                {employee.scheduledStartTime} - {employee.scheduledEndTime} 근무스케줄이며
-              </p>
-              <p className="text-2xl text-gray-700 mb-8">
-                휴게시간은 {breakTimeDisplay}입니다.
-              </p>
-            </>
-          ) : (
-            <p className="text-2xl text-gray-700 mb-8">
-              스케줄이 없습니다.
+        <div className="bg-white rounded-3xl shadow-2xl p-12 max-w-2xl w-full">
+          <div className="mb-8 text-center">
+            <h3 className="text-2xl font-bold text-gray-800 mb-4">
+              금일 {employee.employeeName} 님 근무 정보
+            </h3>
+            <div className="inline-flex flex-col sm:flex-row items-stretch justify-center gap-3 sm:gap-6 bg-gray-50 border border-gray-200 rounded-2xl px-4 py-3 text-base text-gray-700">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
+                <span className="text-sm font-semibold text-gray-500">근무스케줄</span>
+                <span className="font-medium">
+                  {employee.scheduledStartTime} - {employee.scheduledEndTime}
+                </span>
+              </div>
+              <div className="h-px sm:h-8 sm:w-px bg-gray-200 mx-6 sm:mx-0 sm:my-0" />
+              <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
+                <span className="text-sm font-semibold text-gray-500">휴게시간</span>
+                <span className="font-medium">{breakTimeDisplay}</span>
+              </div>
+            </div>
+            <p className="text-2xl font-bold text-green-600 mt-6 mb-2">
+              정각출근 감사합니다 :)
             </p>
-          )}
-          <p className="text-3xl font-bold text-green-600 mb-8">
-            정각출근 감사합니다 :)
-          </p>
-          <button
-            onClick={onConfirm}
-            className="w-full h-16 bg-green-500 hover:bg-green-600 text-white text-2xl font-bold rounded-2xl shadow-lg transform transition-all duration-200 hover:scale-105 active:scale-95"
-          >
-            확인
-          </button>
+            <p className="text-sm text-gray-500 mt-3">
+              ⚠️ 휴게시간은 반드시 지켜주시고, 매장 상황상 휴게가 불가한 경우에는
+              사장님께 사전에 꼭 동의를 구해주세요.
+            </p>
+          </div>
+          <div className="space-y-4">
+            <textarea
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              placeholder="전달사항 (선택사항)"
+              className="w-full h-24 p-4 border-2 border-gray-300 rounded-xl text-lg resize-none focus:outline-none focus:border-blue-500"
+            />
+            <div className="flex space-x-4">
+              <button
+                onClick={onBack}
+                className="flex-1 h-14 bg-gray-300 hover:bg-gray-400 text-gray-800 text-xl font-bold rounded-xl shadow-lg"
+              >
+                뒤로
+              </button>
+              <button
+                onClick={onConfirm}
+                className="flex-1 h-14 bg-green-500 hover:bg-green-600 text-white text-xl font-bold rounded-xl shadow-lg"
+              >
+                확인
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     );
@@ -1171,12 +1191,8 @@ function EarlyCheckInReasonForm({
   );
 }
 
-// 사유 입력 폼 컴포넌트 (지각/일반)
+// 전달사항 + 확인 폼 (지각/일찍 출근 시 — 사유 선택 제거, 전달사항만)
 function ReasonInputForm({
-  selectedReason,
-  setSelectedReason,
-  reasonOther,
-  setReasonOther,
   note,
   setNote,
   onConfirm,
@@ -1191,39 +1207,8 @@ function ReasonInputForm({
   onConfirm: () => void;
   onBack: () => void;
 }) {
-  const reasons = [
-    '사장님 요청',
-    '매장이 바빠서',
-    '개인사정',
-    '기타'
-  ];
-
   return (
     <div className="mt-8 space-y-4">
-      <h3 className="text-xl font-bold text-gray-800 mb-4">스케줄과 다른 사유 선택</h3>
-      <div className="grid grid-cols-2 gap-3 mb-4">
-        {reasons.map((reason) => (
-          <button
-            key={reason}
-            onClick={() => setSelectedReason(reason)}
-            className={`h-14 rounded-xl font-semibold text-lg transition-all duration-200 ${
-              selectedReason === reason
-                ? 'bg-blue-600 text-white shadow-lg'
-                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-            }`}
-          >
-            {reason}
-          </button>
-        ))}
-      </div>
-      {selectedReason === '기타' && (
-        <textarea
-          value={reasonOther}
-          onChange={(e) => setReasonOther(e.target.value)}
-          placeholder="사유를 입력하세요"
-          className="w-full h-24 p-4 border-2 border-gray-300 rounded-xl text-lg resize-none focus:outline-none focus:border-blue-500"
-        />
-      )}
       <textarea
         value={note}
         onChange={(e) => setNote(e.target.value)}

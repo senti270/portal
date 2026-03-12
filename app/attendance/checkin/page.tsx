@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, Suspense } from 'react';
+import React, { useState, useEffect, useRef, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { collection, query, where, getDocs, addDoc, Timestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
@@ -715,6 +715,42 @@ function ScheduleInfoScreen({
     return `${sign}${hoursPart}${minutesPart || ''}`.trim();
   })();
 
+  // 정각출근 화면 전용: 10초 카운트다운, 0초 시 자동 확인
+  const isOnTimeScreen = Boolean(
+    employee.scheduledStartTime &&
+    employee.scheduledEndTime &&
+    checkResult?.status === 'on_time' &&
+    !showReasonInput &&
+    !showManualTimeInput
+  );
+  const [onTimeCountdown, setOnTimeCountdown] = useState(10);
+  const onTimeConfirmedRef = useRef(false);
+  const onConfirmRef = useRef(onConfirm);
+  onConfirmRef.current = onConfirm;
+
+  useEffect(() => {
+    if (!isOnTimeScreen) return;
+    setOnTimeCountdown(10);
+    onTimeConfirmedRef.current = false;
+  }, [isOnTimeScreen, employee.employeeId]);
+
+  useEffect(() => {
+    if (!isOnTimeScreen) return;
+    const id = setInterval(() => {
+      setOnTimeCountdown((prev) => {
+        if (prev <= 1) {
+          if (!onTimeConfirmedRef.current) {
+            onTimeConfirmedRef.current = true;
+            onConfirmRef.current();
+          }
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => clearInterval(id);
+  }, [isOnTimeScreen]);
+
   // 사유 입력 화면 (수동 시간 입력 후 또는 지각/일찍 출근 후)
   if (showReasonInput && !showManualTimeInput) {
     return (
@@ -821,10 +857,13 @@ function ScheduleInfoScreen({
                 뒤로
               </button>
               <button
-                onClick={onConfirm}
+                onClick={() => {
+                  onTimeConfirmedRef.current = true;
+                  onConfirm();
+                }}
                 className="flex-1 h-14 bg-green-500 hover:bg-green-600 text-white text-xl font-bold rounded-xl shadow-lg"
               >
-                확인
+                확인 ({onTimeCountdown}s)
               </button>
             </div>
           </div>

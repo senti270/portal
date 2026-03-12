@@ -1191,8 +1191,12 @@ function EarlyCheckInReasonForm({
   );
 }
 
-// 전달사항 + 확인 폼 (지각/일찍 출근 시 — 사유 선택 제거, 전달사항만)
+// 전달사항 + 확인 폼. 지각/일찍 시에만 사유 선택 표시 (정시출근은 이 폼 안 씀)
 function ReasonInputForm({
+  selectedReason,
+  setSelectedReason,
+  reasonOther,
+  setReasonOther,
   note,
   setNote,
   onConfirm,
@@ -1207,8 +1211,39 @@ function ReasonInputForm({
   onConfirm: () => void;
   onBack: () => void;
 }) {
+  const reasons = [
+    '사장님 요청',
+    '매장이 바빠서',
+    '개인사정',
+    '기타'
+  ];
+
   return (
     <div className="mt-8 space-y-4">
+      <h3 className="text-xl font-bold text-gray-800 mb-4">스케줄과 다른 사유 선택</h3>
+      <div className="grid grid-cols-2 gap-3 mb-4">
+        {reasons.map((reason) => (
+          <button
+            key={reason}
+            onClick={() => setSelectedReason(reason)}
+            className={`h-14 rounded-xl font-semibold text-lg transition-all duration-200 ${
+              selectedReason === reason
+                ? 'bg-blue-600 text-white shadow-lg'
+                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+            }`}
+          >
+            {reason}
+          </button>
+        ))}
+      </div>
+      {selectedReason === '기타' && (
+        <textarea
+          value={reasonOther}
+          onChange={(e) => setReasonOther(e.target.value)}
+          placeholder="사유를 입력하세요"
+          className="w-full h-24 p-4 border-2 border-gray-300 rounded-xl text-lg resize-none focus:outline-none focus:border-blue-500"
+        />
+      )}
       <textarea
         value={note}
         onChange={(e) => setNote(e.target.value)}

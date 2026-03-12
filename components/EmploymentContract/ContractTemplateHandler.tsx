@@ -480,7 +480,7 @@ export default function ContractTemplateHandler({ branchId, branch }: ContractTe
         <div class="section">
           <div class="section-title">5. 근무일/휴일</div>
           <div class="section-content">
-            <p>매주 ${contractData.workDaysPerWeek}일 근무${contractData.workDaysDetail ? `(필요시, 근무요일: ${contractData.workDaysDetail})` : ''}, 주휴일 매주 ${contractData.weeklyHolidayDay}요일</p>
+            <p>매주 ${contractData.workDaysPerWeek}일 근무${contractData.workDaysDetail ? `(필요시, 근무요일: ${contractData.workDaysDetail})` : ''}</p>
             <p>사업장의 상황이나 근로자 요청에 따라 근무일 또는 휴무일이 변경될 수 있으며, 이 경우 상호 협의하여 조정함</p>
           </div>
         </div>

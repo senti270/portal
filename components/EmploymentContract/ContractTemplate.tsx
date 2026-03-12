@@ -604,9 +604,7 @@ export default function ContractTemplate({ branch, onComplete, contractFileUrl }
           <p className="text-base mb-2">
             <span className="font-semibold">5. 근무일/휴일</span> : 매주 {' '}
             <span className="font-semibold text-blue-600">{formData.workDaysPerWeek}</span>
-            {' '}일 근무(필요시, 근무요일), 주휴일 매주 {' '}
-            <span className="font-semibold text-blue-600">{formData.weeklyHolidayDay}</span>
-            {' '}요일
+            {' '}일 근무(필요시, 근무요일)
           </p>
           <div className="mb-2">
             <button

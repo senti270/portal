@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -295,11 +295,16 @@ function CheckInPageContent() {
         (actualTime.getTime() - scheduledTime.getTime()) / (1000 * 60); // +면 늦게, -면 일찍
       const absDiffMinutes = Math.abs(rawDiffMinutes);
 
-      // ±30분 이내이면 바로 출근 처리 (사유 입력 없이)
+      // ±30분 이내이면 근무정보 화면을 띄운 뒤, 확인 시 출근 처리
       if (absDiffMinutes <= 30) {
         setSelectedEmployee(employee);
-        setAutoCheckInMode(true);
-        await handleConfirmCheckIn();
+        setCheckResult({
+          status: 'on_time',
+          minutesDiff: 0,
+          message: '정시 출근입니다.',
+          diffMinutes: Math.round(rawDiffMinutes)
+        });
+        setShowScheduleInfo(true);
         return;
       }
 

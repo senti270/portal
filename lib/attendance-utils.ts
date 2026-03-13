@@ -18,7 +18,7 @@ export function isWithinTolerance(scheduledTime: Date, actualTime: Date, toleran
 export function checkAttendanceStatus(
   scheduledTime: Date | null,
   actualTime: Date,
-  toleranceMinutes: number = 5
+  toleranceMinutes: number = 10
 ): AttendanceCheckResult {
   if (!scheduledTime) {
     return {

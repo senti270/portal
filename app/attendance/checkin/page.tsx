@@ -295,8 +295,8 @@ function CheckInPageContent() {
         (actualTime.getTime() - scheduledTime.getTime()) / (1000 * 60); // +면 늦게, -면 일찍
       const absDiffMinutes = Math.abs(rawDiffMinutes);
 
-      // ±30분 이내이면 근무정보 화면을 띄운 뒤, 확인 시 출근 처리
-      if (absDiffMinutes <= 30) {
+      // ±10분 이내이면 근무정보 화면을 띄운 뒤, 확인 시 출근 처리
+      if (absDiffMinutes <= 10) {
         setSelectedEmployee(employee);
         setCheckResult({
           status: 'on_time',
@@ -1297,7 +1297,17 @@ function ReasonInputForm({
           뒤로
         </button>
         <button
-          onClick={onConfirm}
+          onClick={() => {
+            if (!selectedReason) {
+              alert('사유를 선택해주세요.');
+              return;
+            }
+            if (selectedReason === '기타' && !reasonOther.trim()) {
+              alert('기타 사유를 입력해주세요.');
+              return;
+            }
+            onConfirm();
+          }}
           className="flex-1 h-14 bg-green-500 hover:bg-green-600 text-white text-xl font-bold rounded-xl shadow-lg"
         >
           확인

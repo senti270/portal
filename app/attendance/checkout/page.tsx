@@ -296,23 +296,27 @@ function CheckOutPageContent() {
         }
       }
 
-      // 퇴근 기록 저장 (undefined 필드는 Firestore에 넣지 않도록 조건부로 추가)
-      const attendanceRecord: any = {
+      // 퇴근 기록 저장 (undefined 필드는 Firestore에 넣지 않음 — 스케줄 없는 직원 대응)
+      const attendanceRecord: Record<string, unknown> = {
         employeeId: selectedEmployee.employeeId,
         employeeName: selectedEmployee.employeeName,
-        // URL 파라미터가 없을 때도 실제 지점 ID를 사용하도록 targetBranchId 우선
         branchId: targetBranchId || branchId || 'unknown',
         branchName: branchName || '',
-        date: todayStr as any,
+        date: todayStr,
         type: 'checkout',
-        scheduledStartTime: selectedEmployee.scheduledStartTime,
-        scheduledEndTime: selectedEmployee.scheduledEndTime,
-        scheduledBreakTime: selectedEmployee.scheduledBreakTime,
-        actualTime: actualTime,
+        actualTime: Timestamp.fromDate(actualTime),
         status,
-        createdAt: actualTime
+        createdAt: Timestamp.fromDate(actualTime)
       };
-
+      if (selectedEmployee.scheduledStartTime != null) {
+        attendanceRecord.scheduledStartTime = selectedEmployee.scheduledStartTime;
+      }
+      if (selectedEmployee.scheduledEndTime != null) {
+        attendanceRecord.scheduledEndTime = selectedEmployee.scheduledEndTime;
+      }
+      if (selectedEmployee.scheduledBreakTime != null && selectedEmployee.scheduledBreakTime !== undefined) {
+        attendanceRecord.scheduledBreakTime = selectedEmployee.scheduledBreakTime;
+      }
       if (status === 'late' && lateMinutes > 0) {
         attendanceRecord.lateMinutes = lateMinutes;
       }
@@ -329,12 +333,7 @@ function CheckOutPageContent() {
         attendanceRecord.note = note;
       }
 
-      await addDoc(collection(db, 'attendanceRecords'), {
-        ...attendanceRecord,
-        date: todayStr,
-        actualTime: Timestamp.fromDate(actualTime),
-        createdAt: Timestamp.fromDate(actualTime)
-      });
+      await addDoc(collection(db, 'attendanceRecords'), attendanceRecord);
 
       alert('퇴근 기록이 완료되었습니다.\n오늘도 감사합니다.');
       router.push('/attendance');

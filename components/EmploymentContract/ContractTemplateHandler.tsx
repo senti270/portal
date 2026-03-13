@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { collection, addDoc, getDocs, query, where, Timestamp, writeBatch, doc } from 'firebase/firestore'
+import { collection, addDoc, getDocs, getDoc, query, where, Timestamp, writeBatch, doc } from 'firebase/firestore'
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage'
 import { db, storage } from '@/lib/firebase'
 import { generateContractPdf } from '@/lib/contract-docx'
@@ -24,9 +24,24 @@ interface ContractTemplateHandlerProps {
   branch: Branch
 }
 
+interface MatchedEmployee {
+  id: string
+  name: string
+  phone: string
+  residentNumber?: string
+}
+
 export default function ContractTemplateHandler({ branchId, branch }: ContractTemplateHandlerProps) {
   const [loading, setLoading] = useState(false)
   const [contractFileUrl, setContractFileUrl] = useState<string | null>(null)
+  const [showSamePersonModal, setShowSamePersonModal] = useState(false)
+  const [matchedEmployees, setMatchedEmployees] = useState<MatchedEmployee[]>([])
+  const [pendingSync, setPendingSync] = useState<{
+    contractDataForSave: Omit<EmploymentContract, 'id' | 'createdAt' | 'updatedAt'>
+    contractId: string
+    pdfUrl: string
+    originalContractData: ContractData
+  } | null>(null)
 
   const handleContractComplete = async (contractData: ContractData) => {
     console.log('🚀 계약서 저장 프로세스 시작')
@@ -221,68 +236,96 @@ export default function ContractTemplateHandler({ branchId, branch }: ContractTe
         throw new Error('계약서 저장 중 오류가 발생했습니다. 다시 시도해주세요.')
       }
 
-      // 7. 직원관리에 자동 업로드
-      console.log('👤 직원관리 동기화 시작...')
-      try {
-        await syncToEmployeeManagement(contractDataForSave, contractId, pdfUrl, contractData)
-        console.log('✅ 직원관리 동기화 완료')
-      } catch (error) {
-        console.error('❌ 직원관리 동기화 오류:', error)
-        console.error('오류 상세:', {
-          errorMessage: error instanceof Error ? error.message : String(error),
-          errorStack: error instanceof Error ? error.stack : undefined,
-          contractData: {
-            employeeName: contractData.employeeName,
-            residentNumber: contractData.residentNumber
-          }
+      // 7. 동명이인 또는 같은 전화번호 직원 검색
+      const nameQuery = query(
+        collection(db, 'employees'),
+        where('name', '==', contractDataForSave.employeeInfo.name)
+      )
+      const phoneQuery = query(
+        collection(db, 'employees'),
+        where('phone', '==', contractDataForSave.employeeInfo.phone)
+      )
+      const [nameSnap, phoneSnap] = await Promise.all([
+        getDocs(nameQuery),
+        getDocs(phoneQuery)
+      ])
+      const seenIds = new Set<string>()
+      const merged: MatchedEmployee[] = []
+      nameSnap.docs.forEach((d) => {
+        if (seenIds.has(d.id)) return
+        seenIds.add(d.id)
+        const ddata = d.data()
+        merged.push({
+          id: d.id,
+          name: ddata.name ?? '',
+          phone: ddata.phone ?? '',
+          residentNumber: ddata.residentNumber
         })
-        // 직원관리 동기화 실패해도 계약서는 저장되었으므로 경고만 표시
-        alert('⚠️ 계약서는 저장되었지만 직원관리 동기화에 실패했습니다.\n직원관리 화면에서 수동으로 확인해주세요.\n\n브라우저 콘솔(F12)에서 오류 내용을 확인할 수 있습니다.')
-      }
+      })
+      phoneSnap.docs.forEach((d) => {
+        if (seenIds.has(d.id)) return
+        seenIds.add(d.id)
+        const ddata = d.data()
+        merged.push({
+          id: d.id,
+          name: ddata.name ?? '',
+          phone: ddata.phone ?? '',
+          residentNumber: ddata.residentNumber
+        })
+      })
 
-      // 8. 카카오톡 전송
-      console.log('📱 카카오톡 전송 시작...')
-      try {
-        const kakaoResponse = await fetch('/api/employment-contract/send-kakao', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            phoneNumber: contractData.employeePhone,
-            contractUrl: pdfUrl,
-            employeeName: contractData.employeeName
+      const doPostSyncSteps = async () => {
+        console.log('📱 카카오톡 전송 시작...')
+        try {
+          const kakaoResponse = await fetch('/api/employment-contract/send-kakao', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              phoneNumber: contractData.employeePhone,
+              contractUrl: pdfUrl,
+              employeeName: contractData.employeeName
+            })
           })
-        })
-        
-        if (!kakaoResponse.ok) {
-          const errorText = await kakaoResponse.text()
-          console.error('❌ 카카오톡 전송 API 오류:', {
-            status: kakaoResponse.status,
-            statusText: kakaoResponse.statusText,
-            body: errorText
-          })
-          // 카카오톡 전송 실패해도 계약서 저장은 완료되었으므로 계속 진행
-        } else {
-          const kakaoResult = await kakaoResponse.json()
-          if (kakaoResult.success) {
-            console.log('✅ 카카오톡 전송 성공:', kakaoResult.message)
+          if (!kakaoResponse.ok) {
+            const errorText = await kakaoResponse.text()
+            console.error('❌ 카카오톡 전송 API 오류:', { status: kakaoResponse.status, body: errorText })
           } else {
-            console.warn('⚠️ 카카오톡 전송 실패:', kakaoResult.error)
+            const kakaoResult = await kakaoResponse.json()
+            if (kakaoResult.success) console.log('✅ 카카오톡 전송 성공:', kakaoResult.message)
+            else console.warn('⚠️ 카카오톡 전송 실패:', kakaoResult.error)
           }
+        } catch (error) {
+          console.error('❌ 카카오톡 전송 중 오류:', error)
         }
-      } catch (error) {
-        console.error('❌ 카카오톡 전송 중 오류:', error)
-        console.error('오류 상세:', {
-          errorMessage: error instanceof Error ? error.message : String(error),
-          errorStack: error instanceof Error ? error.stack : undefined
-        })
-        // 카카오톡 전송 실패해도 계약서 저장은 완료되었으므로 계속 진행
+        console.log('🎉 모든 작업 완료!')
+        setContractFileUrl(pdfUrl)
+        alert('근로계약서가 성공적으로 작성되었습니다!\n직원관리에 자동으로 등록되었습니다.')
       }
 
-      console.log('🎉 모든 작업 완료!')
-      setContractFileUrl(pdfUrl) // PDF URL 저장
-      alert('근로계약서가 성공적으로 작성되었습니다!\n직원관리에 자동으로 등록되었습니다.')
+      if (merged.length === 0) {
+        // 매칭 없음 → 신규 직원 생성 + 계약 연결
+        console.log('👤 직원관리 동기화 시작 (신규 직원)...')
+        try {
+          await syncToEmployeeManagement(contractDataForSave, contractId, pdfUrl, contractData, null)
+          console.log('✅ 직원관리 동기화 완료')
+          await doPostSyncSteps()
+        } catch (error) {
+          console.error('❌ 직원관리 동기화 오류:', error)
+          alert('⚠️ 계약서는 저장되었지만 직원관리 동기화에 실패했습니다.\n직원관리 화면에서 수동으로 확인해주세요.')
+        }
+      } else {
+        // 매칭 있음 → 같은 사람 확인 모달
+        setPendingSync({
+          contractDataForSave,
+          contractId,
+          pdfUrl,
+          originalContractData: contractData
+        })
+        setMatchedEmployees(merged)
+        setShowSamePersonModal(true)
+        setLoading(false)
+        return
+      }
     } catch (error) {
       console.error('❌ 계약서 저장 중 오류:', error)
       const errorMessage = error instanceof Error ? error.message : '계약서 저장 중 오류가 발생했습니다.'
@@ -548,21 +591,14 @@ export default function ContractTemplateHandler({ branchId, branch }: ContractTe
     contractData: Omit<EmploymentContract, 'id' | 'createdAt' | 'updatedAt'>,
     contractId: string,
     contractFileUrl: string,
-    originalContractData: ContractData
+    originalContractData: ContractData,
+    existingEmployeeId: string | null
   ) => {
     try {
-      // 기존 직원이 있는지 확인
-      const employeesQuery = query(
-        collection(db, 'employees'),
-        where('name', '==', contractData.employeeInfo.name),
-        where('residentNumber', '==', contractData.employeeInfo.residentNumber)
-      )
-      const employeesSnapshot = await getDocs(employeesQuery)
-
       const batch = writeBatch(db)
 
-      if (employeesSnapshot.empty) {
-        // 새 직원 추가
+      if (!existingEmployeeId) {
+        // 새 직원 추가 (근로계약정보는 이미 saveEmploymentContract에서 INSERT됨 → employeeId만 연결)
         const employeeRef = doc(collection(db, 'employees'))
         
         // 은행 코드 찾기
@@ -641,10 +677,15 @@ export default function ContractTemplateHandler({ branchId, branch }: ContractTe
           residentNumber: contractData.employeeInfo.residentNumber
         })
       } else {
-        // 기존 직원 업데이트
-        const existingEmployee = employeesSnapshot.docs[0]
+        // 기존 직원 업데이트 (직원 UPDATE + 근로계약정보는 이미 INSERT됨 → employeeId만 연결)
+        const existingDoc = await getDoc(doc(db, 'employees', existingEmployeeId))
+        if (!existingDoc.exists()) {
+          throw new Error('선택한 직원을 찾을 수 없습니다.')
+        }
+        const existingEmployee = existingDoc
         const employeeRef = doc(db, 'employees', existingEmployee.id)
-        
+        const existingData = existingEmployee.data()
+
         // 은행 코드 찾기
         let selectedBankCode = ''
         if (originalContractData.bankName) {
@@ -659,23 +700,20 @@ export default function ContractTemplateHandler({ branchId, branch }: ContractTe
             console.warn('은행 코드 조회 실패:', error)
           }
         }
-        
+
         batch.update(employeeRef, {
           contractFile: contractFileUrl,
-          // 계약 정보 업데이트
-          employmentType: contractData.contractInfo.employmentType || existingEmployee.data()?.employmentType || '사업소득',
+          employmentType: contractData.contractInfo.employmentType || existingData?.employmentType || '사업소득',
           salaryType: contractData.contractInfo.salaryType,
           salaryAmount: contractData.contractInfo.salaryAmount,
-          includesWeeklyHolidayInWage: contractData.contractInfo.includesWeeklyHoliday || false,
+          includesWeeklyHolidayInWage: contractData.contractInfo.includesWeeklyHoliday ?? false,
           weeklyWorkHours: contractData.contractInfo.weeklyWorkHours,
-          // 은행 정보 업데이트 (계좌입금인 경우)
-          bankName: originalContractData.bankName || existingEmployee.data()?.bankName || '',
-          bankCode: selectedBankCode || existingEmployee.data()?.bankCode || '',
-          accountNumber: originalContractData.bankAccount || existingEmployee.data()?.accountNumber || '',
+          bankName: originalContractData.bankName || existingData?.bankName || '',
+          bankCode: selectedBankCode || existingData?.bankCode || '',
+          accountNumber: originalContractData.bankAccount || existingData?.accountNumber || '',
           updatedAt: Timestamp.now()
         })
 
-        // 근로계약서 정보 연결
         const employmentContractRef = doc(db, 'employmentContracts', contractId)
         batch.update(employmentContractRef, {
           employeeId: existingEmployee.id
@@ -703,12 +741,135 @@ export default function ContractTemplateHandler({ branchId, branch }: ContractTe
     }
   }
 
+  const handleSamePersonConfirm = async (selectedEmployeeId: string) => {
+    if (!pendingSync) return
+    setLoading(true)
+    setShowSamePersonModal(false)
+    try {
+      await syncToEmployeeManagement(
+        pendingSync.contractDataForSave,
+        pendingSync.contractId,
+        pendingSync.pdfUrl,
+        pendingSync.originalContractData,
+        selectedEmployeeId
+      )
+      console.log('✅ 직원관리 동기화 완료 (기존 직원 연결)')
+      // 카카오 + 성공 알림
+      try {
+        const res = await fetch('/api/employment-contract/send-kakao', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            phoneNumber: pendingSync.originalContractData.employeePhone,
+            contractUrl: pendingSync.pdfUrl,
+            employeeName: pendingSync.originalContractData.employeeName
+          })
+        })
+        if (res.ok) {
+          const data = await res.json()
+          if (data.success) console.log('✅ 카카오톡 전송 성공')
+        }
+      } catch (e) {
+        console.error('카카오톡 전송 오류:', e)
+      }
+      setContractFileUrl(pendingSync.pdfUrl)
+      alert('근로계약서가 성공적으로 작성되었습니다!\n선택한 직원 정보에 연결되었습니다.')
+    } catch (error) {
+      console.error('❌ 직원관리 동기화 오류:', error)
+      alert('⚠️ 직원 연결에 실패했습니다. 직원관리 화면에서 수동으로 확인해주세요.')
+    } finally {
+      setPendingSync(null)
+      setMatchedEmployees([])
+      setLoading(false)
+    }
+  }
+
+  const handleNewEmployeeConfirm = async () => {
+    if (!pendingSync) return
+    setLoading(true)
+    setShowSamePersonModal(false)
+    try {
+      await syncToEmployeeManagement(
+        pendingSync.contractDataForSave,
+        pendingSync.contractId,
+        pendingSync.pdfUrl,
+        pendingSync.originalContractData,
+        null
+      )
+      console.log('✅ 직원관리 동기화 완료 (신규 직원)')
+      try {
+        const res = await fetch('/api/employment-contract/send-kakao', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            phoneNumber: pendingSync.originalContractData.employeePhone,
+            contractUrl: pendingSync.pdfUrl,
+            employeeName: pendingSync.originalContractData.employeeName
+          })
+        })
+        if (res.ok) {
+          const data = await res.json()
+          if (data.success) console.log('✅ 카카오톡 전송 성공')
+        }
+      } catch (e) {
+        console.error('카카오톡 전송 오류:', e)
+      }
+      setContractFileUrl(pendingSync.pdfUrl)
+      alert('근로계약서가 성공적으로 작성되었습니다!\n직원관리에 새로 등록되었습니다.')
+    } catch (error) {
+      console.error('❌ 직원관리 동기화 오류:', error)
+      alert('⚠️ 직원 등록에 실패했습니다. 직원관리 화면에서 수동으로 확인해주세요.')
+    } finally {
+      setPendingSync(null)
+      setMatchedEmployees([])
+      setLoading(false)
+    }
+  }
+
   return (
-    <ContractTemplate
-      branch={branch}
-      onComplete={handleContractComplete}
-      contractFileUrl={contractFileUrl}
-    />
+    <>
+      <ContractTemplate
+        branch={branch}
+        onComplete={handleContractComplete}
+        contractFileUrl={contractFileUrl}
+      />
+      {showSamePersonModal && pendingSync && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-6">
+            <h3 className="text-xl font-bold text-gray-800 mb-2">같은 사람인가요?</h3>
+            <p className="text-gray-600 mb-4">
+              다음 직원 중 계약서와 동일한 사람이 있나요? 선택하면 해당 직원 정보에 계약이 연결됩니다.
+            </p>
+            <ul className="space-y-3 mb-6">
+              {matchedEmployees.map((emp) => (
+                <li key={emp.id} className="flex items-center justify-between gap-3 p-3 bg-gray-50 rounded-xl">
+                  <div>
+                    <span className="font-semibold text-gray-800">{emp.name}</span>
+                    <span className="block text-sm text-gray-500">{emp.phone || '(연락처 없음)'}</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => handleSamePersonConfirm(emp.id)}
+                    className="shrink-0 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg"
+                  >
+                    이 사람으로 연결
+                  </button>
+                </li>
+              ))}
+            </ul>
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={handleNewEmployeeConfirm}
+                className="flex-1 py-3 bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold rounded-xl"
+              >
+                아니오, 새 직원으로 등록
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   )
 }
 

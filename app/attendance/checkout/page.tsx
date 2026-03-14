@@ -812,17 +812,7 @@ function CheckoutInfoScreen({
               뒤로
             </button>
             <button
-              onClick={() => {
-                if (!selectedReason) {
-                  alert('사유를 선택해주세요.');
-                  return;
-                }
-                if (selectedReason === '기타' && !reasonOther.trim()) {
-                  alert('기타 사유를 입력해주세요.');
-                  return;
-                }
-                onConfirm();
-              }}
+              onClick={onConfirm}
               className="flex-1 h-14 bg-green-500 hover:bg-green-600 text-white text-xl font-bold rounded-xl shadow-lg"
             >
               확인 - 오늘도 감사합니다.
@@ -833,7 +823,7 @@ function CheckoutInfoScreen({
     );
   }
 
-  // 사유 입력 화면
+  // 사유 입력 화면 (스케줄 있는 직원만 해당)
   if (showReasonInput) {
     const checkInTimeDisplay =
       employee.checkInTime instanceof Date
@@ -936,7 +926,17 @@ function CheckoutInfoScreen({
               뒤로
             </button>
             <button
-              onClick={onConfirm}
+              onClick={() => {
+                if (!selectedReason) {
+                  alert('사유를 선택해주세요.');
+                  return;
+                }
+                if (selectedReason === '기타' && !reasonOther.trim()) {
+                  alert('기타 사유를 입력해주세요.');
+                  return;
+                }
+                onConfirm();
+              }}
               className="flex-1 h-14 bg-green-500 hover:bg-green-600 text-white text-xl font-bold rounded-xl shadow-lg"
             >
               확인 - 오늘도 감사합니다.

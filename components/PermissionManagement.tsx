@@ -135,10 +135,10 @@ export default function PermissionManagement() {
           rejectedAt: data.rejectedAt?.toDate().toISOString(),
           rejectionReason: data.rejectionReason,
         };
-        approvalsMap.set(data.firebaseUid || data.kakaoId, approval);
-        if (data.employeeId) {
-          approvalsByEmployeeId.set(data.employeeId, approval);
-        }
+        const uidOrKakao = (data.firebaseUid || data.kakaoId || '').toString();
+        if (uidOrKakao) approvalsMap.set(uidOrKakao, approval);
+        const empId = data.employeeId != null ? String(data.employeeId) : '';
+        if (empId) approvalsByEmployeeId.set(empId, approval);
       });
 
       // 3. 권한 정보 로드
@@ -161,8 +161,8 @@ export default function PermissionManagement() {
       
       // 직원 기준으로 통합 (직원이 없는 승인 요청도 포함)
       employeesMap.forEach((employee) => {
-        const approvalByUid = employee.firebaseUid ? approvalsMap.get(employee.firebaseUid) : undefined;
-        const approvalByEmployeeId = approvalsByEmployeeId.get(employee.id);
+        const approvalByUid = employee.firebaseUid ? approvalsMap.get(String(employee.firebaseUid)) : undefined;
+        const approvalByEmployeeId = approvalsByEmployeeId.get(String(employee.id));
         // firebaseUid로 찾은 승인 우선, 없으면 employeeId로 찾은 승인(방금 가입·승인 대기) 사용
         const approval = approvalByUid || approvalByEmployeeId;
 
@@ -190,7 +190,8 @@ export default function PermissionManagement() {
 
       // 승인 요청 중 직원이 없는 것들도 추가
       approvalsMap.forEach((approval) => {
-        if (!approval.employeeId || !employeesMap.has(approval.employeeId)) {
+        const empId = approval.employeeId != null ? String(approval.employeeId) : '';
+        if (!empId || !employeesMap.has(empId)) {
           const existing = unified.find(u => u.firebaseUid === approval.firebaseUid || u.kakaoId === approval.kakaoId);
           if (!existing) {
             unified.push({
@@ -205,6 +206,20 @@ export default function PermissionManagement() {
               canCreateInvite: false,
             });
           }
+        }
+      });
+
+      // 직원 ID로 승인 대기가 있는데 아직 not_applied로 남은 행 보정 (매칭 누락 방지)
+      approvalsByEmployeeId.forEach((approval, empId) => {
+        if (approval.status !== 'pending') return;
+        const u = unified.find((x) => x.employeeId === empId);
+        if (u && u.approvalStatus === 'not_applied') {
+          u.approvalStatus = 'pending';
+          u.approvalId = approval.id;
+          u.firebaseUid = u.firebaseUid || approval.firebaseUid;
+          u.realName = u.realName || approval.realName;
+          u.kakaoNickname = approval.kakaoNickname;
+          u.kakaoId = approval.kakaoId;
         }
       });
 

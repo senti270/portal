@@ -139,22 +139,34 @@ export default function PortalAuth({ children }: PortalAuthProps) {
       if (approvedApproval) {
         const approvalData = approvedApproval.data();
         const kakaoEmail = `kakao_${kakaoId}@kakao.workschedule.local`;
-        
+        const firebasePassword = `kakao_${kakaoId}_temp`;
+
+        const tryLogin = () => signInWithEmailAndPassword(auth, kakaoEmail, firebasePassword);
+
         try {
-          // Firebase Auth로 로그인 시도
-          const firebasePassword = `kakao_${kakaoId}_temp`;
-          
           try {
-            await signInWithEmailAndPassword(auth, kakaoEmail, firebasePassword);
+            await tryLogin();
+            return;
           } catch (err: any) {
-            if (err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password') {
-              // 계정이 없거나 비밀번호가 다르면 계정 생성
+            if (err.code === 'auth/user-not-found') {
               await createUserWithEmailAndPassword(auth, kakaoEmail, firebasePassword);
-            } else {
-              throw err;
+              return;
             }
+            if (err.code === 'auth/wrong-password' && approvalData.firebaseUid) {
+              // 가입 시 예전에 다른 비밀번호로 생성된 경우: 서버에서 비밀번호 맞춘 뒤 재시도
+              const res = await fetch('/api/auth/reset-kakao-password', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ firebaseUid: approvalData.firebaseUid, kakaoId }),
+              });
+              const data = await res.json().catch(() => ({}));
+              if (data.success) {
+                await tryLogin();
+                return;
+              }
+            }
+            throw err;
           }
-          return; // 로그인 성공
         } catch (error: any) {
           console.error('카카오 로그인 오류:', error);
           alert('카카오톡 로그인에 실패했습니다. 관리자에게 문의하세요.');

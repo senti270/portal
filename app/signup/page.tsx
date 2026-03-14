@@ -118,8 +118,9 @@ function SignupContent() {
       setError('');
 
       // 1. Firebase Auth 계정 생성 (카카오 ID를 이메일로 사용)
+      // 비밀번호는 PortalAuth 카카오 로그인에서 사용하는 값과 동일해야 함 (승인 후 로그인 가능)
       const kakaoEmail = `kakao_${kakaoUser.id}@kakao.workschedule.local`;
-      const tempPassword = `kakao_${kakaoUser.id}_${Date.now()}`;
+      const tempPassword = `kakao_${kakaoUser.id}_temp`;
       
       let firebaseUser;
       try {

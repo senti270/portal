@@ -7,6 +7,7 @@ import { auth, db } from '@/lib/firebase';
 import { useRouter } from 'next/navigation';
 import { loadKakaoSDK, loginWithKakao, getKakaoUserInfo } from '@/lib/kakao';
 import { PermissionProvider } from '@/contexts/PermissionContext';
+import { useAdmin } from '@/contexts/AdminContext';
 
 interface PortalAuthProps {
   children: React.ReactNode;
@@ -14,6 +15,7 @@ interface PortalAuthProps {
 
 export default function PortalAuth({ children }: PortalAuthProps) {
   const router = useRouter();
+  const { login: adminLogin } = useAdmin();
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [showLogin, setShowLogin] = useState(false);
@@ -57,6 +59,8 @@ export default function PortalAuth({ children }: PortalAuthProps) {
       if (userId === 'drawing555') {
         const email = 'drawing555@naver.com';
         await signInWithEmailAndPassword(auth, email, password);
+        // drawing555 계정은 자동으로 관리자 권한 부여 (system-login 접근 가능)
+        adminLogin('2906');
         return;
       }
       

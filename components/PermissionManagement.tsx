@@ -118,9 +118,10 @@ export default function PermissionManagement() {
       // 2. 승인 요청 로드
       const approvalsSnapshot = await getDocs(collection(db, 'userApprovals'));
       const approvalsMap = new Map<string, UserApproval>();
+      const approvalsByEmployeeId = new Map<string, UserApproval>();
       approvalsSnapshot.docs.forEach((doc) => {
         const data = doc.data();
-        approvalsMap.set(data.firebaseUid || data.kakaoId, {
+        const approval: UserApproval = {
           id: doc.id,
           firebaseUid: data.firebaseUid || '',
           kakaoId: data.kakaoId || '',
@@ -133,7 +134,11 @@ export default function PermissionManagement() {
           approvedAt: data.approvedAt?.toDate().toISOString(),
           rejectedAt: data.rejectedAt?.toDate().toISOString(),
           rejectionReason: data.rejectionReason,
-        });
+        };
+        approvalsMap.set(data.firebaseUid || data.kakaoId, approval);
+        if (data.employeeId) {
+          approvalsByEmployeeId.set(data.employeeId, approval);
+        }
       });
 
       // 3. 권한 정보 로드
@@ -156,27 +161,28 @@ export default function PermissionManagement() {
       
       // 직원 기준으로 통합 (직원이 없는 승인 요청도 포함)
       employeesMap.forEach((employee) => {
-        // 퇴사한 직원이면서 카카오톡 회원가입이 안되어 있으면 리스트에서 제외
-        if (employee.status === 'inactive' && !employee.firebaseUid) {
-          return; // 이 직원은 목록에 추가하지 않음
+        const approvalByUid = employee.firebaseUid ? approvalsMap.get(employee.firebaseUid) : undefined;
+        const approvalByEmployeeId = approvalsByEmployeeId.get(employee.id);
+        // firebaseUid로 찾은 승인 우선, 없으면 employeeId로 찾은 승인(방금 가입·승인 대기) 사용
+        const approval = approvalByUid || approvalByEmployeeId;
+
+        // 퇴사한 직원이면서 카카오 가입도 없고 승인 대기 건도 없으면 리스트에서 제외
+        if (employee.status === 'inactive' && !employee.firebaseUid && !approvalByEmployeeId) {
+          return;
         }
-        
-        const approval = employee.firebaseUid 
-          ? approvalsMap.get(employee.firebaseUid) 
-          : undefined;
-        
+
         unified.push({
           employeeId: employee.id,
           employeeName: employee.name,
-          firebaseUid: employee.firebaseUid,
+          firebaseUid: employee.firebaseUid || approval?.firebaseUid,
           email: employee.email,
           realName: approval?.realName,
           kakaoNickname: approval?.kakaoNickname,
           kakaoId: approval?.kakaoId,
           approvalStatus: approval?.status || (employee.firebaseUid ? 'approved' : 'not_applied'),
           approvalId: approval?.id,
-          permission: employee.firebaseUid ? permissionsMap.get(employee.firebaseUid) : undefined,
-          canCreateInvite: !employee.firebaseUid,
+          permission: (employee.firebaseUid || approval?.firebaseUid) ? permissionsMap.get(employee.firebaseUid || approval!.firebaseUid) : undefined,
+          canCreateInvite: !employee.firebaseUid && !approvalByEmployeeId,
           employeeStatus: employee.status,
           resignationDate: employee.resignationDate,
         });
